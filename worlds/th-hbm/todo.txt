@@ -1,0 +1,6 @@
+- Ability Card, Stage End Selection locations to be implemented.
+- Client. Game loop.
+- Networking.
+- Location rules.
+- Game Handler and Game Controller?
+- Finish World.
