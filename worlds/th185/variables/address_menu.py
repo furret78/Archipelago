@@ -5,7 +5,9 @@ Variables: Memory addresses used during the main menu.
 # These should be combined with the base game address.
 
 ADDR_BASE_MENU_PTR = 0x000D7C48
-# Everything below here should be used as offsets to the above pointer.
+# Everything below here should be used as offsets to the above pointer's address offset.
+# Read from the base + the above, and then add an offset to get the address we read from.
+
 # Everything is considered as a 1-byte hex boolean where 00 is FALSE and anything else is TRUE.
 # Some addresses have additional notes.
 

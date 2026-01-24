@@ -42,7 +42,7 @@ class GameHandler:
     def getCurrentBulletMoney(self) -> int:
         return self.gameController.getBulletMoney()
 
-    def getShopCardData(self, card_string_id: str):
+    def getShopCardData(self, card_string_id: str) -> int:
         """
         0x00 = Not unlocked
         0x01 - 0x79 = Unlocked but not new
@@ -58,9 +58,9 @@ class GameHandler:
         Gets whether a card is unlocked in the dex or not.
         0x00 means False. Anything else is True.
         """
-        return self.gameController.getDexCardData(card_string_id) != 0x00
+        return self.gameController.getDexCardData(card_string_id)
 
-    def setDexCardData(self, card_string_id: str, value: int):
+    def setDexCardData(self, card_string_id: str, value: bool):
         """
         Writes data to the memory for this particular Ability Card in the dex.
         This one is for loading in the dex when reconnecting to the server.
@@ -140,8 +140,8 @@ class GameHandler:
                 BOSS_SUIKA: False, BOSS_MAMIZOU: False, BOSS_SAKI: False, BOSS_MOMOYO: False
             }
 
-        for stage in STAGE_LIST:
-            self.stages_unlocked[stage] = False
+        for stage_name in STAGE_LIST:
+            self.stages_unlocked[stage_name] = False
 
     def initGame(self):
         if self.gameController is None: return

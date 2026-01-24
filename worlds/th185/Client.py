@@ -20,11 +20,38 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
     def __init__(self, ctx):
         super().__init__(ctx)
 
-    def _cmd_refresh_scorefile(self):
-        """Delete scorefile and substitute in a fresh, locked scorefile."""
+    def _cmd_relink_game(self):
+        self.ctx.inError = True
 
-    def _cmd_help(self):
-        logger.info("Touhou 18.5")
+    def _cmd_unlock_stage(self, stage_name: str):
+        """
+        Unlocks the stage according to its number.
+        Stage 0 is the Tutorial, 7 is End of Market, 8 is Challenge Market.
+        """
+        if stage_name not in STAGE_LIST:
+            logger.error("There is no stage with this number!")
+            return
+
+        self.ctx.handler.stages_unlocked[stage_name] = True
+        self.ctx.update_stage_list()
+
+        logger.info(f"{stage_name}: Set to {self.ctx.handler.stages_unlocked[stage_name]}")
+
+    def _cmd_show_life(self):
+        """
+        Retrieves this slot's current number of lives.
+        """
+        if self.ctx.handler.gameController.check_if_in_stage():
+            life_count = self.ctx.handler.gameController.getLives()
+            logger.info(f"Current lives: {life_count}")
+        else:
+            logger.error("This slot is currently not in a stage!")
+
+    def _cmd_unlock_no_card(self):
+        """
+        Command to forcibly unlock the option to equip no cards in the loadout.
+        """
+        self.ctx.handler.gameController.setNoCardData()
 
 
 class TouhouHBMContext(CommonContext):
@@ -384,7 +411,7 @@ async def game_watcher(ctx: TouhouHBMContext):
                 await asyncio.sleep(1)
 
         # Trying to reconnect to the game after an error
-        if ctx.inError:
+        if ctx.inError or (ctx.handler.gameController is None and not ctx.exit_event.is_set()):
             logger.info(f"Connection lost. Trying to reconnect...")
             ctx.handler.gameController = None
 
