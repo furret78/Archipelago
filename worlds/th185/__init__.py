@@ -1,9 +1,25 @@
+from .variables.meta_data import SHORT_NAME, DISPLAY_NAME
+from ..LauncherComponents import Component, components, launch_subprocess, Type
 from collections.abc import Mapping
 from typing import Any
 
 from worlds.AutoWorld import World
-from . import Locations, Items, OptionsHBM as HBMOptions, Regions, Rules
+from . import Locations, Items, Options as HBMOptions, Regions, Rules
 from .variables.meta_data import *
+
+def launch_client():
+    """
+    Launch a Client instance.
+    """
+    from .Client import launch
+    launch_subprocess(launch, name="GameClient")
+
+components.append(Component(
+    display_name=SHORT_NAME+" Client",
+    func=launch_client,
+    component_type=Type.CLIENT,
+    game_name=DISPLAY_NAME
+))
 
 class TouhouHBMWorld(World):
     """
@@ -42,13 +58,13 @@ class TouhouHBMWorld(World):
         # Does not affect gameplay but it is nice eye-candy.
         data = {
             # Options
-            "challenge_checks": self.options.challenge_checks,
-            "card_dex_checks": self.options.card_dex_checks,
-            "trap_chance": self.options.trap_chance,
-            "starting_card": self.options.starting_card,
-            "completion_type": self.options.completion_type,
+            "challenge_checks": self.options.challenge_checks.value,
+            "card_dex_checks": self.options.card_dex_checks.value,
+            "trap_chance": self.options.trap_chance.value,
+            "starting_card": self.options.starting_card.value,
+            "completion_type": self.options.completion_type.value,
             # This is for eye-candy. List contains the string IDs of cards marked as "New!" in the game.
-            "card_shop_new": self.card_shop_new,
+
             # Card Shop dictionary does not exist. Use the list of acquired Ability Card Items for that.
             # Dex dictionary does not exist. Use the list of acquired checks for that.
             # Owning a card and unlocking its dex entry is one and the same,

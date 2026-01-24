@@ -2,9 +2,6 @@ from typing import TYPE_CHECKING
 from BaseClasses import Entrance, Region
 from .variables.boss_and_stage import *
 
-if TYPE_CHECKING:
-    from .World import TouhouHBMWorld
-
 
 def create_and_connect_regions(world):
     create_all_regions(world)
@@ -61,21 +58,21 @@ def connect_regions(world):
 
     # This helper function returns a list,
     # but it has the Market End Card Selection at the end.
-    # Remove that.
+    # Don't count that one in.
     region_exit_list = get_regions_list(world)
-    region_exit_list.pop(-1)
+    region_exit_list.remove(region_exit_list[-1])
 
     # From the menu to the rest of the game.
     region_exit_id = 0
-    for i in region_exit_list:
-        region_menu.connect(region_exit_list[region_exit_id], ORIGIN_TO_REGION_LIST[region_exit_id])
+    for exit_point in ORIGIN_TO_REGION_LIST:
+        region_menu.connect(region_exit_list[region_exit_id], exit_point)
+        print(exit_point)
         region_exit_id += 1
 
     # From the Markets to the card selection at the end.
     # Since not every card shows up here, each location will need a rule about requiring stage unlock minimums.
     # TBD. Should probably put them in Locations.py
     region_stage_exit_id = 0
-    for j in region_exit_list:
-        if region_stage_exit_id >= len(region_exit_list) - 1: continue
+    for region_exits in STAGE_TO_ENDSTAGE_LIST:
         region_exit_list[region_stage_exit_id].connect(region_endstage, STAGE_TO_ENDSTAGE_LIST[region_stage_exit_id])
         region_stage_exit_id += 1

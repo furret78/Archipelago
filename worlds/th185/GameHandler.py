@@ -8,18 +8,18 @@ from .variables.card_const import *
 
 class GameHandler:
     """Class keeping tracking of what's unlocked and handles game interactions."""
-    spare_lives = None
-    game_funds = None
-    menu_funds = None
-    end_stage_card_chosen = {}
-    permashop_card_new = []
-    permashop_card = {}
-    dex_card_unlocked = {}
+    spare_lives: int = 0
+    game_funds: int = 0
+    menu_funds: int = 0
+    end_stage_card_chosen: dict = {}
+    permashop_card_new: list = []
+    permashop_card: dict = {}
+    dex_card_unlocked: dict = {}
     gameController = None
-    bosses_beaten = {}
-    bosses_met = {}
-    stages_unlocked = {}
-    previous_location_checked = []
+    bosses_beaten: dict = {}
+    bosses_met: dict = {}
+    stages_unlocked: dict = {}
+    previous_location_checked: list = []
 
     def __init__(self):
         self.gameController = GameController()
@@ -94,14 +94,15 @@ class GameHandler:
     # Other functions
     def reconnect(self):
         self.gameController = GameController()
+        self.initGame()
 
     def reset(self):
         """
         Initialize everything to defaults.
         """
-        self.spare_lives = None
-        self.game_funds = None
-        self.menu_funds = None
+        self.spare_lives = 0
+        self.game_funds = 0
+        self.menu_funds = 0
         self.end_stage_card_chosen = {}
         self.permashop_card_new = []
         self.permashop_card = {}
@@ -143,6 +144,7 @@ class GameHandler:
             self.stages_unlocked[stage] = False
 
     def initGame(self):
+        if self.gameController is None: return
         self.gameController.initAnticheatHack()
         self.gameController.setNoCardData()
 

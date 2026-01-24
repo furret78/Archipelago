@@ -20,15 +20,20 @@ def get_boss_names_challenge_list() -> list[str]:
     result_boss_list: list[str] = []
     challenge_set_id = 1
     # This will iterate through the entire boss list.
-    for boss_sets in ALL_BOSSES_LIST[challenge_set_id]:
+    for boss_sets in ALL_BOSSES_LIST:
         if challenge_set_id <= TUTORIAL_ID or challenge_set_id >= STAGE_CHIMATA_ID: continue
+        # Gets the actual list data of the current stage chosen.
+        current_boss_set = ALL_BOSSES_LIST[challenge_set_id]
+        # Iterate through it. If the index is 4 or more, that's a story boss.
         boss_challenge_id = 0
-        for boss_challenge in boss_sets:
-            # ID 4 is reaching the story bosses.
+        for boss_challenge in current_boss_set:
             if boss_challenge_id >= 4: continue
             result_boss_list.append(boss_challenge)
             boss_challenge_id += 1
+        # Move onto the next stage.
         challenge_set_id += 1
+
+    # Return the final list.
     return result_boss_list
 
 
@@ -105,8 +110,8 @@ def create_regular_locations(world):
     region_dict = get_regions_dict(world)
 
     # Stages Tutorial-Challenge
-    local_stage_id = 0
     for game_stage in STAGE_LIST:
+        local_stage_id = STAGE_NAME_TO_ID[game_stage]
         if game_stage != CHALLENGE_NAME:
             for boss_name in ALL_BOSSES_LIST[local_stage_id]:
                 locationEncounter: str = get_boss_location_name_str(local_stage_id, boss_name)
@@ -125,9 +130,11 @@ def create_regular_locations(world):
                     region_dict[stages]
                 )
 
-                region_dict[stages].locations.append(boss_encounter_location, boss_defeat_location)
+                region_dict[stages].locations.append(boss_encounter_location)
+                region_dict[stages].locations.append(boss_defeat_location)
         elif getattr(world.options, "challenge_checks"):
-            for challenge_boss in get_boss_names_challenge_list():
+            boss_challenge_list = get_boss_names_challenge_list()
+            for challenge_boss in boss_challenge_list:
                 locationEncounter: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss)
 
                 boss_encounter_location = TouhouHBMLocation(
@@ -159,7 +166,7 @@ def create_regular_locations(world):
             world.player,
             cardLocationName,
             world.location_name_to_id[cardLocationName],
-            region_dict[CARD_DEX_NAME]
+            region_dict[CARD_SHOP_NAME]
         )
 
-        region_dict[CARD_DEX_NAME].locations.append(card_dex_location)
+        region_dict[CARD_SHOP_NAME].locations.append(card_dex_location)

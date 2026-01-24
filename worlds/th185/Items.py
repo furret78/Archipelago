@@ -20,7 +20,7 @@ class TouhouHBMItem(Item):
 class TouhouHBMItemData(NamedTuple):
     category: str
     code: Optional[int] = None
-    classification: ItemClassification = None
+    classification: ItemClassification = ItemClassification.filler
     max_quantity: int = 1
     weight: int = 1
 
@@ -108,7 +108,7 @@ def create_all_items(world):
                 if string_id == MALLET_CARD: continue
 
         # Grab full name of item and create.
-        item_pool.append(world.create_item(CARD_ID_TO_NAME[ability_card_name]))
+        item_pool.append(world.create_item(CARD_ID_TO_NAME[string_id]))
 
     # Now that all the important stuff is added, check if there's any spots left.
     number_of_items = len(item_pool)

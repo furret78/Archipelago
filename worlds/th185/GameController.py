@@ -12,7 +12,7 @@ class GameController:
     """Class accessing the game's memory."""
 
     def __init__(self):
-        self.pm = pymem.Pymem(GAME_NAME)
+        self.pm = pymem.Pymem(process_name=FILE_NAME)
 
         # Gameplay only.
         self.addrCurrentStage = self.pm.base_address+ADDR_CURRENT_STAGE_PTR # Check if pointer itself is valid.
@@ -113,5 +113,6 @@ class GameController:
 
     # Things to do on boot-up before anything else.
     def initAnticheatHack(self):
+        return
         bytesAtAddress = self.pm.read_bytes(self.pm.base_address+ADDR_ANTICHEAT)
         if bytesAtAddress != BYTES_ANTICHEAT_ORIGINAL: return

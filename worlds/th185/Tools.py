@@ -4,10 +4,11 @@ import os
 
 def getPointerAddress(pm, base, offsets):
     address = base
-    for offset in offsets[:-1]:
+    offset_list = [offsets]
+    for offset in offset_list[:-1]:
         address = pm.read_uint(address)
         address += offset
-    return pm.read_uint(address) + offsets[-1]
+    return pm.read_uint(address) + offset_list[-1]
 
 
 def getIntFromBinaryArray(binary_array):

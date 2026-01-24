@@ -1,3 +1,4 @@
+import traceback
 from typing import Optional
 import asyncio
 import colorama
@@ -28,6 +29,7 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
 
 class TouhouHBMContext(CommonContext):
     """Touhou 18.5 Game Context"""
+    handler = None
 
     def __init__(self, server_address: Optional[str], password: Optional[str]) -> None:
         super().__init__(server_address, password)
@@ -40,7 +42,6 @@ class TouhouHBMContext(CommonContext):
         self.location_name_to_ap_id = None
         self.all_location_ids = []
         self.previous_location_checked = []
-        self.handler = None
         self.game = DISPLAY_NAME
         self.items_handling = 0b111  # Item from starting inventory, own world and other world
         self.command_processor = TouhouHBMClientProcessor
@@ -64,7 +65,7 @@ class TouhouHBMContext(CommonContext):
     def reset(self):
         self.previous_location_checked = []
         self.all_location_ids = []
-        self.handler = None  # gameHandler
+        self.handler = None
         self.no_card_unlocked = False
 
         self.is_in_menu = False
@@ -211,11 +212,11 @@ class TouhouHBMContext(CommonContext):
         This method waits until the client finishes the initial conversation with the server.
         See client_recieved_initial_server_data for wait requirements.
         """
-        if self.client_recieved_initial_server_data():
+        if self.client_received_initial_server_data():
             return
 
         logger.info("Waiting for connect from server...")
-        while not self.client_recieved_initial_server_data() and not self.exit_event.is_set():
+        while not self.client_received_initial_server_data() and not self.exit_event.is_set():
             await asyncio.sleep(1)
 
     async def connect_to_game(self):
@@ -223,9 +224,10 @@ class TouhouHBMContext(CommonContext):
         Connect the client to the game process.
         """
         self.handler = None
-        while not self.handler:
+
+        while self.handler is None:
             try:
-                self.handler = GameHandler()
+                self.handler: GameHandler = GameHandler()
             except Exception as e:
                 await asyncio.sleep(2)
 
@@ -234,7 +236,7 @@ class TouhouHBMContext(CommonContext):
         Reconnect to the game without resetting everything
         """
 
-        while not self.handler.gameController:
+        while self.handler.gameController is None:
             try:
                 self.handler.reconnect()
             except Exception as e:
@@ -284,6 +286,8 @@ class TouhouHBMContext(CommonContext):
 
             self.gameItemQueue.pop(-1)
 
+        return
+
 
     async def menu_loop(self):
         """
@@ -296,8 +300,7 @@ class TouhouHBMContext(CommonContext):
             self.no_card_unlocked = True
 
         if self.handler.isGameInStage(): return
-
-
+        return
 
 
     async def update_locations_checked(self):
@@ -373,10 +376,12 @@ async def game_watcher(ctx: TouhouHBMContext):
             ctx.reset()
             await ctx.wait_for_initial_connection_info()
 
-        # First connection to the game
+        # Trying to make first connection to the game
         if ctx.handler is None and not ctx.inError:
             logger.info(f"Awaiting connection to {SHORT_NAME}...")
             asyncio.create_task(ctx.connect_to_game())
+            while ctx.handler is None and not ctx.exit_event.is_set():
+                await asyncio.sleep(1)
 
         # Trying to reconnect to the game after an error
         if ctx.inError:
@@ -385,6 +390,7 @@ async def game_watcher(ctx: TouhouHBMContext):
 
             asyncio.create_task(ctx.reconnect_to_game())
             await asyncio.sleep(1)
+
             while ctx.handler.gameController is None and not ctx.exit_event.is_set():
                 await asyncio.sleep(1)
 

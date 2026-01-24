@@ -99,11 +99,7 @@ def get_card_shop_item_names() -> list[str]:
     # Go through both lists and fetch the card names.
     # Nazrin's cards never show up in shop.
     shop_card_item_names = []
-    card_list_index = 0
-    for i in ABILITY_CARD_LIST:
-        if i == NAZRIN_CARD_1 or i == NAZRIN_CARD_2:
-            card_list_index += 1
-            continue
-        shop_card_item_names.append(CARD_ID_TO_NAME[card_list_index])
-        card_list_index += 1
+    for card_string_id in ABILITY_CARD_LIST:
+        if card_string_id == NAZRIN_CARD_1 or card_string_id == NAZRIN_CARD_2: continue
+        shop_card_item_names.append(CARD_ID_TO_NAME[card_string_id])
     return shop_card_item_names
