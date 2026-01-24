@@ -1,6 +1,5 @@
+- Fix networking and data saving.
+- Fix bugs (idk which ones but they're definitely there)
 - Ability Card, Stage End Selection locations to be implemented.
-- Client. Game loop.
-- Networking.
-- Location rules.
-- Game Handler and Game Controller?
-- Finish World.
+- Fix location checking.
+- Add a separate tab for HBM configs at some point (mainly for scorefile path lol)
