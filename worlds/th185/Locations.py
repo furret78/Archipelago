@@ -60,6 +60,7 @@ def get_card_location_name_str(card_id: str, is_dex: bool = False) -> str:
 location_id_offset = 1
 location_table = {} # Name to ID
 location_id_to_name = {} # ID to Name
+location_cards_id_to_card_string_id = {}
 
 # Boss locations
 stage_id = 0
@@ -98,6 +99,7 @@ for cards in ABILITY_CARD_LIST:
     cardLocationNameString: str = get_card_location_name_str(cards, True)
     location_table[cardLocationNameString] = location_id_offset
     location_id_to_name[location_id_offset] = cardLocationNameString
+    location_cards_id_to_card_string_id[location_id_offset] = cards
     location_id_offset += 1
     card_index_id += 1
 

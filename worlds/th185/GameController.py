@@ -9,6 +9,11 @@ from .variables.boss_and_stage import *
 
 class GameController:
     """Class accessing the game's memory."""
+
+    # I honestly have no idea why it's written this way.
+    # I consider the implementation of memory editing the game below magic.
+    # The helper function that gets addresses from pointers I also consider to be magic.
+    # But it works so I don't really care.
     def __init__(self):
         self.pm = pymem.Pymem(process_name=FILE_NAME)
 
@@ -81,17 +86,19 @@ class GameController:
         self.pm.write_bytes(stageLockAddress, bytes([value]), 1)
 
     # Functions that control boss records
-    def getBossRecord(self, stage: int, boss: int, type: int) -> bool:
+    def getBossRecord(self, stage: int, boss: int, category: int) -> bool:
+        boss_address_list_normal = ADDR_BOSS_ID_TO_PTR[stage][boss]
+
         if stage != STAGE_CHALLENGE_ID:
-            bossRecordAddress = self.getAddressFromPointerWithBase(ADDR_BOSS_ID_TO_PTR[stage][boss][type])
+            bossRecordAddress = self.getAddressFromPointerWithBase(boss_address_list_normal[category])
         else:
             bossRecordAddress = self.getAddressFromPointerWithBase(ADDR_BOSS_ID_TO_PTR[stage][boss])
         return int.from_bytes(self.pm.read_bytes(bossRecordAddress, 1)) != 0
 
-    def setBossRecord(self, stage: int, boss: int, value: int, type: int):
+    def setBossRecord(self, stage: int, boss: int, value: int, category: int):
         # Practically unused, but might be handy at some point.
         if stage != STAGE_CHALLENGE_ID:
-            bossRecordAddress = self.getAddressFromPointerWithBase(ADDR_BOSS_ID_TO_PTR[stage][boss][type])
+            bossRecordAddress = self.getAddressFromPointerWithBase(ADDR_BOSS_ID_TO_PTR[stage][boss][category])
         else:
             bossRecordAddress = self.getAddressFromPointerWithBase(ADDR_BOSS_ID_TO_PTR[stage][boss])
         self.pm.write_bytes(bossRecordAddress, bytes([value]), 1)

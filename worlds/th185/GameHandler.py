@@ -196,9 +196,7 @@ class GameHandler:
         Type 0 is checking for encounters, and type 1 is checking for defeat.
         Challenge Market skips the type check and always returns the encounter value.
         """
-        recordData = self.gameController.getBossRecord(stage_id, boss_id, type)
-        if recordData != 0x00: return True
-        return False
+        return self.gameController.getBossRecord(stage_id, boss_id, type)
 
     def setBossRecordGame(self, stage_id: int, boss_id: int, value: bool, type: int = 0) -> None:
         """

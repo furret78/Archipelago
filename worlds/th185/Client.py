@@ -1,3 +1,5 @@
+import os
+import shutil
 import traceback
 from typing import Optional
 import asyncio
@@ -25,8 +27,8 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
 
     def _cmd_unlock_stage(self, stage_name: str):
         """
-        Unlocks the stage according to its number.
-        Stage 0 is the Tutorial, 7 is End of Market, 8 is Challenge Market.
+        Unlocks the stage according to its name:
+        Tutorial, 1st Market, 2nd Market, 3rd Market, 4th Market, 5th Market, 6th Market, End of Market, Challenge Market.
         """
         if stage_name not in STAGE_LIST:
             logger.error("There is no stage with this number!")
@@ -53,10 +55,21 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
         """
         self.ctx.handler.gameController.setNoCardData()
 
+    def _cmd_show_scorefile_path(self):
+        logger.info(f"Scorefile path is currently set to: {self.ctx.scorefile_path}")
+
+    def _cmd_replace_save(self):
+        """
+        Replaces the scorefile at the game's Appdata folder.
+        Recommended to manually back up save data before doing this.
+        """
+        empty_save_path = ""
+
 
 class TouhouHBMContext(CommonContext):
     """Touhou 18.5 Game Context"""
     handler = None
+    scorefile_path = ""
 
     def __init__(self, server_address: Optional[str], password: Optional[str]) -> None:
         super().__init__(server_address, password)
@@ -75,6 +88,8 @@ class TouhouHBMContext(CommonContext):
         self.is_in_menu = False
         self.no_card_unlocked = False
         self.traps = []
+        self.scorefile_path = "os.getenv('APPDATA')"
+        self.loadingDataSetup = True
 
         # Set to True in order to prevent the client from looking for checks.
         # Mainly to set proper values for the Permanent Card Shop between
@@ -89,6 +104,7 @@ class TouhouHBMContext(CommonContext):
 
         self.reset()
 
+
     def reset(self):
         self.previous_location_checked = []
         self.all_location_ids = []
@@ -102,6 +118,7 @@ class TouhouHBMContext(CommonContext):
         # List of items/locations
         self.previous_location_checked = None
         self.is_connected = False
+        self.loadingDataSetup = True
 
     def make_gui(self):
         ui = super().make_gui()
@@ -202,9 +219,10 @@ class TouhouHBMContext(CommonContext):
 
     def checkAllBosses(self) -> bool:
         if not self.handler.bosses_beaten: return False
-        for stage, boss_data in self.handler.bosses_beaten:
-            for boss_name, defeat_check in boss_data:
-                if not defeat_check: return False
+
+        for stage_id_key in self.handler.bosses_beaten:
+            for boss_data_key in self.handler.bosses_beaten[stage_id_key]:
+                if not self.handler.bosses_beaten[stage_id_key][boss_data_key]: return False
         return True
 
     def checkFullClear(self) -> bool:
@@ -273,23 +291,30 @@ class TouhouHBMContext(CommonContext):
         """
         Main loop. Responsible for general management of Items and scanning locations for checks.
         """
-        if len(self.receivedItemQueue) > 0:
-            current_item_id = self.receivedItemQueue[-1]
+        try:
+            if len(self.receivedItemQueue) > 0:
+                current_item_id = self.receivedItemQueue[-1]
 
-            if check_if_item_id_exists(current_item_id):
-                if current_item_id in GAME_ONLY_ITEM_ID:
-                    self.gameItemQueue.append(current_item_id)
-                else:
-                    match current_item_id:
-                        case 1: self.handler.addFunds(200)
-                        case 2: self.handler.addFunds(1000)
-                        case 10: self.handler.addFunds(5)
-                        case 11: self.handler.addFunds(10)
-                        case 51: self.handler.addFunds(-100)
-                        case 52: self.handler.addFunds(-50)
-                        case _: self.handler.handleValidItem(current_item_id)
+                if check_if_item_id_exists(current_item_id):
+                    if current_item_id in GAME_ONLY_ITEM_ID:
+                        self.gameItemQueue.append(current_item_id)
+                    else:
+                        match current_item_id:
+                            case 1: self.handler.addFunds(200)
+                            case 2: self.handler.addFunds(1000)
+                            case 10: self.handler.addFunds(5)
+                            case 11: self.handler.addFunds(10)
+                            case 51: self.handler.addFunds(-100)
+                            case 52: self.handler.addFunds(-50)
+                            case _: self.handler.handleValidItem(current_item_id)
 
-            self.receivedItemQueue.pop(-1)
+                self.receivedItemQueue.pop(-1)
+
+            await self.update_locations_checked()
+        except Exception as e:
+            logger.error(f"Error in the MAIN loop:")
+            logger.error(traceback.format_exc())
+            self.inError = True
 
 
     async def game_loop(self):
@@ -297,23 +322,28 @@ class TouhouHBMContext(CommonContext):
         Game loop. Responsible for handling resources during gameplay.
         """
         # Handles items that go only into stages.
-        if not self.handler.isGameInStage(): return
+        try:
+            if not self.handler.isGameInStage(): return
 
-        if len(self.gameItemQueue) > 0:
-            current_item_id = self.gameItemQueue[-1]
+            if len(self.gameItemQueue) > 0:
+                current_item_id = self.gameItemQueue[-1]
 
-            match current_item_id:
-                case 0: self.handler.addLife(1)
-                case 3: self.handler.addBulletMoney(200)
-                case 4: self.handler.addBulletMoney(500)
-                case 12: self.handler.addBulletMoney(5)
-                case 13: self.handler.addBulletMoney(10)
-                case 51: self.handler.addBulletMoney(-100)
-                case 52: self.handler.addBulletMoney(-50)
+                match current_item_id:
+                    case 0: self.handler.addLife(1)
+                    case 3: self.handler.addBulletMoney(200)
+                    case 4: self.handler.addBulletMoney(500)
+                    case 12: self.handler.addBulletMoney(5)
+                    case 13: self.handler.addBulletMoney(10)
+                    case 51: self.handler.addBulletMoney(-100)
+                    case 52: self.handler.addBulletMoney(-50)
 
-            self.gameItemQueue.pop(-1)
+                self.gameItemQueue.pop(-1)
 
-        return
+            return
+        except Exception as e:
+            logger.error(f"Error in the GAME loop:")
+            logger.error(traceback.format_exc())
+            self.inError = True
 
 
     async def menu_loop(self):
@@ -322,12 +352,16 @@ class TouhouHBMContext(CommonContext):
         Mainly here to fiddle with the Permanent Card Shop since it has 2 checks in 1,
         split between the gameplay section and the menu section.
         """
-        if not self.no_card_unlocked:
-            self.handler.unlockNoCard()
-            self.no_card_unlocked = True
+        try:
+            if not self.no_card_unlocked:
+                self.handler.unlockNoCard()
+                self.no_card_unlocked = True
 
-        if self.handler.isGameInStage(): return
-        return
+            if self.handler.isGameInStage(): return
+        except Exception as e:
+            logger.error(f"Error in the MENU loop:")
+            logger.error(traceback.format_exc())
+            self.inError = True
 
 
     async def update_locations_checked(self):
@@ -338,25 +372,45 @@ class TouhouHBMContext(CommonContext):
         new_locations = []
 
         # If scanning is disabled, return.
-        if self.disable_check_scanning: return
+        if self.disable_check_scanning:
+            logger.error("Location scanning was disabled.")
+            return
 
         # Check bosses first.
         for stage_name in STAGE_LIST:
-            for boss_name in ALL_BOSSES_LIST:
-                # Encounters
-                # Get the location name first, convert that to ID,
-                # and then append if it is not in previously checked locations.
-                if self.handler.getBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name]):
-                    locationName: str = get_boss_location_name_str(STAGE_NAME_TO_ID[stage_name], boss_name)
-                    if location_table[locationName] not in self.previous_location_checked and location_table[locationName] in self.all_location_ids:
-                        self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], True)
-                        new_locations.append(location_table[locationName])
-                # Defeat
-                if self.handler.getBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], 1):
-                    locationName: str = get_boss_location_name_str(STAGE_NAME_TO_ID[stage_name], boss_name, True)
-                    if location_table[locationName] not in self.previous_location_checked and location_table[locationName] in self.all_location_ids:
-                        self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], True, 1)
-                        new_locations.append(location_table[locationName])
+            if stage_name != CHALLENGE_NAME:
+                for boss_name in ALL_BOSSES_LIST[STAGE_NAME_TO_ID[stage_name]]:
+                    # Get the location name first, convert that to ID,
+                    # and then append if it is not in previously checked locations.
+                    # Encounters
+                    if self.handler.getBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name]):
+                        locationName: str = get_boss_location_name_str(STAGE_NAME_TO_ID[stage_name], boss_name)
+                        if location_table[locationName] not in self.previous_location_checked and location_table[
+                            locationName] in self.all_location_ids:
+                            self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
+                                                              True)
+                            new_locations.append(location_table[locationName])
+                    # Defeat
+                    if self.handler.getBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], 1):
+                        locationName: str = get_boss_location_name_str(STAGE_NAME_TO_ID[stage_name], boss_name, True)
+                        if location_table[locationName] not in self.previous_location_checked and location_table[
+                            locationName] in self.all_location_ids:
+                            self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
+                                                              True, 1)
+                            new_locations.append(location_table[locationName])
+            elif self.options["challenge_checks"] is True:
+                # Special Challenge Market clause
+                boss_set_id_loc = 1
+                for boss_set in ALL_BOSSES_LIST:
+                    # If it's the Tutorial set or End of Market set, discard those.
+                    if TUTORIAL_ID <= boss_set_id_loc >= STAGE_CHIMATA_ID: continue
+                    for boss_name in boss_set:
+                        # There are only encounters. Check those.
+                        if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name]):
+                            locationName: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss_name)
+                            if location_table[locationName] not in self.previous_location_checked and location_table[locationName] in self.all_location_ids:
+                                self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
+                                new_locations.append(location_table[locationName])
 
         # Check Ability Cards.
         # Split into stage-exclusive and dex.
@@ -367,15 +421,17 @@ class TouhouHBMContext(CommonContext):
         # Not yet implemented.
 
         # Dex
-        else:
-            for card in ABILITY_CARD_LIST:
-                cardLocationName: str = get_card_location_name_str(card, True)
-                if location_table[cardLocationName] not in self.all_location_ids and location_table[cardLocationName] not in self.previous_location_checked: continue
+        for card in ABILITY_CARD_LIST:
+            cardLocationName: str = get_card_location_name_str(card, True)
+            if location_table[cardLocationName] in self.all_location_ids:
+                continue
+            if location_table[cardLocationName] not in self.previous_location_checked:
+                continue
 
-                # Card dex location does exist if it made it past that.
-                if self.handler.getDexCardData(card):
-                    # Card dex location is True. This is a check.
-                    new_locations.append(location_table[cardLocationName])
+            # Card dex location does exist if it made it past that.
+            if self.handler.getDexCardData(card):
+                # Card dex location is True. This is a check.
+                new_locations.append(location_table[cardLocationName])
 
         # If there are new locations, send a message to the server
         # and add to the list of previously checked locations.
@@ -414,6 +470,7 @@ async def game_watcher(ctx: TouhouHBMContext):
         if ctx.inError or (ctx.handler.gameController is None and not ctx.exit_event.is_set()):
             logger.info(f"Connection lost. Trying to reconnect...")
             ctx.handler.gameController = None
+            ctx.loadingDataSetup = True
 
             asyncio.create_task(ctx.reconnect_to_game())
             await asyncio.sleep(1)
@@ -424,7 +481,9 @@ async def game_watcher(ctx: TouhouHBMContext):
         # No connection issues. Start loops.
         if ctx.handler and ctx.handler.gameController:
             ctx.inError = False
-            logger.info(f"Found {SHORT_NAME} process! Initiating game loops...")
+            if ctx.loadingDataSetup:
+                logger.info(f"Found {SHORT_NAME} process! Initiating game loops...")
+                ctx.loadingDataSetup = False
 
             # Start the different loops.
             loops = []
@@ -438,14 +497,13 @@ async def game_watcher(ctx: TouhouHBMContext):
             # Potential Death Link implementation here.
 
             # Infinitely loop if there is no error.
+            await asyncio.sleep(1)
             # If there is, exit to restart the connection.
-            while not ctx.exit_event.is_set() and ctx.server and not ctx.inError:
-                await asyncio.sleep(1)
-
             # Stop all loops if possible at this phase.
-            for loop in loops:
-                try: loop.cancel()
-                except: pass
+            if ctx.inError or ctx.exit_event.is_set() or not ctx.server:
+                for loop in loops:
+                    try: loop.cancel()
+                    except: pass
 
 def launch():
     """
