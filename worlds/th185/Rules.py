@@ -75,17 +75,18 @@ def set_all_location_rules(world) -> None:
     # Challenge Market has all bosses except story bosses.
     # Story bosses include Tutorial Mike, Chimata, Nitori, and Takane.
     chosen_stage_set_id = 0
-    for boss_set in ALL_BOSSES_LIST:
-        # This checks if it's within the normal range of the Challenge Market boss list.
-        if TUTORIAL_ID < chosen_stage_set_id < STAGE_CHIMATA_ID:
-            for boss_name in boss_set:
-                # If this happens to be Nitori or Takane, discard and move on.
-                if boss_name == BOSS_NITORI_NAME or boss_name == BOSS_TAKANE_NAME: continue
+    if getattr(world.options, "challenge_checks"):
+        for boss_set in ALL_BOSSES_LIST:
+            # This checks if it's within the normal range of the Challenge Market boss list.
+            if TUTORIAL_ID < chosen_stage_set_id < STAGE_CHIMATA_ID:
+                for boss_name in boss_set:
+                    # If this happens to be Nitori or Takane, discard and move on.
+                    if boss_name == BOSS_NITORI_NAME or boss_name == BOSS_TAKANE_NAME: continue
 
-                location_encounter = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss_name)
-                add_rule(world.get_location(location_encounter), lambda state: state.has(CHALLENGE_NAME_FULL, world.player))
+                    location_encounter = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss_name)
+                    add_rule(world.get_location(location_encounter), lambda state: state.has(CHALLENGE_NAME_FULL, world.player))
 
-        chosen_stage_set_id += 1
+            chosen_stage_set_id += 1
 
     #
     # Location rules for Ability Cards as stage rewards here.
@@ -113,7 +114,7 @@ def set_all_location_rules(world) -> None:
                 continue
 
             # Generic stage access conditions otherwise.
-            add_rule(location_card_reward, lambda state: has_stage_access_item(state, STAGE_NAME_TO_ID[stage_id]))
+            add_rule(location_card_reward, lambda state: has_stage_access_item(state, STAGE_NAME_TO_ID[stage_name]))
 
     #
     # Location rules for Ability Card dex entries here.

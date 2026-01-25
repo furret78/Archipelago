@@ -178,11 +178,11 @@ def check_if_item_id_exists(given_id: int) -> bool:
 # as well as add entries to the other tables below here.
 item_table: Dict[str, TouhouHBMItemData] = {
     # In-game occurrences
-    "+1 Life": TouhouHBMItemData(CATEGORY_ITEM, 0, ItemClassification.useful, 6),
-    "+200 Funds": TouhouHBMItemData(CATEGORY_ITEM, 1, ItemClassification.useful, 7),
-    "+1000 Funds": TouhouHBMItemData(CATEGORY_ITEM, 2, ItemClassification.useful, 4),
-    "+200 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 3, ItemClassification.useful, 7),
-    "+500 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 4, ItemClassification.useful, 8),
+    "+1 Life": TouhouHBMItemData(CATEGORY_ITEM, 1, ItemClassification.useful, 6),
+    "+200 Funds": TouhouHBMItemData(CATEGORY_ITEM, 2, ItemClassification.useful, 7),
+    "+1000 Funds": TouhouHBMItemData(CATEGORY_ITEM, 3, ItemClassification.useful, 4),
+    "+200 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 4, ItemClassification.useful, 7),
+    "+500 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 5, ItemClassification.useful, 8),
 
     # Filler
     "+5 Funds": TouhouHBMItemData(CATEGORY_FILLER, 10),
@@ -398,4 +398,4 @@ ITEM_TABLE_ID_TO_CARD_ID: Dict[int, str] = {
     282: TEACUP_MARISA_CARD
 }
 
-GAME_ONLY_ITEM_ID = [0, 3, 4, 12, 13, 50]
+GAME_ONLY_ITEM_ID = [1, 4, 5, 12, 13, 50]

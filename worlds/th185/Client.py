@@ -285,6 +285,7 @@ class TouhouHBMContext(CommonContext):
         self.handler.handleValidItem(item_id)
         if 100 <= item_id <= 108:
             self.unlocked_stages[ITEM_TABLE_ID_TO_STAGE_NAME[item_id]] = True
+            self.handler.unlockStage(ITEM_TABLE_ID_TO_STAGE_NAME[item_id])
             self.save_stages_to_server(ITEM_TABLE_ID_TO_STAGE_NAME[item_id])
         elif item_id >= 200 and item_id != 500 and item_id != 501:
             card_string_id = ITEM_TABLE_ID_TO_CARD_ID[item_id]
@@ -407,8 +408,8 @@ class TouhouHBMContext(CommonContext):
                         self.gameItemQueue.append(current_item_id)
                     else:
                         match current_item_id:
-                            case 1: self.handler.addFunds(200)
-                            case 2: self.handler.addFunds(1000)
+                            case 2: self.handler.addFunds(200)
+                            case 3: self.handler.addFunds(1000)
                             case 10: self.handler.addFunds(5)
                             case 11: self.handler.addFunds(10)
                             case 51: self.handler.addFunds(-100)
