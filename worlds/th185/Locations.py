@@ -91,17 +91,20 @@ for stages in STAGE_LIST:
     stage_id += 1
 
 # Card Shop locations at the end of each Market.
-# TBD
+for cards in ABILITY_CARD_LIST:
+    cardLocationNameString: str = get_card_location_name_str(cards, False)
+    location_table[cardLocationNameString] = location_id_offset
+    location_id_to_name[location_id_offset] = cardLocationNameString
+    location_cards_id_to_card_string_id[location_id_offset] = cards
+    location_id_offset += 1
 
 # Card Dex locations.
-card_index_id = 0
 for cards in ABILITY_CARD_LIST:
     cardLocationNameString: str = get_card_location_name_str(cards, True)
     location_table[cardLocationNameString] = location_id_offset
     location_id_to_name[location_id_offset] = cardLocationNameString
     location_cards_id_to_card_string_id[location_id_offset] = cards
     location_id_offset += 1
-    card_index_id += 1
 
 
 def get_location_names_with_ids(location_names: list[str]) -> dict[str, int | None]:
@@ -146,11 +149,31 @@ def create_regular_locations(world):
                     region_dict[CHALLENGE_NAME]
                 )
 
+                print(locationEncounter)
                 region_dict[CHALLENGE_NAME].locations.append(boss_encounter_location)
 
     # Ability Card Shop Unlocks
     # Not every card is available in every stage.
-    # TBD.
+    for stage_card in ABILITY_CARD_LIST:
+        # End-level Card Selection.
+        # Starting Card option allows for choosing Ringo-Brand Dango or Miracle Mallet to begin the run.
+        # Remember to remove their dex checks as needed.
+        starting_card_choice = getattr(world.options, "starting_card")
+
+        if ((starting_card_choice == 1 and stage_card == RINGO_CARD)
+            or (starting_card_choice == 2 and stage_card == MALLET_CARD)):
+            continue
+
+        cardLocationName: str = get_card_location_name_str(stage_card, False)
+
+        card_dex_location = TouhouHBMLocation(
+            world.player,
+            cardLocationName,
+            world.location_name_to_id[cardLocationName],
+            region_dict[ENDSTAGE_CHOOSE_NAME]
+        )
+
+        region_dict[ENDSTAGE_CHOOSE_NAME].locations.append(card_dex_location)
 
     # Ability Card Dex
     for dex_card in ABILITY_CARD_LIST:

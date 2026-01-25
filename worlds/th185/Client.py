@@ -86,7 +86,6 @@ class TouhouHBMContext(CommonContext):
         self.items_handling = 0b111  # Item from starting inventory, own world and other world
         self.command_processor = TouhouHBMClientProcessor
 
-        self.is_in_menu = False
         self.no_card_unlocked = False
         self.scorefile_path = "os.getenv('APPDATA')"
         self.loadingDataSetup = True
@@ -136,8 +135,6 @@ class TouhouHBMContext(CommonContext):
         self.handler = None
         self.no_card_unlocked = False
 
-        self.is_in_menu = False
-        self.disable_check_scanning = True
         self.inError = False
 
         self.menuFunds = 0
@@ -238,7 +235,6 @@ class TouhouHBMContext(CommonContext):
     #
     def update_stage_list(self):
         self.handler.updateStageList()
-        if self.disable_check_scanning: self.disable_check_scanning = False
 
     #
     # Victory conditions
@@ -289,7 +285,7 @@ class TouhouHBMContext(CommonContext):
         self.handler.handleValidItem(item_id)
         if 100 <= item_id <= 108:
             self.unlocked_stages[ITEM_TABLE_ID_TO_STAGE_NAME[item_id]] = True
-            self.save_stages_to_server()
+            self.save_stages_to_server(ITEM_TABLE_ID_TO_STAGE_NAME[item_id])
         elif item_id >= 200 and item_id != 500 and item_id != 501:
             card_string_id = ITEM_TABLE_ID_TO_CARD_ID[item_id]
             if card_string_id not in self.permashop_cards:
@@ -302,29 +298,29 @@ class TouhouHBMContext(CommonContext):
     # Functions for saving custom data to server.
     #
 
-    def save_funds_to_server(self):
-        asyncio.create_task(self.send_msgs(
-            [{"cmd": 'Set', "key": 'menuFunds', "default": 0, "operations": {"operation": 'replace', "value": self.menuFunds}}]))
+    async def save_funds_to_server(self):
+        await self.send_msgs(
+            [{"cmd": 'Set', "key": 'menuFunds', "default": 0, "operations": {"operation": 'replace', "value": self.menuFunds}}])
 
-    def save_stages_to_server(self):
-        asyncio.create_task(self.send_msgs(
-            [{"cmd": 'Set', "key": 'unlocked_stages', "operation": {"operation": 'update', "value": self.unlocked_stages}}]))
+    def save_stages_to_server(self, stage_name_unlocked: str):
+        self.send_msgs(
+            [{"cmd": 'Set', "key": 'unlocked_stages', "operations": {"operation": 'update', "value": {self.unlocked_stages[stage_name_unlocked]: True}}}])
 
     def save_new_permashop_cards_to_server(self, card_string_id: str):
-        asyncio.create_task(self.send_msgs(
-            [{"cmd": 'Set', "key": 'permashop_cards', "want_reply": True, "operation": {"operation": 'update', "value": card_string_id}}]
-        ))
+        self.send_msgs(
+            [{"cmd": 'Set', "key": 'permashop_cards', "want_reply": True, "operations": {"operation": 'update', "value": [card_string_id]}}]
+        )
         self.isWaitingReplyFromServer = True
 
     def save_new_tag_from_card_to_server(self, card_string_id: str):
-        asyncio.create_task(self.send_msgs(
-            [{"cmd": 'Set', "key": 'permashop_cards_new', "operation": {"operation": 'update', "value": card_string_id}}]
-        ))
+        self.send_msgs(
+            [{"cmd": 'Set', "key": 'permashop_cards_new', "operations": {"operation": 'update', "value": [card_string_id]}}]
+        )
 
-    def remove_new_tag_from_card_to_server(self, card_string_id: str):
-        asyncio.create_task(self.send_msgs(
-            [{"cmd": 'Set', "key": 'permashop_cards_new', "operation": {"operation": 'remove', "value": card_string_id}}]
-        ))
+    async def remove_new_tag_from_card_to_server(self, card_string_id: str):
+        await self.send_msgs(
+            [{"cmd": 'Set', "key": 'permashop_cards_new', "operations": {"operation": 'remove', "value": [card_string_id]}}]
+        )
 
     #
     # Async for various client needs
@@ -504,7 +500,6 @@ class TouhouHBMContext(CommonContext):
                     # Encounters
                     if self.handler.getBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name]):
                         locationName: str = get_boss_location_name_str(STAGE_NAME_TO_ID[stage_name], boss_name)
-                        if locationName not in location_table: continue
                         if location_table[locationName] not in self.previous_location_checked and location_table[
                             locationName] in self.all_location_ids:
                             self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
@@ -513,7 +508,6 @@ class TouhouHBMContext(CommonContext):
                     # Defeat
                     if self.handler.getBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], 1):
                         locationName: str = get_boss_location_name_str(STAGE_NAME_TO_ID[stage_name], boss_name, True)
-                        if locationName not in location_table: continue
                         if location_table[locationName] not in self.previous_location_checked and location_table[
                             locationName] in self.all_location_ids:
                             self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
@@ -539,14 +533,13 @@ class TouhouHBMContext(CommonContext):
         # First step is checking if the card location exists in the big location table.
 
         # Stage-exclusive.
-        if self.enable_card_selection_checking:
+        if self.enable_card_selection_checking and self.handler.isGameInStage():
             shop_card_list = ABILITY_CARD_LIST
             for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
                 if invalid_card in shop_card_list: shop_card_list.remove(invalid_card)
 
             for card in shop_card_list:
                 cardLocationName: str = get_card_location_name_str(card, False)
-                if cardLocationName not in location_table: continue
                 if location_table[cardLocationName] not in self.all_location_ids:
                     continue
                 if location_table[cardLocationName] in self.previous_location_checked:
@@ -575,7 +568,7 @@ class TouhouHBMContext(CommonContext):
         # and add to the list of previously checked locations.
         if new_locations:
             self.menuFunds = self.handler.gameController.getMenuFunds()
-            self.save_funds_to_server()
+            await self.save_funds_to_server()
 
             self.previous_location_checked = self.previous_location_checked + new_locations
             await self.send_msgs([{"cmd": 'LocationChecks', "locations": new_locations}])
@@ -669,6 +662,15 @@ class TouhouHBMContext(CommonContext):
         Previously checked locations are save data for Card Selection checks.
         """
         logger.info("Heading into a stage!")
+        menu_shop_card_list = ABILITY_CARD_LIST
+        for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
+            if invalid_card in menu_shop_card_list: menu_shop_card_list.remove(invalid_card)
+
+        # Clear out the records of the entire Card Shop in the memory.
+        for card_string_id in menu_shop_card_list:
+            self.handler.setCardShopRecordGame(card_string_id, False)
+
+        # Go over the list of acquired checks and set as appropriate.
         previous_checks = self.previous_location_checked
         for location_id in previous_checks:
             full_location_name = location_id_to_name[location_id]
@@ -677,8 +679,9 @@ class TouhouHBMContext(CommonContext):
                 continue
 
             # It does not really matter what value the records are set to aside from 0x00 and non-0x00.
-            for card_string_id in ABILITY_CARD_LIST:
-                self.handler.setCardShopRecordGame(card_string_id, CARD_ID_TO_NAME[card_string_id] in full_location_name)
+            for card_string_id in menu_shop_card_list:
+                if CARD_ID_TO_NAME[card_string_id] in full_location_name:
+                    self.handler.setCardShopRecordGame(card_string_id, True)
 
     async def transfer_from_stage_to_menu(self):
         """
@@ -686,11 +689,15 @@ class TouhouHBMContext(CommonContext):
         Mainly for the Ability Card shop addresses.
         """
         logger.info("Heading back into the menu...")
-        self.save_funds_to_server()
+        await self.save_funds_to_server()
 
         menu_shop_card_list = ABILITY_CARD_LIST
         for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
             if invalid_card in menu_shop_card_list: menu_shop_card_list.remove(invalid_card)
+
+        # Clear out the records of the entire Card Shop in the memory.
+        for card_string_id in menu_shop_card_list:
+            self.handler.setCardShopRecordGame(card_string_id, False)
 
         # For all cards that can be bought in the shop...
         for card_name in menu_shop_card_list:

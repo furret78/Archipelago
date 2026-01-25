@@ -66,7 +66,6 @@ def connect_regions(world):
     region_exit_id = 0
     for exit_point in ORIGIN_TO_REGION_LIST:
         region_menu.connect(region_exit_list[region_exit_id], exit_point)
-        print(exit_point)
         region_exit_id += 1
 
     # From the Markets to the card selection at the end.
