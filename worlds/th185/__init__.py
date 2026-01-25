@@ -1,5 +1,5 @@
 from .variables.meta_data import SHORT_NAME, DISPLAY_NAME
-from ..LauncherComponents import Component, components, launch_subprocess, Type
+from ..LauncherComponents import Component, components, launch_subprocess, Type, icon_paths
 from collections.abc import Mapping
 from typing import Any
 
@@ -18,8 +18,11 @@ components.append(Component(
     display_name=SHORT_NAME+" Client",
     func=launch_client,
     component_type=Type.CLIENT,
-    game_name=DISPLAY_NAME
+    game_name=DISPLAY_NAME,
+    icon="th185_card"
 ))
+
+icon_paths["th185_card"] = f"ap:{__name__}/icons/th185_card.png"
 
 class TouhouHBMWorld(World):
     """

@@ -281,24 +281,27 @@ class TouhouHBMContext(CommonContext):
     def checkFullClear(self) -> bool:
         return self.checkAllCards() and self.checkAllBosses()
 
-    def handleValidItem(self, item_id: int):
+    async def handleValidItem(self, item_id: int):
         self.handler.handleValidItem(item_id)
         if 100 <= item_id <= 108:
             self.unlocked_stages[ITEM_TABLE_ID_TO_STAGE_NAME[item_id]] = True
             self.handler.unlockStage(ITEM_TABLE_ID_TO_STAGE_NAME[item_id])
             self.save_stages_to_server(ITEM_TABLE_ID_TO_STAGE_NAME[item_id])
+            return
         elif item_id >= 200 and item_id != 500 and item_id != 501:
             card_string_id = ITEM_TABLE_ID_TO_CARD_ID[item_id]
             if card_string_id not in self.permashop_cards:
                 self.permashop_cards.append(card_string_id)
                 self.permashop_cards_new.append(card_string_id)
-                self.save_new_permashop_cards_to_server(card_string_id)
                 self.save_new_tag_from_card_to_server(card_string_id)
+                await self.save_new_permashop_cards_to_server(card_string_id)
+            else: return
 
     #
     # Functions for saving custom data to server.
     #
 
+    # TODO: Fix networking with custom data sent to the server.
     async def save_funds_to_server(self):
         await self.send_msgs(
             [{"cmd": 'Set', "key": 'menuFunds', "default": 0, "operations": {"operation": 'replace', "value": self.menuFunds}}])
@@ -307,11 +310,11 @@ class TouhouHBMContext(CommonContext):
         self.send_msgs(
             [{"cmd": 'Set', "key": 'unlocked_stages', "operations": {"operation": 'update', "value": {self.unlocked_stages[stage_name_unlocked]: True}}}])
 
-    def save_new_permashop_cards_to_server(self, card_string_id: str):
-        self.send_msgs(
+    async def save_new_permashop_cards_to_server(self, card_string_id: str):
+        self.isWaitingReplyFromServer = True
+        await self.send_msgs(
             [{"cmd": 'Set', "key": 'permashop_cards', "want_reply": True, "operations": {"operation": 'update', "value": [card_string_id]}}]
         )
-        self.isWaitingReplyFromServer = True
 
     def save_new_tag_from_card_to_server(self, card_string_id: str):
         self.send_msgs(
@@ -414,7 +417,7 @@ class TouhouHBMContext(CommonContext):
                             case 11: self.handler.addFunds(10)
                             case 51: self.handler.addFunds(-100)
                             case 52: self.handler.addFunds(-50)
-                            case _: self.handleValidItem(current_item_id)
+                            case _: await self.handleValidItem(current_item_id)
 
                 self.receivedItemQueue.pop(-1)
 
@@ -663,6 +666,8 @@ class TouhouHBMContext(CommonContext):
         Previously checked locations are save data for Card Selection checks.
         """
         logger.info("Heading into a stage!")
+        await self.save_funds_to_server()
+
         menu_shop_card_list = ABILITY_CARD_LIST
         for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
             if invalid_card in menu_shop_card_list: menu_shop_card_list.remove(invalid_card)
