@@ -91,10 +91,13 @@ class TouhouHBMContext(CommonContext):
         self.scorefile_path = "os.getenv('APPDATA')"
         self.loadingDataSetup = True
 
-        # Set to True in order to prevent the client from looking for checks.
-        # Mainly to set proper values for the Permanent Card Shop between
-        # the stage part and the menu part before scanning can resume.
-        self.disable_check_scanning = True
+        # Set to True when scanning the card shop addresses as locations.
+        # Set to False when in the menu.
+        self.enable_card_selection_checking = False
+        # The opposite of the above.
+        # Set to True when scanning the card shop addresses as items.
+        # Set to False when in stages.
+        self.enable_card_shop_scanning = True
 
         self.receivedItemQueue = [] # All items freshly arrived. Will be filtered for wrong IDs as it's processed.
         self.menuItemQueue = [] # Items received but not yet executed because game is in a stage.
@@ -371,9 +374,8 @@ class TouhouHBMContext(CommonContext):
         """
         new_locations = []
 
-        # If scanning is disabled, return.
-        if self.disable_check_scanning:
-            logger.error("Location scanning was disabled.")
+        if self.loadingDataSetup:
+            logger.info("Attempting to load previous data...")
             return
 
         # Check bosses first.
@@ -418,7 +420,13 @@ class TouhouHBMContext(CommonContext):
 
 
         # Stage-exclusive.
-        # Not yet implemented.
+        # TODO: Add functionality.
+        if self.enable_card_selection_checking:
+            pass
+        # Menu-exclusive.
+        # TODO: Add functionality.
+        if self.enable_card_shop_scanning:
+            pass
 
         # Dex
         for card in ABILITY_CARD_LIST:
@@ -443,6 +451,67 @@ class TouhouHBMContext(CommonContext):
         if self.checkVictory() and not self.finished_game:
             self.finished_game = True
             await self.send_msgs([{"cmd": 'StatusUpdate', "status": 30}])
+
+    async def load_save_data(self):
+        """
+        Load all save data as needed before location checking can begin.
+        Should be carried out at the very first game connection.
+        """
+        # Load boss defeat records for the handler, then update the records in-game.
+        # Retrieve these from previously checked locations.
+        logger.info("Loading boss save data...")
+        self.load_save_data_bosses()
+        # Load stage data for the handler, then update stage data in-game.
+
+        # Load Ability Card shop data for the handler.
+        # This is only the menu data. Data as used for checks during the stages are loaded in the stage part.
+        # Load Ability Card dex data for the handler, then update it in-game.
+
+        # Load menu funds. The player's grinding should be rewarded.
+
+        # Finish loading save data.
+        logger.info("Finished loading all save data!")
+
+    def load_save_data_bosses(self):
+        # Assume that the game is in 100% locked mode.
+        previous_checks = self.previous_location_checked
+        for location_id in previous_checks:
+            full_location_name = location_id_to_name[location_id]
+            # Iterate through all shortened stage names.
+            for stage_name in STAGE_LIST:
+                # If this stage name exists in the location's name, continue.
+                # If not, abort mission.
+                if stage_name in full_location_name:
+                    if stage_name == CHALLENGE_NAME:
+                        # Special Challenge Market clause
+                        boss_set_id_loc = 1
+                        for boss_set in ALL_BOSSES_LIST:
+                            # If it's the Tutorial set or End of Market set, discard those.
+                            if TUTORIAL_ID <= boss_set_id_loc >= STAGE_CHIMATA_ID: continue
+                            for boss_name in boss_set:
+                                self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID,
+                                                                  BOSS_NAME_TO_ID[boss_name], True)
+                                self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
+                    else:
+                        for boss_name in ALL_BOSSES_LIST[STAGE_NAME_TO_ID[stage_name]]:
+                            record_type = ENCOUNTER_ID
+                            if "Defeat" in full_location_name: record_type = DEFEAT_ID
+                            self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], True, record_type)
+                            self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], True)
+        return
+
+
+    async def transfer_from_menu_to_stage(self):
+        """
+        Handles transferring from the menu to the game stage.
+        Mainly for the Ability Card shop addresses.
+        """
+
+    async def transfer_from_stage_to_menu(self):
+        """
+        Handles transferring from the game stage to the menu.
+        Mainly for the Ability Card shop addresses.
+        """
 
 async def game_watcher(ctx: TouhouHBMContext):
     """
@@ -482,16 +551,19 @@ async def game_watcher(ctx: TouhouHBMContext):
         if ctx.handler and ctx.handler.gameController:
             ctx.inError = False
             if ctx.loadingDataSetup:
-                logger.info(f"Found {SHORT_NAME} process! Initiating game loops...")
+                logger.info(f"Found {SHORT_NAME} process!")
+                asyncio.create_task(ctx.load_save_data())
+                await asyncio.sleep(3)
                 ctx.loadingDataSetup = False
+                continue
 
             # Start the different loops.
             loops = []
-            loops.append(asyncio.create_task(ctx.main_loop())) # TODO
-            loops.append(asyncio.create_task(ctx.menu_loop()))  # TODO
-            loops.append(asyncio.create_task(ctx.game_loop())) # TODO
+            loops.append(asyncio.create_task(ctx.main_loop()))
+            loops.append(asyncio.create_task(ctx.menu_loop()))
+            loops.append(asyncio.create_task(ctx.game_loop()))
 
-            await ctx.update_locations_checked() # TODO
+            await ctx.update_locations_checked()
             ctx.update_stage_list()
 
             # Potential Death Link implementation here.

@@ -11,9 +11,6 @@ ADDR_BASE_MENU_PTR = 0x000D7C48
 # Everything is considered as a 1-byte hex boolean where 00 is FALSE and anything else is TRUE.
 # Some addresses have additional notes.
 
-# Anticheat hack
-
-
 # Player stats (all use 4-byte decimals)
 ADDR_EQUIP_SLOT_COUNT = 0x000269D0 # max 34
 ADDR_EQUIP_COST = 0x000269E0

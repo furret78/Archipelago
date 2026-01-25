@@ -122,12 +122,10 @@ class GameController:
         addrFromCardDex = self.getAddressFromPointerWithBase(ADDR_CARD_TO_DEX[card_id])
         self.pm.write_bool(addrFromCardDex, value)
 
+    # Things to do on boot-up before anything else.
+    def initAnticheatHack(self):
+        self.pm.write_bytes(self.pm.base_address+ADDR_ANTICHEAT_HACK, bytes([0x90, 0x90]), 2)
+
     def setNoCardData(self):
         addrFromCardDex = self.getAddressFromPointerWithBase(ADDR_DEX_NO_CARD)
         self.pm.write_bytes(addrFromCardDex, bytes([0x01]), 1)
-
-    # Things to do on boot-up before anything else.
-    def initAnticheatHack(self):
-        return
-        bytesAtAddress = self.pm.read_bytes(self.pm.base_address+ADDR_ANTICHEAT)
-        if bytesAtAddress != BYTES_ANTICHEAT_ORIGINAL: return
