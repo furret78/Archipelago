@@ -149,7 +149,7 @@ STAGE_NAME_LIST = [
 # Miscellaneous region names
 CARD_SHOP_NAME = "Permanent Card Shop"
 CARD_DEX_NAME = "Ability Card Dex"
-ENDSTAGE_CHOOSE_NAME = "Market End Card Selection"
+ENDSTAGE_CHOOSE_NAME = "Market Card Reward"
 
 # Entrances to region names
 ORIGIN_TO_TUTORIAL_NAME = f"Origin to {TUTORIAL_NAME}"

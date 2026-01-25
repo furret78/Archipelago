@@ -254,6 +254,28 @@ class GameHandler:
 
         self.setShopCardData(card_string_id, final_value)
 
+    def getCardShopRecordHandler(self, card_string_id: str):
+        return self.permashop_card[card_string_id]
+
+    def setCardShopRecordHandler(self, card_string_id: str, value: bool):
+        self.permashop_card[card_string_id] = value
+
+    def getCardShopRecordGame(self, card_string_id: str) -> int:
+        return self.getShopCardData(card_string_id)
+
+    def setCardShopRecordGame(self, card_string_id: str, value: bool):
+        """
+        Updates the game memory to align with the Permanent Card Shop records.
+        """
+        if value:
+            final_value = 0x01
+            if card_string_id in self.permashop_card_new:
+                final_value = 0x80
+
+            self.setShopCardData(card_string_id, final_value)
+        else:
+            self.setShopCardData(card_string_id, 0x00)
+
     def unlockStage(self, stage_name: str):
         self.stages_unlocked[stage_name] = True
 

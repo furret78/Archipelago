@@ -91,6 +91,9 @@ class TouhouHBMContext(CommonContext):
         self.scorefile_path = "os.getenv('APPDATA')"
         self.loadingDataSetup = True
         self.retrievedCustomData = False
+        # Networking things concerning the Permanent Card Shop unlocks
+        self.isWaitingReplyFromServer = False
+        self.replyFromServerReceived = False
 
         # Additional game data.
         # Funds as shown in the menu.
@@ -198,6 +201,13 @@ class TouhouHBMContext(CommonContext):
         elif cmd == "Bounced":
             tags = args.get("tags", [])
 
+        if cmd == "SetReply":
+            # Main concern is with the Permanent Shop Card unlock list.
+            # Funds update or the list for the above with the "New!" tag can be dropped,
+            # but the unlock list itself is important since that interferes with checks.
+            if args["key"] == "permashop_cards":
+                self.replyFromServerReceived = True
+
     def client_received_initial_server_data(self):
         """
         This method waits until the client finishes the initial conversation with the server.
@@ -274,6 +284,10 @@ class TouhouHBMContext(CommonContext):
                 self.save_new_permashop_cards_to_server(card_string_id)
                 self.save_new_tag_from_card_to_server(card_string_id)
 
+    #
+    # Functions for saving custom data to server.
+    #
+
     def save_funds_to_server(self):
         asyncio.create_task(self.send_msgs(
             [{"cmd": 'Set', "key": 'menuFunds', "default": 0, "operation": 'replace', "value": self.menuFunds}]))
@@ -284,8 +298,9 @@ class TouhouHBMContext(CommonContext):
 
     def save_new_permashop_cards_to_server(self, card_string_id: str):
         asyncio.create_task(self.send_msgs(
-            [{"cmd": 'Set', "key": 'permashop_cards', "operation": 'update', "value": card_string_id}]
+            [{"cmd": 'Set', "key": 'permashop_cards', "want_reply": 'true', "operation": 'update', "value": card_string_id}]
         ))
+        self.isWaitingReplyFromServer = True
 
     def save_new_tag_from_card_to_server(self, card_string_id: str):
         asyncio.create_task(self.send_msgs(
@@ -355,6 +370,17 @@ class TouhouHBMContext(CommonContext):
                 self.handler.reconnect()
             except Exception as e:
                 await asyncio.sleep(2)
+
+    async def wait_for_setreply_from_server(self):
+        """
+        This function waits until it has received a SetReply from the server.
+        Ideally should only be used when asking for a SetReply for the Permanent Card Shop unlocks.
+        """
+        if self.isWaitingReplyFromServer and self.replyFromServerReceived:
+            self.isWaitingReplyFromServer = False
+            self.replyFromServerReceived = False
+            return True
+        else: return False
 
     async def main_loop(self):
         """
@@ -554,6 +580,7 @@ class TouhouHBMContext(CommonContext):
         self.handler.setMenuFunds(self.menuFunds)
         # Finish loading save data.
         logger.info("Finished loading all save data!")
+        return
 
     def load_save_data_bosses(self):
         # Assume that the game is in 100% locked mode.
@@ -581,7 +608,6 @@ class TouhouHBMContext(CommonContext):
                             if "Defeat" in full_location_name: record_type = DEFEAT_ID
                             self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], True, record_type)
                             self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], True)
-        return
 
     def load_save_data_dex(self):
         # Assume that the game is in 100% locked mode.
@@ -606,7 +632,18 @@ class TouhouHBMContext(CommonContext):
         """
         Handles transferring from the menu to the game stage.
         Mainly for the Ability Card shop addresses.
+        Previously checked locations are save data for Card Selection checks.
         """
+        previous_checks = self.previous_location_checked
+        for location_id in previous_checks:
+            full_location_name = location_id_to_name[location_id]
+            # If none of these locations talk about the Market Card Reward, discard and move on.
+            if ENDSTAGE_CHOOSE_NAME not in full_location_name:
+                continue
+
+            # It does not really matter what value the records are set to aside from 0x00 and non-0x00.
+            for card_string_id in ABILITY_CARD_LIST:
+                self.handler.setCardShopRecordGame(card_string_id, CARD_ID_TO_NAME[card_string_id] in full_location_name)
 
     async def transfer_from_stage_to_menu(self):
         """
@@ -619,9 +656,17 @@ class TouhouHBMContext(CommonContext):
         menu_shop_card_list.remove(NAZRIN_CARD_1)
         menu_shop_card_list.remove(NAZRIN_CARD_2)
 
+        # For all cards that can be bought in the shop...
         for card_name in menu_shop_card_list:
-            # TODO: add this
-            pass
+            # Check if it's unlocked.
+            if self.handler.getCardShopRecordHandler(card_name):
+                self.handler.setCardShopRecordHandler(card_name, True)
+                self.handler.permashop_card_new = self.permashop_cards_new
+            self.handler.setCardShopRecordGame(card_name, card_name in self.permashop_cards)
+
+        # If the client was saving the card info, wait for a response from the server.
+        if self.isWaitingReplyFromServer: await self.wait_for_setreply_from_server()
+        else: return
 
 async def game_watcher(ctx: TouhouHBMContext):
     """
@@ -664,9 +709,9 @@ async def game_watcher(ctx: TouhouHBMContext):
         if ctx.handler and ctx.handler.gameController:
             ctx.inError = False
             if ctx.loadingDataSetup:
-                logger.info(f"Found {SHORT_NAME} process!")
+                logger.info(f"Found {SHORT_NAME} process! Loading previous save data and initiating game loops...")
                 asyncio.create_task(ctx.load_save_data())
-                await asyncio.sleep(3)
+                await asyncio.sleep(2)
                 ctx.loadingDataSetup = False
                 continue
 
