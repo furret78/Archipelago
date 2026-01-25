@@ -137,7 +137,7 @@ def create_regular_locations(world):
 
                 region_dict[stages].locations.append(boss_encounter_location)
                 region_dict[stages].locations.append(boss_defeat_location)
-        elif getattr(world.options, "challenge_checks"):
+        else:
             boss_challenge_list = get_boss_names_challenge_list()
             for challenge_boss in boss_challenge_list:
                 locationEncounter: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss)
