@@ -110,7 +110,10 @@ class TouhouHBMContext(CommonContext):
         # Dex dictionary does not exist. Use the list of acquired checks for that.
         # Owning a card and unlocking its dex entry is one and the same,
         # but it is separate for the player.
-        self.custom_data_keys_list = ["menuFunds", "permashop_cards_new", "permashop_cards", "unlocked_stages"]
+        self.custom_data_keys_list = [str(self.slot)+"MenuFunds",
+                                      str(self.slot)+"PermashopNew",
+                                      str(self.slot)+"Permashop",
+                                      str(self.slot)+"UnlockedStages"]
 
         # Set to True when scanning the card shop addresses as locations.
         # Set to False when in the menu.
@@ -176,6 +179,25 @@ class TouhouHBMContext(CommonContext):
         if cmd == "ReceivedItems":
             asyncio.create_task(self.give_item(args["items"]))
 
+        elif cmd == "Retrieved": # Custom data
+            if self.custom_data_keys_list[0] in args["keys"]:
+                if args["keys"][self.custom_data_keys_list[0]] is not None:
+                    self.menuFunds = args["keys"][self.custom_data_keys_list[0]]
+
+            if self.custom_data_keys_list[1] in args["keys"]:
+                if args["keys"][self.custom_data_keys_list[1]] is not None:
+                    self.permashop_cards_new = args["keys"][self.custom_data_keys_list[1]]
+
+            if self.custom_data_keys_list[2] in args["keys"]:
+                if args["keys"][self.custom_data_keys_list[2]] is not None:
+                    self.permashop_cards = args["keys"][self.custom_data_keys_list[2]]
+
+            if self.custom_data_keys_list[3] in args["keys"]:
+                if args["keys"][self.custom_data_keys_list[3]] is not None:
+                    self.unlocked_stages = args["keys"][self.custom_data_keys_list[3]]
+
+            logger.info("Data from the server has been received!")
+
         elif cmd == "DataPackage":
             if not self.all_location_ids:
                 # Connected package not received yet, wait for datapackage request after connected package
@@ -192,31 +214,19 @@ class TouhouHBMContext(CommonContext):
         elif cmd == "Bounced":
             tags = args.get("tags", [])
 
-        if cmd == "Retrieved": # Custom data
-            received_data_dict = args["keys"]
-
-            if self.custom_data_keys_list[0] in received_data_dict:
-                if received_data_dict[self.custom_data_keys_list[0]] is not None:
-                    self.menuFunds = received_data_dict[self.custom_data_keys_list[0]]
-
-            if self.custom_data_keys_list[1] in received_data_dict:
-                if received_data_dict[self.custom_data_keys_list[1]] is not None:
-                    self.permashop_cards_new = received_data_dict[self.custom_data_keys_list[1]]
-
-            if self.custom_data_keys_list[2] in received_data_dict:
-                if received_data_dict[self.custom_data_keys_list[2]] is not None:
-                    self.permashop_cards = received_data_dict[self.custom_data_keys_list[2]]
-
-            if self.custom_data_keys_list[3] in received_data_dict:
-                if received_data_dict[self.custom_data_keys_list[3]] is not None:
-                    self.unlocked_stages = received_data_dict[self.custom_data_keys_list[3]]
-
-            logger.info("Data from the server has been received!")
-
         if cmd == "SetReply":
             # Main concern is with the Permanent Shop Card unlock list.
             # Funds update or the list for the above with the "New!" tag can be dropped,
             # but the unlock list itself is important since that interferes with checks.
+            if args["value"] is not None:
+                if args["key"] == self.custom_data_keys_list[0]:
+                    self.menuFunds = args["value"]
+                if args["key"] == self.custom_data_keys_list[1]:
+                    self.permashop_cards_new = args["value"]
+                if args["key"] == self.custom_data_keys_list[2]:
+                    self.permashop_cards = args["value"]
+                if args["key"] == self.custom_data_keys_list[3]:
+                    self.unlocked_stages = args["value"]
             self.replyFromServerReceived = True
 
     def client_received_initial_server_data(self):
@@ -304,26 +314,26 @@ class TouhouHBMContext(CommonContext):
     # TODO: Fix networking with custom data sent to the server.
     async def save_funds_to_server(self):
         await self.send_msgs(
-            [{"cmd": 'Set', "key": 'menuFunds', "default": 0, "operations": {"operation": 'replace', "value": self.menuFunds}}])
+            [{"cmd": 'Set', "key": self.custom_data_keys_list[0], "default": 0, "want_reply": True, "operations": {"operation": 'replace', "value": self.menuFunds}}])
 
     def save_stages_to_server(self, stage_name_unlocked: str):
         self.send_msgs(
-            [{"cmd": 'Set', "key": 'unlocked_stages', "operations": {"operation": 'update', "value": {self.unlocked_stages[stage_name_unlocked]: True}}}])
+            [{"cmd": 'Set', "key": self.custom_data_keys_list[3], "want_reply": True, "operations": {"operation": 'update', "value": {self.unlocked_stages[stage_name_unlocked]: True}}}])
 
     async def save_new_permashop_cards_to_server(self, card_string_id: str):
         self.isWaitingReplyFromServer = True
         await self.send_msgs(
-            [{"cmd": 'Set', "key": 'permashop_cards', "want_reply": True, "operations": {"operation": 'update', "value": [card_string_id]}}]
+            [{"cmd": 'Set', "key": self.custom_data_keys_list[2], "want_reply": True, "operations": {"operation": 'update', "value": [card_string_id]}}]
         )
 
     def save_new_tag_from_card_to_server(self, card_string_id: str):
         self.send_msgs(
-            [{"cmd": 'Set', "key": 'permashop_cards_new', "operations": {"operation": 'update', "value": [card_string_id]}}]
+            [{"cmd": 'Set', "key": self.custom_data_keys_list[1], "want_reply": True, "operations": {"operation": 'update', "value": [card_string_id]}}]
         )
 
     async def remove_new_tag_from_card_to_server(self, card_string_id: str):
         await self.send_msgs(
-            [{"cmd": 'Set', "key": 'permashop_cards_new', "operations": {"operation": 'remove', "value": [card_string_id]}}]
+            [{"cmd": 'Set', "key": self.custom_data_keys_list[1], "want_reply": True, "operations": {"operation": 'remove', "value": [card_string_id]}}]
         )
 
     #
@@ -586,7 +596,7 @@ class TouhouHBMContext(CommonContext):
         logger.info("Grabbing data from the server...")
         self.retrievedCustomData = True
         await self.send_msgs([{"cmd": 'Get', "keys": self.custom_data_keys_list}])
-        return
+        await self.send_msgs([{"cmd": 'SetNotify', "keys": self.custom_data_keys_list}])
 
     async def load_save_data(self):
         """

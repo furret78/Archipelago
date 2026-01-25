@@ -26,7 +26,7 @@ icon_paths["th185_card"] = f"ap:{__name__}/icons/th185_card.png"
 
 class TouhouHBMWorld(World):
     """
-    Touhou 18.5
+    Touhou 18.5: 100th Black Market
     """
     game = DISPLAY_NAME
     # web world here
