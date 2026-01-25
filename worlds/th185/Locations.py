@@ -52,7 +52,7 @@ def get_card_location_name_str(card_id: str, is_dex: bool = False) -> str:
     Gets the location name according to Ability Card string ID.
     Has a Shop Unlock and Dex Unlock variant.
     """
-    regionName: str = CARD_SHOP_NAME
+    regionName: str = ENDSTAGE_CHOOSE_NAME
     if is_dex: regionName = CARD_DEX_NAME
     return f"[{regionName}] {CARD_ID_TO_NAME[card_id]}"
 
