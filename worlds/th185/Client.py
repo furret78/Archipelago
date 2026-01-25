@@ -85,11 +85,29 @@ class TouhouHBMContext(CommonContext):
         self.game = DISPLAY_NAME
         self.items_handling = 0b111  # Item from starting inventory, own world and other world
         self.command_processor = TouhouHBMClientProcessor
+
         self.is_in_menu = False
         self.no_card_unlocked = False
-        self.traps = []
         self.scorefile_path = "os.getenv('APPDATA')"
         self.loadingDataSetup = True
+        self.retrievedCustomData = False
+
+        # Additional game data.
+        # Funds as shown in the menu.
+        # Should only be sent to the server when:
+        # - A check for the Ability Card Dex was found.
+        # - Exiting a stage.
+        self.menuFunds = 0
+        # This is for eye-candy. List contains the string IDs of cards marked as "New!" in the game.
+        self.permashop_cards_new = []
+        # List of Cards that are unlocked in Shop.
+        # There is no Item list that can cover this.
+        # Sent to the server upon receiving an item.
+        self.permashop_cards = []
+        self.unlocked_stages = {}
+        # Dex dictionary does not exist. Use the list of acquired checks for that.
+        # Owning a card and unlocking its dex entry is one and the same,
+        # but it is separate for the player.
 
         # Set to True when scanning the card shop addresses as locations.
         # Set to False when in the menu.
@@ -117,6 +135,11 @@ class TouhouHBMContext(CommonContext):
         self.is_in_menu = False
         self.disable_check_scanning = True
         self.inError = False
+
+        self.menuFunds = 0
+        self.permashop_cards_new = []
+        self.permashop_cards = []
+        self.unlocked_stages = {}
 
         # List of items/locations
         self.previous_location_checked = None
@@ -151,6 +174,13 @@ class TouhouHBMContext(CommonContext):
 
         if cmd == "ReceivedItems":
             asyncio.create_task(self.give_item(args["items"]))
+
+        elif cmd == "Retrieved": # Custom data
+            self.menuFunds = args["menuFunds"]
+            self.unlocked_stages = args["unlocked_stages"]
+            self.permashop_cards = args["permashop_cards"]
+            self.permashop_cards_new = args["permashop_cards_new"]
+            logger.info("Data from the server has been received!")
 
         elif cmd == "DataPackage":
             if not self.all_location_ids:
@@ -231,6 +261,42 @@ class TouhouHBMContext(CommonContext):
     def checkFullClear(self) -> bool:
         return self.checkAllCards() and self.checkAllBosses()
 
+    def handleValidItem(self, item_id: int):
+        self.handler.handleValidItem(item_id)
+        if 100 <= item_id <= 108:
+            self.unlocked_stages[ITEM_TABLE_ID_TO_STAGE_NAME[item_id]] = True
+            self.save_stages_to_server()
+        elif item_id >= 200 and item_id != 500 and item_id != 501:
+            card_string_id = ITEM_TABLE_ID_TO_CARD_ID[item_id]
+            if card_string_id not in self.permashop_cards:
+                self.permashop_cards.append(card_string_id)
+                self.permashop_cards_new.append(card_string_id)
+                self.save_new_permashop_cards_to_server(card_string_id)
+                self.save_new_tag_from_card_to_server(card_string_id)
+
+    def save_funds_to_server(self):
+        asyncio.create_task(self.send_msgs(
+            [{"cmd": 'Set', "key": 'menuFunds', "default": 0, "operation": 'replace', "value": self.menuFunds}]))
+
+    def save_stages_to_server(self):
+        asyncio.create_task(self.send_msgs(
+            [{"cmd": 'Set', "key": 'unlocked_stages', "operation": 'update', "value": self.unlocked_stages}]))
+
+    def save_new_permashop_cards_to_server(self, card_string_id: str):
+        asyncio.create_task(self.send_msgs(
+            [{"cmd": 'Set', "key": 'permashop_cards', "operation": 'update', "value": card_string_id}]
+        ))
+
+    def save_new_tag_from_card_to_server(self, card_string_id: str):
+        asyncio.create_task(self.send_msgs(
+            [{"cmd": 'Set', "key": 'permashop_cards_new', "operation": 'update', "value": card_string_id}]
+        ))
+
+    def remove_new_tag_from_card_to_server(self, card_string_id: str):
+        asyncio.create_task(self.send_msgs(
+            [{"cmd": 'Set', "key": 'permashop_cards_new', "operation": 'remove', "value": card_string_id}]
+        ))
+
     #
     # Async for various client needs
     #
@@ -309,7 +375,7 @@ class TouhouHBMContext(CommonContext):
                             case 11: self.handler.addFunds(10)
                             case 51: self.handler.addFunds(-100)
                             case 52: self.handler.addFunds(-50)
-                            case _: self.handler.handleValidItem(current_item_id)
+                            case _: self.handleValidItem(current_item_id)
 
                 self.receivedItemQueue.pop(-1)
 
@@ -327,6 +393,11 @@ class TouhouHBMContext(CommonContext):
         # Handles items that go only into stages.
         try:
             if not self.handler.isGameInStage(): return
+
+            if self.enable_card_shop_scanning: self.enable_card_shop_scanning = False
+            if not self.enable_card_selection_checking:
+                await self.transfer_from_menu_to_stage()
+                self.enable_card_selection_checking = True
 
             if len(self.gameItemQueue) > 0:
                 current_item_id = self.gameItemQueue[-1]
@@ -361,6 +432,10 @@ class TouhouHBMContext(CommonContext):
                 self.no_card_unlocked = True
 
             if self.handler.isGameInStage(): return
+            if not self.enable_card_selection_checking: self.enable_card_selection_checking = False
+            if self.enable_card_shop_scanning:
+                await self.transfer_from_stage_to_menu()
+                self.enable_card_shop_scanning = True
         except Exception as e:
             logger.error(f"Error in the MENU loop:")
             logger.error(traceback.format_exc())
@@ -418,14 +493,9 @@ class TouhouHBMContext(CommonContext):
         # Split into stage-exclusive and dex.
         # First step is checking if the card location exists in the big location table.
 
-
         # Stage-exclusive.
         # TODO: Add functionality.
         if self.enable_card_selection_checking:
-            pass
-        # Menu-exclusive.
-        # TODO: Add functionality.
-        if self.enable_card_shop_scanning:
             pass
 
         # Dex
@@ -444,6 +514,9 @@ class TouhouHBMContext(CommonContext):
         # If there are new locations, send a message to the server
         # and add to the list of previously checked locations.
         if new_locations:
+            self.menuFunds = self.handler.getMenuFunds()
+            self.save_funds_to_server()
+
             self.previous_location_checked = self.previous_location_checked + new_locations
             await self.send_msgs([{"cmd": 'LocationChecks', "locations": new_locations}])
 
@@ -451,6 +524,12 @@ class TouhouHBMContext(CommonContext):
         if self.checkVictory() and not self.finished_game:
             self.finished_game = True
             await self.send_msgs([{"cmd": 'StatusUpdate', "status": 30}])
+
+    async def get_custom_data_from_server(self):
+        logger.info("Grabbing data from the server...")
+        self.retrievedCustomData = True
+        await self.send_msgs([{"cmd": 'Get', "keys": ["menuFunds", "permashop_cards", "permashop_cards_new", "unlocked_stages"]}])
+        return
 
     async def load_save_data(self):
         """
@@ -462,13 +541,17 @@ class TouhouHBMContext(CommonContext):
         logger.info("Loading boss save data...")
         self.load_save_data_bosses()
         # Load stage data for the handler, then update stage data in-game.
-
+        logger.info("Loading stage save data...")
+        for stage_name in self.unlocked_stages:
+            self.handler.unlockStage(stage_name)
         # Load Ability Card shop data for the handler.
         # This is only the menu data. Data as used for checks during the stages are loaded in the stage part.
+        self.load_save_data_shop()
         # Load Ability Card dex data for the handler, then update it in-game.
-
+        self.load_save_data_dex()
         # Load menu funds. The player's grinding should be rewarded.
-
+        logger.info("Loading funds save data...")
+        self.handler.setMenuFunds(self.menuFunds)
         # Finish loading save data.
         logger.info("Finished loading all save data!")
 
@@ -500,6 +583,24 @@ class TouhouHBMContext(CommonContext):
                             self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], True)
         return
 
+    def load_save_data_dex(self):
+        # Assume that the game is in 100% locked mode.
+        previous_checks = self.previous_location_checked
+        for location_id in previous_checks:
+            full_location_name = location_id_to_name[location_id]
+            # If none of these locations talk about the Card Dex, discard and move on.
+            if CARD_DEX_NAME not in full_location_name:
+                continue
+
+            for card_string_id in ABILITY_CARD_LIST:
+                if CARD_ID_TO_NAME[card_string_id] in full_location_name:
+                    self.handler.unconditionalDexUnlock(card_string_id)
+
+    def load_save_data_shop(self):
+        self.handler.permashop_card_new = self.permashop_cards_new
+        for card_name in self.permashop_cards:
+            self.handler.permashop_card[card_name] = True
+
 
     async def transfer_from_menu_to_stage(self):
         """
@@ -512,6 +613,15 @@ class TouhouHBMContext(CommonContext):
         Handles transferring from the game stage to the menu.
         Mainly for the Ability Card shop addresses.
         """
+        self.save_funds_to_server()
+
+        menu_shop_card_list = ABILITY_CARD_LIST
+        menu_shop_card_list.remove(NAZRIN_CARD_1)
+        menu_shop_card_list.remove(NAZRIN_CARD_2)
+
+        for card_name in menu_shop_card_list:
+            # TODO: add this
+            pass
 
 async def game_watcher(ctx: TouhouHBMContext):
     """
@@ -527,6 +637,9 @@ async def game_watcher(ctx: TouhouHBMContext):
             # Reset the context in that case
             ctx.reset()
             await ctx.wait_for_initial_connection_info()
+        else:
+            if not ctx.retrievedCustomData:
+                await ctx.get_custom_data_from_server()
 
         # Trying to make first connection to the game
         if ctx.handler is None and not ctx.inError:
@@ -537,7 +650,7 @@ async def game_watcher(ctx: TouhouHBMContext):
 
         # Trying to reconnect to the game after an error
         if ctx.inError or (ctx.handler.gameController is None and not ctx.exit_event.is_set()):
-            logger.info(f"Connection lost. Trying to reconnect...")
+            logger.info(f"Connection was lost. Trying to reconnect...")
             ctx.handler.gameController = None
             ctx.loadingDataSetup = True
 

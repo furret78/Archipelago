@@ -63,10 +63,5 @@ class TouhouHBMWorld(World):
             "trap_chance": self.options.trap_chance.value,
             "starting_card": self.options.starting_card.value,
             "completion_type": self.options.completion_type.value,
-            # This is for eye-candy. List contains the string IDs of cards marked as "New!" in the game.
-            # Card Shop dictionary does not exist. Use the list of acquired Ability Card Items for that.
-            # Dex dictionary does not exist. Use the list of acquired checks for that.
-            # Owning a card and unlocking its dex entry is one and the same,
-            # but it is separate for the player.
         }
         return data

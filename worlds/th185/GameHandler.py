@@ -34,10 +34,20 @@ class GameHandler:
         return self.gameController.check_if_in_stage()
 
     def getCurrentGameFunds(self) -> int:
-        return self.gameController.getGameFunds()
+        self.game_funds = self.gameController.getGameFunds()
+        return self.game_funds
 
     def getCurrentMenuFunds(self) -> int:
-        return self.gameController.getMenuFunds()
+        self.menu_funds = self.gameController.getMenuFunds()
+        return self.menu_funds
+
+    def setMenuFunds(self, value: int):
+        """
+        Forcibly sets the menu funds to this amount.
+        Only for initial save data loading.
+        """
+        self.menu_funds = value
+        self.gameController.setMenuFunds(value)
 
     def getCurrentBulletMoney(self) -> int:
         return self.gameController.getBulletMoney()
@@ -215,10 +225,11 @@ class GameHandler:
 
     def unconditionalDexUnlock(self, card_string_id: str):
         """
-        Function specifically for unlocking Starting Cards.
+        Function specifically for unlocking Starting Cards and/or save data loading.
         Technically this can unlock every other dex entry, but that will break locations.
         """
         self.dex_card_unlocked[card_string_id] = True
+        self.gameController.setDexCardData(card_string_id, True)
 
     def unlockCardInMenuShop(self, card_string_id: str):
         """
