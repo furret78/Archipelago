@@ -314,26 +314,26 @@ class TouhouHBMContext(CommonContext):
     # TODO: Fix networking with custom data sent to the server.
     async def save_funds_to_server(self):
         await self.send_msgs(
-            [{"cmd": 'Set', "key": self.custom_data_keys_list[0], "default": 0, "want_reply": True, "operations": {"operation": 'replace', "value": self.menuFunds}}])
+            [{"cmd": 'Set', "key": self.custom_data_keys_list[0], "default": 0, "want_reply": True, "operations": [{"operation": 'replace', "value": self.menuFunds}]}])
 
     def save_stages_to_server(self, stage_name_unlocked: str):
         self.send_msgs(
-            [{"cmd": 'Set', "key": self.custom_data_keys_list[3], "want_reply": True, "operations": {"operation": 'update', "value": {self.unlocked_stages[stage_name_unlocked]: True}}}])
+            [{"cmd": 'Set', "key": self.custom_data_keys_list[3], "want_reply": True, "operations": [{"operation": 'update', "value": {self.unlocked_stages[stage_name_unlocked]: True}}]}])
 
     async def save_new_permashop_cards_to_server(self, card_string_id: str):
         self.isWaitingReplyFromServer = True
         await self.send_msgs(
-            [{"cmd": 'Set', "key": self.custom_data_keys_list[2], "want_reply": True, "operations": {"operation": 'update', "value": [card_string_id]}}]
+            [{"cmd": 'Set', "key": self.custom_data_keys_list[2], "want_reply": True, "operations": [{"operation": 'update', "value": [card_string_id]}]}]
         )
 
     def save_new_tag_from_card_to_server(self, card_string_id: str):
         self.send_msgs(
-            [{"cmd": 'Set', "key": self.custom_data_keys_list[1], "want_reply": True, "operations": {"operation": 'update', "value": [card_string_id]}}]
+            [{"cmd": 'Set', "key": self.custom_data_keys_list[1], "want_reply": True, "operations": [{"operation": 'update', "value": [card_string_id]}]}]
         )
 
     async def remove_new_tag_from_card_to_server(self, card_string_id: str):
         await self.send_msgs(
-            [{"cmd": 'Set', "key": self.custom_data_keys_list[1], "want_reply": True, "operations": {"operation": 'remove', "value": [card_string_id]}}]
+            [{"cmd": 'Set', "key": self.custom_data_keys_list[1], "want_reply": True, "operations": [{"operation": 'remove', "value": [card_string_id]}]}]
         )
 
     #
