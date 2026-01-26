@@ -380,13 +380,14 @@ TEACUP_MARISA_CARD_NAME = "Teacup Marisa"
 
 # Special: Starting Card
 # Meant for directly unlocking dex entries, and thus loadout
-STARTING_MALLET_CARD_NAME = f"Initial Ability Card: {MALLET_CARD_NAME}"
-STARTING_RINGO_CARD_NAME = f"Initial Ability Card: {RINGO_CARD_NAME}"
+INIT_ABILITY_CARD_STRING = "Initial Ability Card"
+STARTING_MALLET_CARD_NAME = f"{INIT_ABILITY_CARD_STRING}: {MALLET_CARD_NAME}"
+STARTING_RINGO_CARD_NAME = f"{INIT_ABILITY_CARD_STRING}: {RINGO_CARD_NAME}"
 
 NEW_CARD = 0x80
 OWNED_CARD = 0x01
 
-# Card ID to Name
+# Card String ID to Name
 CARD_ID_TO_NAME = {
     BLANK_CARD: BLANK_CARD_NAME,
     NAZRIN_CARD_1: NAZRIN_CARD_1_NAME,

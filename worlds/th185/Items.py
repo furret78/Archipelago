@@ -34,7 +34,7 @@ def get_items_by_category(category: str) -> Dict[str, TouhouHBMItemData]:
     return item_dict
 
 
-def get_card_id_by_code(code: int) -> str:
+def get_card_string_id_by_code(code: int) -> str:
     if code < 200 or code >= 200 + ITEM_TABLE_ID_TO_CARD_ID.__sizeof__(): return "Invalid."
     return ITEM_TABLE_ID_TO_CARD_ID.get(code)
 

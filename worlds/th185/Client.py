@@ -101,18 +101,15 @@ class TouhouHBMContext(CommonContext):
         # This is for eye-candy. List contains the string IDs of cards marked as "New!" in the game.
         self.permashop_cards_new: list = []
         # List of Cards that are unlocked in Shop.
-        # There is no Item list that can cover this.
-        # Sent to the server upon receiving an item.
+        # When connected to the server, the entire ReceivedItem package will be scanned
+        # for any cards that are in there. Same with the list of unlocked stages.
         self.permashop_cards: list = []
-        self.unlocked_stages: dict = {}
+        self.unlocked_stages: list = []
         # Dex dictionary does not exist. Use the list of acquired checks for that.
         # Owning a card and unlocking its dex entry is one and the same,
         # but it is separate for the player.
-        self.custom_data_keys_list: list = [str(self.slot)+"MenuFunds185",
-                                            str(self.slot)+"PermashopNew185",
-                                            str(self.slot)+"Permashop185",
-                                            str(self.slot)+"UnlockedStages185",
-                                            str(self.slot)+"LastItemIndex185"]
+        self.custom_data_keys_list: list = [str(self.slot)+"Funds185",
+                                            str(self.slot)+"LastItem185"]
 
         # Set to True when scanning the card shop addresses as locations.
         # Set to False when in the menu.
@@ -145,7 +142,7 @@ class TouhouHBMContext(CommonContext):
         self.menuFunds = 0
         self.permashop_cards_new = []
         self.permashop_cards = []
-        self.unlocked_stages = {}
+        self.unlocked_stages = []
 
         # List of items/locations
         self.previous_location_checked = None
@@ -179,28 +176,18 @@ class TouhouHBMContext(CommonContext):
             asyncio.create_task(self.send_msgs([{"cmd": "GetDataPackage", "games": [DISPLAY_NAME]}]))
 
         if cmd == "ReceivedItems":
-            asyncio.create_task(self.give_item(args["items"]))
+            asyncio.create_task(self.handle_received_items(args["index"], args["items"]))
 
         elif cmd == "Retrieved": # Custom data
+            # Menu Funds
             if self.custom_data_keys_list[0] in args["keys"]:
                 if args["keys"][self.custom_data_keys_list[0]] is not None:
                     self.menuFunds = args["keys"][self.custom_data_keys_list[0]]
 
+            # Last Received Item Index integer
             if self.custom_data_keys_list[1] in args["keys"]:
                 if args["keys"][self.custom_data_keys_list[1]] is not None:
-                    self.permashop_cards_new = args["keys"][self.custom_data_keys_list[1]]
-
-            if self.custom_data_keys_list[2] in args["keys"]:
-                if args["keys"][self.custom_data_keys_list[2]] is not None:
-                    self.permashop_cards = args["keys"][self.custom_data_keys_list[2]]
-
-            if self.custom_data_keys_list[3] in args["keys"]:
-                if args["keys"][self.custom_data_keys_list[3]] is not None:
-                    self.unlocked_stages = args["keys"][self.custom_data_keys_list[3]]
-
-            if self.custom_data_keys_list[4] in args["keys"]:
-                if args["keys"][self.custom_data_keys_list[4]] is not None:
-                    self.lastReceivedItem = args["keys"][self.custom_data_keys_list[4]]
+                    self.lastReceivedItem = args["keys"][self.custom_data_keys_list[1]]
 
             logger.info("Data from the server has been received!")
 
@@ -228,11 +215,7 @@ class TouhouHBMContext(CommonContext):
                 #if args["key"] == self.custom_data_keys_list[0]:
                 #    self.menuFunds = args["value"]
                 if args["key"] == self.custom_data_keys_list[1]:
-                    self.permashop_cards_new = args["value"]
-                if args["key"] == self.custom_data_keys_list[2]:
-                    self.permashop_cards = args["value"]
-                if args["key"] == self.custom_data_keys_list[3]:
-                    self.unlocked_stages = args["value"]
+                    self.lastReceivedItem = args["value"]
             self.replyFromServerReceived = True
 
     def client_received_initial_server_data(self):
@@ -299,19 +282,6 @@ class TouhouHBMContext(CommonContext):
 
     async def handleValidItem(self, item_id: int):
         self.handler.handleValidItem(item_id)
-        if 100 <= item_id <= 108:
-            self.unlocked_stages[ITEM_TABLE_ID_TO_STAGE_NAME[item_id]] = True
-            self.handler.unlockStage(ITEM_TABLE_ID_TO_STAGE_NAME[item_id])
-            self.save_stages_to_server(ITEM_TABLE_ID_TO_STAGE_NAME[item_id])
-            return
-        elif item_id >= 200 and item_id != 500 and item_id != 501:
-            card_string_id = ITEM_TABLE_ID_TO_CARD_ID[item_id]
-            if card_string_id not in self.permashop_cards:
-                self.permashop_cards.append(card_string_id)
-                self.permashop_cards_new.append(card_string_id)
-                self.save_new_tag_from_card_to_server(card_string_id)
-                await self.save_new_permashop_cards_to_server(card_string_id)
-            else: return
 
     #
     # Functions for saving custom data to server.
@@ -323,46 +293,50 @@ class TouhouHBMContext(CommonContext):
         await self.send_msgs(
             [{"cmd": 'Set', "key": self.custom_data_keys_list[0], "default": 0, "operations": [{"operation": 'replace', "value": self.menuFunds}]}])
 
-    def save_stages_to_server(self, stage_name_unlocked: str):
-        self.send_msgs(
-            [{"cmd": 'Set', "key": self.custom_data_keys_list[3], "want_reply": True, "operations": [{"operation": 'update', "value": {self.unlocked_stages[stage_name_unlocked]: True}}]}])
-
-    async def save_new_permashop_cards_to_server(self, card_string_id: str):
-        self.isWaitingReplyFromServer = True
+    async def save_last_received_item_index_to_server(self):
         await self.send_msgs(
-            [{"cmd": 'Set', "key": self.custom_data_keys_list[2], "want_reply": True, "operations": [{"operation": 'update', "value": [card_string_id]}]}]
-        )
-
-    def save_new_tag_from_card_to_server(self, card_string_id: str):
-        self.send_msgs(
-            [{"cmd": 'Set', "key": self.custom_data_keys_list[1], "operations": [{"operation": 'update', "value": [card_string_id]}]}]
-        )
-
-    async def remove_new_tag_from_card_to_server(self, card_string_id: str):
-        await self.send_msgs(
-            [{"cmd": 'Set', "key": self.custom_data_keys_list[1], "operations": [{"operation": 'remove', "value": [card_string_id]}]}]
+            [{"cmd": 'Set', "key": self.custom_data_keys_list[1], "default": 0, "operations": [{"operation": 'replace', "value": self.lastReceivedItem}]}]
         )
 
     #
-    # Async for various client needs
+    # Async for client needs
     #
-    async def give_item(self, network_items_list):
+    async def handle_received_items(self, network_index, network_items_list):
         """
-		Give an item to the player. This method will always give the oldest
-		item that the player has received from AP, but not in game yet.
+        Handle items received from the server. Since some save data is also
+        embedded into the items list, the index will be ignored for them specifically.
+        The rest of the items will be put into a queue.
 
-		:NetworkItem item: The item to give to the player
+        The first argument is the index, second is the NetworkItem list.
 		"""
+
+        # Handle everything related to the game's save data first.
+        # These items will not be given to the game directly.
+        # Card Shop unlocks, in particular, can only be done during menus.
+        # Don't give the game cards during that time, but just store them in the client.
+        asyncio.create_task(self.handle_unlock_items(network_items_list))
 
         # We wait for the link to be established to the game before giving any items
         while self.handler is None or self.handler.gameController is None:
             await asyncio.sleep(0.5)
 
         logger.info("Processing a ReceivedItems package from the server!")
+        logger.info(f"Last item index is: {network_index}")
         for network_item in network_items_list:
             self.receivedItemQueue.append(network_item.item)
 
         self.handler.updateStageList()
+
+    async def handle_unlock_items(self, items_list):
+        for item_id in items_list:
+            if item_id in ITEM_TABLE_ID_TO_STAGE_NAME:
+                if ITEM_TABLE_ID_TO_STAGE_NAME[item_id] not in self.unlocked_stages:
+                    self.unlocked_stages.append(ITEM_TABLE_ID_TO_STAGE_NAME[item_id])
+                    self.handler.unlockStage(ITEM_TABLE_ID_TO_STAGE_NAME[item_id])
+            if item_id in ITEM_TABLE_ID_TO_CARD_ID:
+                if ITEM_TABLE_ID_TO_CARD_ID[item_id] not in self.permashop_cards:
+                    self.permashop_cards.append(ITEM_TABLE_ID_TO_CARD_ID[item_id])
+
 
     #
     # Async loops that handle the game process.
@@ -559,7 +533,7 @@ class TouhouHBMContext(CommonContext):
         # First step is checking if the card location exists in the big location table.
 
         # Stage-exclusive.
-        if self.enable_card_selection_checking and self.handler.isGameInStage():
+        if self.handler.isGameInStage() and self.enable_card_selection_checking:
             shop_card_list = ABILITY_CARD_LIST
             for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
                 if invalid_card in shop_card_list: shop_card_list.remove(invalid_card)
@@ -598,8 +572,6 @@ class TouhouHBMContext(CommonContext):
             if player_has_purchased_card_bool: await self.save_funds_to_server()
 
             self.previous_location_checked = self.previous_location_checked + new_locations
-            logger.info(f"Discovered new locations: {new_locations}")
-            logger.info(f"Total locations found: {self.previous_location_checked}")
             await self.send_msgs([{"cmd": 'LocationChecks', "locations": new_locations}])
 
         # Finally, check for victory.
@@ -760,7 +732,7 @@ async def game_watcher(ctx: TouhouHBMContext):
                 try:
                     await ctx.get_custom_data_from_server()
                 except Exception as e:
-                    logger.error("Failed to retrieve save data:")
+                    logger.error("Failed to retrieve save data.")
                     logger.error(traceback.format_exc())
                     ctx.inError = True
 
