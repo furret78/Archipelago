@@ -42,8 +42,8 @@ def get_boss_location_name_str(market_stage_id: int, boss_name: str, is_defeat: 
     Gets the location name according to Stage ID and Boss name.
     Has an Encounter and Defeat variant.
     """
-    locationType: str = "Encounter"
-    if is_defeat: locationType = "Defeat"
+    locationType: str = ENCOUNTER_TYPE_NAME
+    if is_defeat: locationType = DEFEAT_TYPE_NAME
     return f"[{STAGE_LIST[market_stage_id]}] {boss_name} - {locationType}"
 
 

@@ -1,14 +1,13 @@
+import sys
+
 from .GameController import GameController
 from .Items import ITEM_TABLE_ID_TO_STAGE_NAME, ITEM_TABLE_ID_TO_STARTING_CARD_ID, ITEM_TABLE_ID_TO_CARD_ID
 from .Tools import clamp
 from .variables.boss_and_stage import *
 from .variables.card_const import *
 
-# Spare Lives will not be carried over to other stages.
-
 class GameHandler:
     """Class keeping tracking of what's unlocked and handles game interactions."""
-    spare_lives: int = 0
     game_funds: int = 0
     menu_funds: int = 0
     end_stage_card_chosen: dict = {}
@@ -54,19 +53,26 @@ class GameHandler:
 
     def getShopCardData(self, card_string_id: str) -> int:
         """
-        0x00 = Not unlocked
-        0x01 - 0x79 = Unlocked but not new
-        0x80 - ??? = Unlocked and new
+        0x00 = Not unlocked (0)
+        0x01 - 0x79 = Unlocked but not new (1)
+        0x80 - ??? = Unlocked and new (2)
         """
-        return self.gameController.getShopCardData(card_string_id)
+        bytes_read: bytes = self.gameController.getShopCardData(card_string_id)
+        if bytes_read == bytes([0x00]): return 0
+        decoded_bytes = int.from_bytes(bytes_read, sys.byteorder, signed=False)
+        if decoded_bytes < 0x80: return 1
+        else: return 2
 
-    def setShopCardData(self, card_string_id: str, value: int):
+    def setShopCardData(self, card_string_id: str, value: bytes):
+        """
+        Must use bytes. ( bytes([value_here]) )
+        """
         self.gameController.setShopCardData(card_string_id, value)
 
     def getDexCardData(self, card_string_id: str) -> bool:
         """
         Gets whether a card is unlocked in the dex or not.
-        0x00 means False. Anything else is True.
+        This checks if the value is not 0x00. If True, the card has been unlocked in-game.
         """
         return self.gameController.getDexCardData(card_string_id)
 
@@ -74,9 +80,11 @@ class GameHandler:
         """
         Writes data to the memory for this particular Ability Card in the dex.
         This one is for loading in the dex when reconnecting to the server.
-        0x00 means False. Anything else is True (but 0x01 would be nice).
         """
-        self.gameController.setDexCardData(card_string_id, value)
+        final_bytes = bytes([0x00])
+        if value: final_bytes = bytes([0x01])
+
+        self.gameController.setDexCardData(card_string_id, final_bytes)
 
     # Received Item functions
     def addLife(self, value: int = 1):
@@ -96,6 +104,9 @@ class GameHandler:
     def addFunds(self, value: int):
         if self.isGameInStage(): self.addGameFunds(value)
         else: self.addMenuFunds(value)
+
+    def getMenuFunds(self) -> int:
+        return self.gameController.getMenuFunds()
 
     def addBulletMoney(self, value: int):
         newFunds = clamp(self.getCurrentBulletMoney() + value, 0, 2764472319)
@@ -229,7 +240,7 @@ class GameHandler:
         Technically this can unlock every other dex entry, but that will break locations.
         """
         self.dex_card_unlocked[card_string_id] = True
-        self.gameController.setDexCardData(card_string_id, True)
+        self.gameController.setDexCardData(card_string_id, bytes([0x01]))
 
     def unlockCardInMenuShop(self, card_string_id: str):
         """
@@ -252,7 +263,7 @@ class GameHandler:
         if card_string_id in self.permashop_card_new:
             final_value = 0x81
 
-        self.setShopCardData(card_string_id, final_value)
+        self.setShopCardData(card_string_id, bytes([final_value]))
 
     def getCardShopRecordHandler(self, card_string_id: str):
         return self.permashop_card[card_string_id]
@@ -272,9 +283,9 @@ class GameHandler:
             if card_string_id in self.permashop_card_new:
                 final_value = 0x80
 
-            self.setShopCardData(card_string_id, final_value)
+            self.setShopCardData(card_string_id, bytes([final_value]))
         else:
-            self.setShopCardData(card_string_id, 0x00)
+            self.setShopCardData(card_string_id, bytes([0x00]))
 
     def unlockStage(self, stage_name: str):
         self.stages_unlocked[stage_name] = True

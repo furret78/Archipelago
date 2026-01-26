@@ -164,8 +164,8 @@ def create_starting_card(world):
         world.push_precollected(world.create_item(starting_card_name))
 
 def check_if_item_id_exists(given_id: int) -> bool:
-    if given_id < 0: return False
-    if 4 > given_id < 10: return False
+    if given_id < 1: return False
+    if 5 > given_id < 10: return False
     if 13 > given_id < 50: return False
     if 52 > given_id < 100: return False
     if 108 > given_id < 200: return False

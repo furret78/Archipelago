@@ -54,14 +54,14 @@ class GameController:
 
     # Funds (in-game) functions
     def getGameFunds(self) -> int:
-        return int.from_bytes(self.pm.read_bytes(self.addrGameFunds, 4))
+        return self.pm.read_int(self.addrGameFunds)
 
     def setGameFunds(self, value):
         self.pm.write_int(self.addrGameFunds, value)
 
     # Bullet Money (in-game) functions
     def getBulletMoney(self) -> int:
-        return int.from_bytes(self.pm.read_bytes(self.addrBulletMoney, 4))
+        return self.pm.read_int(self.addrBulletMoney)
 
     def setBulletMoney(self, value):
         self.pm.write_int(self.addrBulletMoney, value)
@@ -93,7 +93,7 @@ class GameController:
             bossRecordAddress = self.getAddressFromPointerWithBase(boss_address_list_normal[category])
         else:
             bossRecordAddress = self.getAddressFromPointerWithBase(ADDR_BOSS_ID_TO_PTR[stage][boss])
-        return int.from_bytes(self.pm.read_bytes(bossRecordAddress, 1)) != 0
+        return self.pm.read_bytes(bossRecordAddress, 1) != bytes([0x00])
 
     def setBossRecord(self, stage: int, boss: int, value: int, category: int):
         # Practically unused, but might be handy at some point.
@@ -104,23 +104,23 @@ class GameController:
         self.pm.write_bytes(bossRecordAddress, bytes([value]), 1)
 
     # Card Shop functions
-    def getShopCardData(self, card_id: str) -> int:
-        if card_id == NAZRIN_CARD_1 or card_id == NAZRIN_CARD_2: return -1
+    def getShopCardData(self, card_id: str) -> bytes:
+        if card_id == NAZRIN_CARD_1 or card_id == NAZRIN_CARD_2: return bytes([0x00])
         addrFromCardShop = self.getAddressFromPointerWithBase(ADDR_CARD_TO_SHOP[card_id])
-        return int.from_bytes(self.pm.read_bytes(addrFromCardShop, 1))
+        return self.pm.read_bytes(addrFromCardShop, 1)
 
-    def setShopCardData(self, card_id: str, value: int):
+    def setShopCardData(self, card_id: str, value: bytes):
         addrFromCardShop = self.getAddressFromPointerWithBase(ADDR_CARD_TO_SHOP[card_id])
-        self.pm.write_bytes(addrFromCardShop, bytes([value]), 1)
+        self.pm.write_bytes(addrFromCardShop, value, 1)
 
     # Card Dex functions
     def getDexCardData(self, card_id: str) -> bool:
         addrFromCardDex = self.getAddressFromPointerWithBase(ADDR_CARD_TO_DEX[card_id])
-        return bool.from_bytes(self.pm.read_bytes(addrFromCardDex, 1))
+        return self.pm.read_bytes(addrFromCardDex, 1) != bytes([0x00])
 
-    def setDexCardData(self, card_id: str, value: bool):
+    def setDexCardData(self, card_id: str, value: bytes):
         addrFromCardDex = self.getAddressFromPointerWithBase(ADDR_CARD_TO_DEX[card_id])
-        self.pm.write_bool(addrFromCardDex, value)
+        self.pm.write_bytes(addrFromCardDex, value, 1)
 
     # Things to do on boot-up before anything else.
     def initAnticheatHack(self):
