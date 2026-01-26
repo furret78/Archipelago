@@ -70,7 +70,7 @@ class GameController:
     # Funds (menu) functions
     def getMenuFunds(self) -> int:
         addrMenuFunds = self.getAddressFromPointerWithBase(ADDR_MENU_FUNDS_PTR)
-        return int.from_bytes(self.pm.read_bytes(addrMenuFunds, 4))
+        return self.pm.read_int(addrMenuFunds)
 
     def setMenuFunds(self, value):
         addrMenuFunds = self.getAddressFromPointerWithBase(ADDR_MENU_FUNDS_PTR)

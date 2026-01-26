@@ -219,8 +219,8 @@ class TouhouHBMContext(CommonContext):
             # Funds update or the list for the above with the "New!" tag can be dropped,
             # but the unlock list itself is important since that interferes with checks.
             if args["value"] is not None:
-                if args["key"] == self.custom_data_keys_list[0]:
-                    self.menuFunds = args["value"]
+                #if args["key"] == self.custom_data_keys_list[0]:
+                #    self.menuFunds = args["value"]
                 if args["key"] == self.custom_data_keys_list[1]:
                     self.permashop_cards_new = args["value"]
                 if args["key"] == self.custom_data_keys_list[2]:
@@ -314,7 +314,7 @@ class TouhouHBMContext(CommonContext):
     # TODO: Fix networking with custom data sent to the server.
     async def save_funds_to_server(self):
         await self.send_msgs(
-            [{"cmd": 'Set', "key": self.custom_data_keys_list[0], "default": 0, "want_reply": True, "operations": [{"operation": 'replace', "value": self.menuFunds}]}])
+            [{"cmd": 'Set', "key": self.custom_data_keys_list[0], "default": 0, "operations": [{"operation": 'replace', "value": self.menuFunds}]}])
 
     def save_stages_to_server(self, stage_name_unlocked: str):
         self.send_msgs(
@@ -328,12 +328,12 @@ class TouhouHBMContext(CommonContext):
 
     def save_new_tag_from_card_to_server(self, card_string_id: str):
         self.send_msgs(
-            [{"cmd": 'Set', "key": self.custom_data_keys_list[1], "want_reply": True, "operations": [{"operation": 'update', "value": [card_string_id]}]}]
+            [{"cmd": 'Set', "key": self.custom_data_keys_list[1], "operations": [{"operation": 'update', "value": [card_string_id]}]}]
         )
 
     async def remove_new_tag_from_card_to_server(self, card_string_id: str):
         await self.send_msgs(
-            [{"cmd": 'Set', "key": self.custom_data_keys_list[1], "want_reply": True, "operations": [{"operation": 'remove', "value": [card_string_id]}]}]
+            [{"cmd": 'Set', "key": self.custom_data_keys_list[1], "operations": [{"operation": 'remove', "value": [card_string_id]}]}]
         )
 
     #

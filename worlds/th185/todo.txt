@@ -1,5 +1,3 @@
-- Fix networking and data saving.
-- Fix bugs (idk which ones but they're definitely there)
-- Ability Card, Stage End Selection locations to be implemented.
-- Fix location checking.
+- Fix game somehow detecting locations that were never checked.
+- Fix game not saving correct amount of funds.
 - Add a separate tab for HBM configs at some point (mainly for scorefile path lol)
