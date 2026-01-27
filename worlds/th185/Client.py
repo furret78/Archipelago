@@ -415,6 +415,7 @@ class TouhouHBMContext(CommonContext):
                             case 51: self.handler.addFunds(-100)
                             case 52: self.handler.addFunds(-50)
                             case _: await self.handleValidItem(current_item_id)
+                else: logger.info(f"ID {current_item_id} is not a valid item!")
 
                 self.receivedItemQueue.pop(0)
 

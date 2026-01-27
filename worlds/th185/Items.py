@@ -164,14 +164,13 @@ def create_starting_card(world):
         world.push_precollected(world.create_item(starting_card_name))
 
 def check_if_item_id_exists(given_id: int) -> bool:
-    if given_id < 1: return False
-    if 5 > given_id < 10: return False
-    if 13 > given_id < 50: return False
-    if 52 > given_id < 100: return False
-    if 108 > given_id < 200: return False
-    if 282 > given_id < 500: return False
-    if given_id > 501: return False
-    return True
+    if 0 < given_id <= 5: return True
+    if 10 <= given_id <= 13: return True
+    if 50 <= given_id <= 52: return True
+    if 100 <= given_id <= 108: return True
+    if 200 <= given_id <= 282: return True
+    if 500 <= given_id <= 501: return True
+    return False
 
 # An Item table documenting every Item and its data.
 # If anything new is added, add it to Client.py under give_item()
