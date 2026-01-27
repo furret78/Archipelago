@@ -152,7 +152,6 @@ def create_regular_locations(world):
                 region_dict[CHALLENGE_NAME].locations.append(boss_encounter_location)
 
     # Ability Card Shop Unlocks
-    # Not every card is available in every stage.
     for stage_card in ABILITY_CARD_LIST:
         # End-level Card Selection.
         # Starting Card option allows for choosing Ringo-Brand Dango or Miracle Mallet to begin the run.
@@ -160,7 +159,7 @@ def create_regular_locations(world):
         starting_card_choice = getattr(world.options, "starting_card")
 
         if ((starting_card_choice == 1 and stage_card == RINGO_CARD)
-            or (starting_card_choice == 2 and stage_card == MALLET_CARD)):
+            or stage_card == MALLET_CARD):
             continue
 
         cardLocationName: str = get_card_location_name_str(stage_card, False)

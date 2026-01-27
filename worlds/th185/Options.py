@@ -11,7 +11,7 @@ class ChallengeChecks(Toggle):
 
 class DisableChallengeLogic(DefaultOnToggle):
     """
-    Prevents the game from taking Challenge Market into account when placing items in Market End Reward locations.
+    Prevents the game from taking Challenge Market into account when placing items in Market End Reward locations. Disable to allow Challenge Market in logic.
     """
 
     display_name = "Disable Challenge Market in Logic"

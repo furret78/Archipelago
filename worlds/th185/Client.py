@@ -2,6 +2,7 @@ import traceback
 from typing import Optional
 import asyncio
 import colorama
+import pymem.exception
 
 from CommonClient import (
 	CommonContext,
@@ -419,9 +420,12 @@ class TouhouHBMContext(CommonContext):
 
             await self.update_locations_checked()
         except Exception as e:
-            logger.error(f"Error in the MAIN loop:")
-            logger.error(traceback.format_exc())
             self.inError = True
+            if e is pymem.exception.ProcessError:
+                logger.error(f"The client can't detect the game process!")
+            else:
+                logger.error(f"Error in the MAIN loop.")
+                logger.error(traceback.format_exc())
 
 
     async def game_loop(self):
@@ -453,9 +457,12 @@ class TouhouHBMContext(CommonContext):
 
             return
         except Exception as e:
-            logger.error(f"Error in the GAME loop:")
-            logger.error(traceback.format_exc())
             self.inError = True
+            if e is pymem.exception.ProcessError:
+                logger.error(f"The client can't detect the game process!")
+            else:
+                logger.error(f"Error in the GAME loop.")
+                logger.error(traceback.format_exc())
 
 
     async def menu_loop(self):
@@ -475,9 +482,12 @@ class TouhouHBMContext(CommonContext):
                 await self.transfer_from_stage_to_menu()
                 self.enable_card_shop_scanning = True
         except Exception as e:
-            logger.error(f"Error in the MENU loop:")
-            logger.error(traceback.format_exc())
             self.inError = True
+            if e is pymem.exception.ProcessError:
+                logger.error(f"The client can't detect the game process!")
+            else:
+                logger.error(f"Error in the MENU loop.")
+                logger.error(traceback.format_exc())
 
 
     async def update_locations_checked(self):
@@ -533,6 +543,7 @@ class TouhouHBMContext(CommonContext):
         # First step is checking if the card location exists in the big location table.
 
         # Stage-exclusive.
+        player_has_found_card_in_stage = False
         if self.handler.isGameInStage() and self.enable_card_selection_checking:
             shop_card_list = ABILITY_CARD_LIST
             for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
@@ -549,6 +560,8 @@ class TouhouHBMContext(CommonContext):
                 if self.handler.getCardShopRecordGame(card) != 0:
                     # Card shop location is True. This is a check.
                     new_locations.append(location_table[cardLocationName])
+                    player_has_found_card_in_stage = True
+
 
         # Dex
         player_has_purchased_card_bool = False
@@ -569,6 +582,17 @@ class TouhouHBMContext(CommonContext):
         # If there are new locations, send a message to the server
         # and add to the list of previously checked locations.
         if new_locations:
+            # Since both of Nazrin's cards do not get unlocked at all past the Tutorial,
+            # This is added so that it gets unlocked in the dex.
+            # The Bullet Money variant is set to be unlocked at the start of a stage.
+            # The Funds variant is set to be unlocked at the Market Card Reward selection.
+            if player_has_found_card_in_stage:
+                self.handler.setDexCardData(NAZRIN_CARD_1, True)
+                cardLocationName: str = get_card_location_name_str(NAZRIN_CARD_1, False)
+                if (location_table[cardLocationName] in self.all_location_ids
+                        and location_table[cardLocationName] not in self.previous_location_checked):
+                    new_locations.append(location_table[cardLocationName])
+
             if player_has_purchased_card_bool: await self.save_funds_to_server()
 
             self.previous_location_checked = self.previous_location_checked + new_locations
@@ -580,7 +604,6 @@ class TouhouHBMContext(CommonContext):
             await self.send_msgs([{"cmd": 'StatusUpdate', "status": 30}])
 
     async def get_custom_data_from_server(self):
-        logger.info("Grabbing data from the server...")
         self.retrievedCustomData = True
         await self.send_msgs([{"cmd": 'Get', "keys": self.custom_data_keys_list}])
         await self.send_msgs([{"cmd": 'SetNotify', "keys": self.custom_data_keys_list}])
@@ -590,24 +613,12 @@ class TouhouHBMContext(CommonContext):
         Load all save data as needed before location checking can begin.
         Should be carried out at the very first game connection.
         """
-        # Load boss defeat records for the handler, then update the records in-game.
-        # Retrieve these from previously checked locations.
-        logger.info("Loading boss save data...")
         self.load_save_data_bosses()
-        # Load stage data for the handler, then update stage data in-game.
-        logger.info("Loading stage save data...")
         for stage_name in self.unlocked_stages:
             self.handler.unlockStage(stage_name)
-        # Load Ability Card shop data for the handler.
-        # This is only the menu data. Data as used for checks during the stages are loaded in the stage part.
         self.load_save_data_shop()
-        # Load Ability Card dex data for the handler, then update it in-game.
         self.load_save_data_dex()
-        # Load menu funds. The player's grinding should be rewarded.
-        logger.info("Loading funds save data...")
         self.handler.setMenuFunds(self.menuFunds)
-        # Finish loading save data.
-        logger.info("Finished loading all save data!")
         return
 
     def load_save_data_bosses(self):
@@ -664,6 +675,8 @@ class TouhouHBMContext(CommonContext):
         """
         logger.info("Heading into a stage!")
         await self.save_funds_to_server()
+
+        self.handler.setDexCardData(NAZRIN_CARD_2, True)
 
         menu_shop_card_list = ABILITY_CARD_LIST
         for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
