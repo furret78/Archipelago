@@ -19,7 +19,7 @@ class StartingMarket(Choice):
     option_Challenge_Market = 8
     option_No_Markets_Unlocked = 9
 
-    default = option_No_Markets_Unlocked
+    default = option_Tutorial_Market
 
 
 class ChallengeChecks(Toggle):
