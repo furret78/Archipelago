@@ -61,6 +61,7 @@ class TouhouHBMWorld(World):
         # Does not affect gameplay but it is nice eye-candy.
         data = {
             # Options
+            "starting_market": self.options.starting_market.value,
             "challenge_checks": self.options.challenge_checks.value,
             "disable_challenge_logic": self.options.disable_challenge_logic.value,
             "card_dex_checks": self.options.card_dex_checks.value,

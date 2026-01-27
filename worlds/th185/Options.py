@@ -1,6 +1,27 @@
 from Options import *
 
 
+class StartingMarket(Choice):
+    """
+    Determines which stage should be unlocked at the start of the game.
+    """
+
+    display_name = "Starting Market"
+
+    choice_Tutorial_Market = 0
+    choice_First_Market = 1
+    choice_Second_Market = 2
+    choice_Third_Market = 3
+    choice_Fourth_Market = 4
+    choice_Fifth_Market = 5
+    choice_Sixth_Market = 6
+    choice_End_of_Market = 7
+    choice_Challenge_Market = 8
+    choice_No_Markets_Unlocked = 9
+
+    default = choice_No_Markets_Unlocked
+
+
 class ChallengeChecks(Toggle):
     """
     Enables checks for boss encounters in the Challenge Market.
@@ -77,6 +98,7 @@ class CompletionType(Choice):
 
 @dataclass()
 class TouhouHBMDataclass(PerGameCommonOptions):
+    starting_market: StartingMarket
     challenge_checks: ChallengeChecks
     disable_challenge_logic: DisableChallengeLogic
     card_dex_checks: DexChecks
@@ -87,6 +109,7 @@ class TouhouHBMDataclass(PerGameCommonOptions):
 
 option_presets = {
     "hard": {
+        "starting_market": 9,
         "challenge_checks": True,
         "disable_challenge_logic": True,
         "card_dex_checks": True,
