@@ -1,3 +1,7 @@
-- Fix game somehow detecting locations that were never checked.
-- Fix game not saving correct amount of funds.
+- Fix game not processing items properly (includes cards and stages).
+- Finish save data via item list received and checks.
+- Add more to rules regarding Market Card Rewards (see Google Sheets in post in #future-game-design).
+- Add last item received indexing.
+- Finish scorefile replacement command.
+- Consider saving last item received index to a .txt file in the game's appdata folder
 - Add a separate tab for HBM configs at some point (mainly for scorefile path lol)

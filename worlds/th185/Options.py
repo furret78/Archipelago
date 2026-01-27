@@ -9,6 +9,14 @@ class ChallengeChecks(Toggle):
     display_name = "Challenge Market Encounters"
 
 
+class DisableChallengeLogic(DefaultOnToggle):
+    """
+    Prevents the game from taking Challenge Market into account when placing items in Market End Reward locations.
+    """
+
+    display_name = "Disable Challenge Market in Logic"
+
+
 class DexChecks(DefaultOnToggle):
     """
     Enables checks for Ability Card Dex unlocks.
@@ -70,6 +78,7 @@ class CompletionType(Choice):
 @dataclass()
 class TouhouHBMDataclass(PerGameCommonOptions):
     challenge_checks: ChallengeChecks
+    disable_challenge_logic: DisableChallengeLogic
     card_dex_checks: DexChecks
     trap_chance: TrapChance
     starting_card: StartingCard
@@ -79,6 +88,7 @@ class TouhouHBMDataclass(PerGameCommonOptions):
 option_presets = {
     "hard": {
         "challenge_checks": True,
+        "disable_challenge_logic": True,
         "card_dex_checks": True,
         "trap_chance": 10,
         "starting_card": 1,
