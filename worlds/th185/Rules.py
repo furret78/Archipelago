@@ -273,7 +273,7 @@ def set_goal_condition(world) -> None:
     # To defeat all bosses, you need all stages to be available except the Challenge Market.
     # Both instances of Mike Goutokuji are counted.
     boss_condition_list = STAGE_NAME_LIST
-    boss_condition_list.remove(CHALLENGE_NAME_FULL)
+    if CHALLENGE_NAME_FULL in boss_condition_list: boss_condition_list.remove(CHALLENGE_NAME_FULL)
 
     def all_bosses_clear(state: CollectionState) -> bool:
         return state.has_all(boss_condition_list, world.player)
