@@ -31,6 +31,12 @@ def set_all_entrance_rules(world) -> None:
 
     stage_id = 0
     for i in STAGE_NAME_LIST:
+        starting_market_option = getattr(world.options, "starting_market")
+        starting_market_item = STAGE_SHORT_TO_FULL_NAME[STAGE_ID_TO_SHORT_NAME[starting_market_option]]
+        if starting_market_option != 9 and i == starting_market_item:
+            stage_id += 1
+            continue
+
         set_rule(origin_to_region_list[stage_id], lambda state: state.has(i, world.player))
         stage_id += 1
 
