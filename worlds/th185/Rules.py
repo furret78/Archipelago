@@ -234,6 +234,14 @@ def set_all_location_rules(world) -> None:
         # Skip Nazrin's cards.
         if card_string_id == NAZRIN_CARD_1 or card_string_id == NAZRIN_CARD_2:
             continue
+        # Skip the Starting Cards, if there are any.
+        starting_card_option = getattr(world.options, "starting_card")
+        if starting_card_option != 0:
+            match starting_card_option:
+                case 1:
+                    if card_string_id == RINGO_CARD: continue
+                case 2:
+                    if card_string_id == MALLET_CARD: continue
 
         card_dex_location = world.get_location(get_card_location_name_str(card_string_id, True))
         add_rule(card_dex_location, lambda state: state.has(CARD_ID_TO_NAME[card_string_id], world.player))

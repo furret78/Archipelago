@@ -8,18 +8,18 @@ class StartingMarket(Choice):
 
     display_name = "Starting Market"
 
-    choice_Tutorial_Market = 0
-    choice_First_Market = 1
-    choice_Second_Market = 2
-    choice_Third_Market = 3
-    choice_Fourth_Market = 4
-    choice_Fifth_Market = 5
-    choice_Sixth_Market = 6
-    choice_End_of_Market = 7
-    choice_Challenge_Market = 8
-    choice_No_Markets_Unlocked = 9
+    option_Tutorial_Market = 0
+    option_First_Market = 1
+    option_Second_Market = 2
+    option_Third_Market = 3
+    option_Fourth_Market = 4
+    option_Fifth_Market = 5
+    option_Sixth_Market = 6
+    option_End_of_Market = 7
+    option_Challenge_Market = 8
+    option_No_Markets_Unlocked = 9
 
-    default = choice_No_Markets_Unlocked
+    default = option_No_Markets_Unlocked
 
 
 class ChallengeChecks(Toggle):

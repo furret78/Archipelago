@@ -615,8 +615,7 @@ class TouhouHBMContext(CommonContext):
         Should be carried out at the very first game connection.
         """
         self.load_save_data_bosses()
-        for stage_name in self.unlocked_stages:
-            self.handler.unlockStage(stage_name)
+        self.load_save_data_stages()
         self.load_save_data_shop()
         self.load_save_data_dex()
         self.handler.setMenuFunds(self.menuFunds)
@@ -649,6 +648,15 @@ class TouhouHBMContext(CommonContext):
                             self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], True, record_type)
                             self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], True)
 
+    def load_save_data_stages(self):
+        starting_market_id = self.options["starting_market"]
+        starting_market_name = STAGE_ID_TO_SHORT_NAME[starting_market_id]
+        if starting_market_id != 9 and starting_market_name not in self.unlocked_stages:
+            self.unlocked_stages.append(starting_market_name)
+
+        for stage_name in self.unlocked_stages:
+            self.handler.unlockStage(stage_name)
+
     def load_save_data_dex(self):
         # Assume that the game is in 100% locked mode.
         previous_checks = self.previous_location_checked
@@ -661,6 +669,16 @@ class TouhouHBMContext(CommonContext):
             for card_string_id in ABILITY_CARD_LIST:
                 if CARD_ID_TO_NAME[card_string_id] in full_location_name:
                     self.handler.unconditionalDexUnlock(card_string_id)
+
+        # If the player has specified a Starting Card, add that here.
+        starting_card_option = self.options["starting_card"]
+        if starting_card_option != 0:
+            match starting_card_option:
+                case 1:
+                    self.handler.unconditionalDexUnlock(RINGO_CARD)
+                case 2:
+                    self.handler.unconditionalDexUnlock(MALLET_CARD)
+
 
     def load_save_data_shop(self):
         self.handler.permashop_card_new = self.permashop_cards_new
