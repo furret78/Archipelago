@@ -736,7 +736,7 @@ class TouhouHBMContext(CommonContext):
         # For all cards that can be bought in the shop...
         for card_name in menu_shop_card_list:
             # Check if it's unlocked.
-            if self.handler.getCardShopRecordHandler(card_name):
+            if card_name in self.permashop_cards:
                 self.handler.setCardShopRecordHandler(card_name, True)
                 self.handler.permashop_card_new = self.permashop_cards_new
             self.handler.setCardShopRecordGame(card_name, card_name in self.permashop_cards)

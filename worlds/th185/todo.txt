@@ -1,3 +1,5 @@
+- Fix Ability Cards not appearing in shop right after receiving them as Items. (menu?)
+- Fix Half Half-Ghost location in card dex not being registered.
 - Add last item received indexing.
 - Finish scorefile replacement command.
 - Consider saving last item received index to a .txt file in the game's appdata folder
