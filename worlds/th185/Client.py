@@ -12,9 +12,13 @@ from CommonClient import (
 	server_loop,
 	gui_enabled,
 )
+from NetUtils import NetworkItem
 from .GameHandler import *
 from .Items import GAME_ONLY_ITEM_ID, check_if_item_id_exists
 from .Locations import *
+from ..smw.Rom import handle_ability_code
+
+
 # Handles the game itself. The watcher that runs loops is down below.
 
 class TouhouHBMClientProcessor(ClientCommandProcessor):
@@ -99,6 +103,10 @@ class TouhouHBMContext(CommonContext):
         # - A check for the Ability Card Dex was found.
         # - Exiting a stage.
         self.menuFunds: int = 0
+        # Number of Ability Cards the player can equip at the start of a stage.
+        self.loadout_slots: int = 0 # Max 7 in-game.
+        # Equipment cost.
+        self.equip_cost: int = 0 # Max 350% in-game.
         # This is for eye-candy. List contains the string IDs of cards marked as "New!" in the game.
         self.permashop_cards_new: list = []
         # List of Cards that are unlocked in Shop.
@@ -110,7 +118,9 @@ class TouhouHBMContext(CommonContext):
         # Owning a card and unlocking its dex entry is one and the same,
         # but it is separate for the player.
         self.custom_data_keys_list: list = [str(self.slot)+"Funds185",
-                                            str(self.slot)+"LastItem185"]
+                                            str(self.slot)+"LastItem185",
+                                            str(self.slot)+"Slots185",
+                                            str(self.slot)+"EquipCost185"]
 
         # Set to True when scanning the card shop addresses as locations.
         # Set to False when in the menu.
@@ -283,6 +293,56 @@ class TouhouHBMContext(CommonContext):
 
     async def handleValidItem(self, item_id: int):
         self.handler.handleValidItem(item_id)
+
+    #
+    # Item Reception and helper functions.
+    #
+    def handle_item(self, index: int, network_item_list: list[NetworkItem]):
+        ability_card_unlock_list = []
+        stage_unlock_list = []
+        filler_list = []
+
+        for network_item in network_item_list:
+            if network_item.item in ITEM_TABLE_ID_TO_STAGE_NAME:
+                stage_unlock_list.append(ITEM_TABLE_ID_TO_STAGE_NAME[network_item.item])
+            elif network_item.item in ITEM_TABLE_ID_TO_CARD_ID:
+                ability_card_unlock_list.append(ITEM_TABLE_ID_TO_CARD_ID[network_item.item])
+            elif network_item.item in ITEM_TABLE_ID_TO_STARTING_CARD_ID:
+                ability_card_unlock_list.append(ITEM_TABLE_ID_TO_STARTING_CARD_ID[network_item.item])
+            else:
+                filler_list.append(network_item.item)
+
+        self.handle_ability_cards(ability_card_unlock_list)
+        self.handle_stages(stage_unlock_list)
+        self.handle_filler_items(filler_list)
+
+    def handle_ability_cards(self, filtered_list):
+        for card_name in filtered_list:
+            if card_name not in self.permashop_cards:
+                self.permashop_cards.append(card_name)
+                # self.permashop_cards_new.append(card_name)
+                self.try_unlock_card_in_shop(card_name)
+
+    def handle_stages(self, filtered_list):
+        for stage_short_name in filtered_list:
+            if stage_short_name not in self.unlocked_stages:
+                self.unlocked_stages.append(stage_short_name)
+                self.handler.stages_unlocked[stage_short_name] = True
+
+    def handle_filler_items(self, filtered_list):
+
+
+
+        pass
+
+    def try_unlock_card_in_shop(self, card_name: str):
+        if self.handler.isGameInStage(): return
+        if self.enable_card_selection_checking: return
+        if not self.enable_card_shop_scanning: return
+
+        self.handler.permashop_card_new = self.permashop_cards_new
+        self.handler.setCardShopRecordHandler(card_name, True)
+        self.handler.setCardShopRecordGame(card_name, True)
 
     #
     # Functions for saving custom data to server.

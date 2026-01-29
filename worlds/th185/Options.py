@@ -18,6 +18,7 @@ class StartingMarket(Choice):
     option_End_of_Market = 7
     option_Challenge_Market = 8
     option_No_Markets_Unlocked = 9
+    option_All_Markets_Unlocked = 10
 
     default = option_Tutorial_Market
 
@@ -73,6 +74,12 @@ class StartingCard(Choice):
 
     default = option_Miracle_Mallet
 
+class LowSkillLogic(DefaultOnToggle):
+    """
+    Whether the generation logic should include certain lategame cards as compulsory logic.
+    """
+
+    display_name = "Recommended Loadout in Logic"
 
 class CompletionType(Choice):
     """
@@ -104,17 +111,70 @@ class TouhouHBMDataclass(PerGameCommonOptions):
     card_dex_checks: DexChecks
     trap_chance: TrapChance
     starting_card: StartingCard
+    low_skill_logic: LowSkillLogic
     completion_type: CompletionType
 
 
+option_groups = {
+    OptionGroup(
+        "Gameplay Options",
+        [StartingMarket, StartingCard, TrapChance]
+    ),
+    OptionGroup(
+        "Generation Options",
+        [ChallengeChecks, DisableChallengeLogic, DexChecks, LowSkillLogic, CompletionType]
+    )
+}
+
 option_presets = {
+    "easy": {
+        "starting_market": 10,
+        "challenge_checks": False,
+        "disable_challenge_logic": True,
+        "card_dex_checks": False,
+        "trap_chance": 0,
+        "starting_card": 2,
+        "low_skill_logic": True,
+        "completion_type": 0
+    },
+    "normal": {
+        "starting_market": 0,
+        "challenge_checks": False,
+        "disable_challenge_logic": True,
+        "card_dex_checks": True,
+        "trap_chance": 5,
+        "starting_card": 2,
+        "low_skill_logic": True,
+        "completion_type": 0
+    },
     "hard": {
-        "starting_market": 9,
+        "starting_market": 1,
         "challenge_checks": True,
         "disable_challenge_logic": True,
         "card_dex_checks": True,
         "trap_chance": 10,
         "starting_card": 1,
+        "low_skill_logic": False,
+        "completion_type": 1
+    },
+    "lunatic": {
+        "starting_market": 9,
+        "challenge_checks": True,
+        "disable_challenge_logic": False,
+        "card_dex_checks": True,
+        "trap_chance": 20,
+        "starting_card": 1,
+        "low_skill_logic": False,
         "completion_type": 3
+    },
+    "overdrive": {
+        "starting_market": 9,
+        "challenge_checks": True,
+        "disable_challenge_logic": False,
+        "card_dex_checks": True,
+        "trap_chance": 25,
+        "starting_card": 0,
+        "low_skill_logic": False,
+        "completion_type": 4
     }
 }

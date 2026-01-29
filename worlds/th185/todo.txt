@@ -1,6 +1,10 @@
 - Fix Ability Cards not appearing in shop right after receiving them as Items. (menu?)
+- Finish new item reception functionality for filler items.
 - Fix Half Half-Ghost location in card dex not being registered.
+- Add recommended Ability Card set for endgame to Rules.
+- Add Ability Card slot and equip cost to data storage.
 - Add last item received indexing.
 - Finish scorefile replacement command.
 - Consider saving last item received index to a .txt file in the game's appdata folder
 - Add a separate tab for HBM configs at some point (mainly for scorefile path lol)
+- Add docs and web page.

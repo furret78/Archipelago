@@ -1,3 +1,4 @@
+from .WebWorld import TouhouHBMWebWorld
 from .variables.meta_data import SHORT_NAME, DISPLAY_NAME
 from ..LauncherComponents import Component, components, launch_subprocess, Type, icon_paths
 from collections.abc import Mapping
@@ -26,10 +27,15 @@ icon_paths["th185_card"] = f"ap:{__name__}/icons/th185_card.png"
 
 class TouhouHBMWorld(World):
     """
-    Touhou 18.5: 100th Black Market
+    100th Black Market is a vertical-scrolling bullet hell shooter, and the 18.5th official installment of the Touhou Project.
+    After the events of Unconnected Marketeers, the god of the market claimed that Ability Cards will eventually become obsolete,
+    and the markets will surely return to normalcy. Contrary to her words, however, their value only kept increasing;
+    at the peak of the chaos, so-called "black markets" trading under rules outside of her control have emerged.
+    As the ordinary magician Marisa Kirisame, you will be investigating these black markets to find out who the culprit is,
+    but truth to be told, you're just here to get your hands on every single Ability Card circulating out there.
     """
     game = DISPLAY_NAME
-    # web world here
+    web = TouhouHBMWebWorld()
 
     location_name_to_id = Locations.location_table
     item_name_to_id = Items.get_item_to_id_dict()
