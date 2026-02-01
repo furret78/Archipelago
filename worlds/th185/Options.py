@@ -1,36 +1,6 @@
 from Options import *
 
 
-class StartingMarket(Choice):
-    """
-    Determines which stage should be unlocked at the start of the game.
-    """
-
-    display_name = "Starting Market"
-
-    option_Tutorial_Market = 0
-    option_First_Market = 1
-    option_Second_Market = 2
-    option_Third_Market = 3
-    option_Fourth_Market = 4
-    option_Fifth_Market = 5
-    option_Sixth_Market = 6
-    option_End_of_Market = 7
-    option_Challenge_Market = 8
-    option_No_Markets_Unlocked = 9
-    option_All_Markets_Unlocked = 10
-
-    default = option_Tutorial_Market
-
-
-class ChallengeChecks(Toggle):
-    """
-    Enables checks for boss encounters in the Challenge Market.
-    """
-
-    display_name = "Challenge Market Encounters"
-
-
 class DisableChallengeLogic(DefaultOnToggle):
     """
     Prevents the game from taking Challenge Market into account when placing items in Market End Reward locations. Disable to allow Challenge Market in logic.
@@ -58,21 +28,6 @@ class TrapChance(Range):
     range_end = 100
     default = 10
 
-
-class StartingCard(Choice):
-    """
-    With no cards unlocked, the player's default choice will be the Blank Card. You can choose to have one card unlocked to begin the run with.
-
-    Available options: No cards at all, Ringo-Brand Dango, Miracle Mallet.
-    """
-
-    display_name = "Starting Ability Card"
-
-    option_No_Cards = 0
-    option_Ringo_Brand_Dango = 1
-    option_Miracle_Mallet = 2
-
-    default = option_Miracle_Mallet
 
 class LowSkillLogic(DefaultOnToggle):
     """
@@ -105,75 +60,58 @@ class CompletionType(Choice):
 
 @dataclass()
 class TouhouHBMDataclass(PerGameCommonOptions):
-    starting_market: StartingMarket
-    challenge_checks: ChallengeChecks
     disable_challenge_logic: DisableChallengeLogic
     card_dex_checks: DexChecks
     trap_chance: TrapChance
-    starting_card: StartingCard
     low_skill_logic: LowSkillLogic
     completion_type: CompletionType
+    start_inventory_from_pool: StartInventoryPool
 
 
-option_groups = {
+option_groups = [
     OptionGroup(
         "Gameplay Options",
-        [StartingMarket, StartingCard, TrapChance]
+        [TrapChance]
     ),
     OptionGroup(
         "Generation Options",
-        [ChallengeChecks, DisableChallengeLogic, DexChecks, LowSkillLogic, CompletionType]
+        [DisableChallengeLogic, DexChecks, LowSkillLogic, CompletionType]
     )
-}
+]
 
 option_presets = {
     "easy": {
-        "starting_market": 10,
-        "challenge_checks": False,
         "disable_challenge_logic": True,
         "card_dex_checks": False,
         "trap_chance": 0,
-        "starting_card": 2,
         "low_skill_logic": True,
         "completion_type": 0
     },
     "normal": {
-        "starting_market": 0,
-        "challenge_checks": False,
         "disable_challenge_logic": True,
         "card_dex_checks": True,
         "trap_chance": 5,
-        "starting_card": 2,
         "low_skill_logic": True,
         "completion_type": 0
     },
     "hard": {
-        "starting_market": 1,
-        "challenge_checks": True,
         "disable_challenge_logic": True,
         "card_dex_checks": True,
         "trap_chance": 10,
-        "starting_card": 1,
         "low_skill_logic": False,
         "completion_type": 1
     },
     "lunatic": {
-        "starting_market": 9,
-        "challenge_checks": True,
         "disable_challenge_logic": False,
         "card_dex_checks": True,
         "trap_chance": 20,
-        "starting_card": 1,
         "low_skill_logic": False,
         "completion_type": 3
     },
     "overdrive": {
-        "starting_market": 9,
-        "challenge_checks": True,
         "disable_challenge_logic": False,
         "card_dex_checks": True,
         "trap_chance": 25,
-        "starting_card": 0,
         "low_skill_logic": False,
         "completion_type": 4
     }

@@ -1,6 +1,6 @@
 from .Regions import get_regions_dict
 from .variables.boss_and_stage import *
-from .variables.card_const import ABILITY_CARD_LIST, CARD_ID_TO_NAME, RINGO_CARD, MALLET_CARD
+from .variables.card_const import ABILITY_CARD_LIST, CARD_ID_TO_NAME, RINGO_CARD, MALLET_CARD, ABILITY_CARD_CANNOT_EQUIP
 from .variables.meta_data import *
 from BaseClasses import Location
 
@@ -92,6 +92,7 @@ for stages in STAGE_LIST:
 
 # Card Shop locations at the end of each Market.
 for cards in ABILITY_CARD_LIST:
+    if cards in ABILITY_CARD_CANNOT_EQUIP: continue
     cardLocationNameString: str = get_card_location_name_str(cards, False)
     location_table[cardLocationNameString] = location_id_offset
     location_id_to_name[location_id_offset] = cardLocationNameString
@@ -137,7 +138,7 @@ def create_regular_locations(world):
 
                 region_dict[stages].locations.append(boss_encounter_location)
                 region_dict[stages].locations.append(boss_defeat_location)
-        elif getattr(world.options, "challenge_checks"):
+        else:
             boss_challenge_list = get_boss_names_challenge_list()
             for challenge_boss in boss_challenge_list:
                 locationEncounter: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss)
@@ -153,15 +154,8 @@ def create_regular_locations(world):
 
     # Ability Card Shop Unlocks
     for stage_card in ABILITY_CARD_LIST:
+        if stage_card in ABILITY_CARD_CANNOT_EQUIP: continue
         # End-level Card Selection.
-        # Starting Card option allows for choosing Ringo-Brand Dango or Miracle Mallet to begin the run.
-        # Remember to remove their dex checks as needed.
-        starting_card_choice = getattr(world.options, "starting_card")
-
-        if ((starting_card_choice == 1 and stage_card == RINGO_CARD)
-            or stage_card == MALLET_CARD):
-            continue
-
         cardLocationName: str = get_card_location_name_str(stage_card, False)
 
         card_dex_location = TouhouHBMLocation(
@@ -175,14 +169,6 @@ def create_regular_locations(world):
 
     # Ability Card Dex
     for dex_card in ABILITY_CARD_LIST:
-        # Starting Card option allows for choosing Ringo-Brand Dango or Miracle Mallet to begin the run.
-        # Remember to remove their dex checks as needed.
-        starting_card_choice = getattr(world.options, "starting_card")
-
-        if ((starting_card_choice == 1 and dex_card == RINGO_CARD)
-            or (starting_card_choice == 2 and dex_card == MALLET_CARD)):
-            continue
-
         cardLocationName: str = get_card_location_name_str(dex_card, True)
 
         card_dex_location = TouhouHBMLocation(

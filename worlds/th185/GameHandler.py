@@ -1,7 +1,7 @@
 import sys
 
 from .GameController import GameController
-from .Items import ITEM_TABLE_ID_TO_STAGE_NAME, ITEM_TABLE_ID_TO_STARTING_CARD_ID, ITEM_TABLE_ID_TO_CARD_ID
+from .Items import ITEM_TABLE_ID_TO_STAGE_NAME, ITEM_TABLE_ID_TO_CARD_ID
 from .Tools import clamp
 from .variables.boss_and_stage import *
 from .variables.card_const import *
@@ -291,9 +291,7 @@ class GameHandler:
         self.stages_unlocked[stage_name] = True
 
     def handleValidItem(self, item_id: int):
-        if item_id == 500 or item_id == 501:
-            self.unconditionalDexUnlock(ITEM_TABLE_ID_TO_STARTING_CARD_ID[item_id])
-        elif 100 <= item_id <= 108:
+        if 100 <= item_id <= 108:
             self.unlockStage(ITEM_TABLE_ID_TO_STAGE_NAME[item_id])
         elif item_id >= 200:
             self.unlockCardInMenuShop(ITEM_TABLE_ID_TO_CARD_ID[item_id])

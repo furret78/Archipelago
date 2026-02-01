@@ -378,12 +378,6 @@ SUIKA_CARD_NAME = "Drunkenly Whimsical Ibuki Gourd"
 TEACUP_REIMU_CARD_NAME = "Teacup Reimu"
 TEACUP_MARISA_CARD_NAME = "Teacup Marisa"
 
-# Special: Starting Card
-# Meant for directly unlocking dex entries, and thus loadout
-INIT_ABILITY_CARD_STRING = "Initial Ability Card"
-STARTING_MALLET_CARD_NAME = f"{INIT_ABILITY_CARD_STRING}: {MALLET_CARD_NAME}"
-STARTING_RINGO_CARD_NAME = f"{INIT_ABILITY_CARD_STRING}: {RINGO_CARD_NAME}"
-
 NEW_CARD = 0x80
 OWNED_CARD = 0x01
 
@@ -476,6 +470,7 @@ CARD_ID_TO_NAME = {
     TEACUP_MARISA_CARD: TEACUP_MARISA_CARD_NAME
 }
 
+# Ability Cards that can never show up in the Permanent Card Shop.
 ABILITY_CARD_CANNOT_EQUIP = [
     NAZRIN_CARD_1, NAZRIN_CARD_2
 ]

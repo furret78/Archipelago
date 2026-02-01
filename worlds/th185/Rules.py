@@ -31,11 +31,7 @@ def set_all_entrance_rules(world) -> None:
 
     stage_id = 0
     for i in STAGE_NAME_LIST:
-        starting_market_option = getattr(world.options, "starting_market")
-        starting_market_item = STAGE_SHORT_TO_FULL_NAME[STAGE_ID_TO_SHORT_NAME[starting_market_option]]
-        if starting_market_option != 9 and i == starting_market_item:
-            stage_id += 1
-            continue
+        if stage_id > len(origin_to_region_list) - 1: break
 
         set_rule(origin_to_region_list[stage_id], lambda state: state.has(i, world.player))
         stage_id += 1
@@ -51,7 +47,7 @@ def set_all_location_rules(world) -> None:
     # For Challenge Market.
     def has_challenge_access_item(state: CollectionState) -> bool:
         # Challenge Market is disabled in logic.
-        if getattr(world.options, "disable_challenge_logic"):
+        if world.options.disable_challenge_logic:
             return False
         # Challenge Market is NOT disabled in logic.
         else:
@@ -111,6 +107,13 @@ def set_all_location_rules(world) -> None:
     def has_doremy_access(state: CollectionState) -> bool:
         return has_early_game_access_item(state) or has_stage_access_item(state, STAGE5_ID)
 
+    # Access rules for the Ability Card dex entries.
+    # Ensures that the player has a way to grind for Funds + the card in the Permanent Card Shop.
+    # This will fail if this is a solo game and the player chooses to start with no Markets unlocked.
+    # (Hopefully)
+    def has_grind_access(state: CollectionState, card_id: str) -> bool:
+        return state.has(CARD_ID_TO_NAME[card_id], world.player) and has_any_stage_access_item(state)
+
     #
     # Location rules for bosses here.
     #
@@ -139,19 +142,18 @@ def set_all_location_rules(world) -> None:
     # Challenge Market has all bosses except story bosses.
     # Story bosses include Tutorial Mike, Chimata, Nitori, and Takane.
     chosen_stage_set_id = 0
-    if getattr(world.options, "challenge_checks"):
-        for boss_set in ALL_BOSSES_LIST:
-            # This checks if it's within the normal range of the Challenge Market boss list.
-            if TUTORIAL_ID < chosen_stage_set_id < STAGE_CHIMATA_ID:
-                for boss_name in boss_set:
-                    # If this happens to be Nitori or Takane, discard and move on.
-                    if boss_name == BOSS_NITORI_NAME or boss_name == BOSS_TAKANE_NAME: continue
+    for boss_set in ALL_BOSSES_LIST:
+        # This checks if it's within the normal range of the Challenge Market boss list.
+        if TUTORIAL_ID < chosen_stage_set_id < STAGE_CHIMATA_ID:
+            for boss_name in boss_set:
+                # If this happens to be Nitori or Takane, discard and move on.
+                if boss_name == BOSS_NITORI_NAME or boss_name == BOSS_TAKANE_NAME: continue
 
-                    location_encounter = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss_name)
-                    add_rule(world.get_location(location_encounter),
-                             lambda state: state.has(CHALLENGE_NAME_FULL, world.player))
+                location_encounter = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss_name)
+                add_rule(world.get_location(location_encounter),
+                         lambda state: state.has(CHALLENGE_NAME_FULL, world.player))
 
-            chosen_stage_set_id += 1
+        chosen_stage_set_id += 1
 
     #
     # Location rules for Ability Cards as stage rewards here.
@@ -219,10 +221,12 @@ def set_all_location_rules(world) -> None:
         add_generic_access_card_rule(card_string_id, 3)
     for card_string_id in LATEGAME_CARD_LIST:
         add_generic_access_card_rule(card_string_id, 4)
+
     # Section for Lily White's and Doremy's cards.
     lily_location_name: str = get_card_location_name_str(LILY_WHITE_CARD, False)
     lily_location = world.get_location(lily_location_name)
     add_rule(lily_location, lambda state: has_lily_white_access(state))
+
     doremy_location_name: str = get_card_location_name_str(DOREMY_CARD, False)
     doremy_location = world.get_location(doremy_location_name)
     add_rule(doremy_location, lambda state: has_doremy_access(state))
@@ -240,17 +244,9 @@ def set_all_location_rules(world) -> None:
         # Skip Nazrin's cards.
         if card_string_id == NAZRIN_CARD_1 or card_string_id == NAZRIN_CARD_2:
             continue
-        # Skip the Starting Cards, if there are any.
-        starting_card_option = getattr(world.options, "starting_card")
-        if starting_card_option != 0:
-            match starting_card_option:
-                case 1:
-                    if card_string_id == RINGO_CARD: continue
-                case 2:
-                    if card_string_id == MALLET_CARD: continue
 
         card_dex_location = world.get_location(get_card_location_name_str(card_string_id, True))
-        add_rule(card_dex_location, lambda state: state.has(CARD_ID_TO_NAME[card_string_id], world.player))
+        add_rule(card_dex_location, lambda state: has_grind_access(state, card_string_id))
 
 
 def set_goal_condition(world) -> None:
@@ -284,7 +280,7 @@ def set_goal_condition(world) -> None:
     # The actual Completion Condition field
     world.multiworld.completion_condition[world.player] = lambda state: minimum_story_clear(state)
 
-    match getattr(world.options, "completion_type"):
+    match world.options.completion_type:
         # Minimum Story Clear
         case 0:
             world.multiworld.completion_condition[world.player] = lambda state: full_story_clear(state)

@@ -83,16 +83,10 @@ def create_all_items(world):
     """
     # Initialization
     item_pool: list[Item] = []
-    starting_market_id = getattr(world.options, "starting_market")
-    starting_market_full_name = STAGE_SHORT_TO_FULL_NAME[STAGE_ID_TO_SHORT_NAME[starting_market_id]]
 
     # Stage unlocks get added first.
     stage_unlock_item_dict = get_items_by_category(CATEGORY_STAGE)
     for name in stage_unlock_item_dict.keys():
-        # If this stage is already unlocked at start, skip.
-        if starting_market_id != 9 and name == starting_market_full_name: continue
-
-        # Otherwise, add to the item pool.
         item_pool.append(world.create_item(name))
 
     # Ability Cards get added next.
@@ -105,13 +99,6 @@ def create_all_items(world):
         # Remove cards that obviously cannot be equipped at start.
         if string_id in ABILITY_CARD_CANNOT_EQUIP:
             continue
-
-        # Check if item is redundant or not.
-        match world.options.starting_card:
-            case 1:
-                if string_id == RINGO_CARD: continue
-            case 2:
-                if string_id == MALLET_CARD: continue
 
         # Grab full name of item and create.
         item_pool.append(world.create_item(CARD_ID_TO_NAME[string_id]))
@@ -149,25 +136,6 @@ def create_all_items(world):
     # Submit item pool for the randomizer.
     world.multiworld.itempool += item_pool
 
-    # Final function that grants the starting card since it was removed from the item pool.
-    create_starting_card(world)
-
-
-def create_starting_card(world):
-    """
-    Internal function for Items.create_all_items().
-    This function artificially gives the player a starting Ability Card.
-    The check for unlocking this card in the Dex is removed from the location pool.
-    Implementation is done in Locations.py
-    """
-    if 0 < world.options.starting_card < 3:
-        starting_card_name: str = STARTING_RINGO_CARD_NAME
-
-        match world.options.starting_card:
-            case 2:
-                starting_card_name = STARTING_MALLET_CARD_NAME
-
-        world.push_precollected(world.create_item(starting_card_name))
 
 def check_if_item_id_exists(given_id: int) -> bool:
     if 0 < given_id <= 5: return True
@@ -175,7 +143,6 @@ def check_if_item_id_exists(given_id: int) -> bool:
     if 50 <= given_id <= 52: return True
     if 100 <= given_id <= 108: return True
     if 200 <= given_id <= 282: return True
-    if 500 <= given_id <= 501: return True
     return False
 
 # An Item table documenting every Item and its data.
@@ -294,10 +261,7 @@ item_table: Dict[str, TouhouHBMItemData] = {
     SAKI_POWER_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 279, ItemClassification.progression),
     SUIKA_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 280, ItemClassification.progression),
     TEACUP_REIMU_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 281, ItemClassification.progression),
-    TEACUP_MARISA_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 282, ItemClassification.progression),
-
-    STARTING_MALLET_CARD_NAME: TouhouHBMItemData(CATEGORY_START, 500, ItemClassification.useful),
-    STARTING_RINGO_CARD_NAME: TouhouHBMItemData(CATEGORY_START, 501, ItemClassification.useful),
+    TEACUP_MARISA_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 282, ItemClassification.progression)
 }
 
 ITEM_TABLE_ID_TO_STAGE_NAME: Dict[int, str] = {
@@ -310,11 +274,6 @@ ITEM_TABLE_ID_TO_STAGE_NAME: Dict[int, str] = {
     106: STAGE6_NAME,
     107: ENDSTAGE_NAME,
     108: CHALLENGE_NAME
-}
-
-ITEM_TABLE_ID_TO_STARTING_CARD_ID: Dict[int, str] = {
-    500: MALLET_CARD,
-    501: RINGO_CARD
 }
 
 ITEM_TABLE_ID_TO_CARD_ID: Dict[int, str] = {

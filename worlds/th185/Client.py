@@ -297,7 +297,25 @@ class TouhouHBMContext(CommonContext):
     #
     # Item Reception and helper functions.
     #
-    def handle_item(self, index: int, network_item_list: list[NetworkItem]):
+    async def handle_received_items(self, network_index, network_items_list):
+        """
+        Handle items received from the server. Since some save data is also
+        embedded into the items list, the index will be ignored for them specifically.
+        The rest of the items will be put into a queue.
+
+        The first argument is the index, second is the NetworkItem list.
+        """
+        # We wait for the link to be established to the game before giving any items
+        while self.handler is None or self.handler.gameController is None:
+            await asyncio.sleep(0.5)
+
+        logger.info("Processing a ReceivedItems package from the server!")
+        logger.info(f"Last item index is: {network_index}")
+
+        self.handle_items(network_index, network_items_list)
+
+
+    def handle_items(self, index: int, network_item_list: list[NetworkItem]):
         ability_card_unlock_list = []
         stage_unlock_list = []
         filler_list = []
@@ -307,8 +325,6 @@ class TouhouHBMContext(CommonContext):
                 stage_unlock_list.append(ITEM_TABLE_ID_TO_STAGE_NAME[network_item.item])
             elif network_item.item in ITEM_TABLE_ID_TO_CARD_ID:
                 ability_card_unlock_list.append(ITEM_TABLE_ID_TO_CARD_ID[network_item.item])
-            elif network_item.item in ITEM_TABLE_ID_TO_STARTING_CARD_ID:
-                ability_card_unlock_list.append(ITEM_TABLE_ID_TO_STARTING_CARD_ID[network_item.item])
             else:
                 filler_list.append(network_item.item)
 
@@ -317,6 +333,8 @@ class TouhouHBMContext(CommonContext):
         self.handle_filler_items(filler_list)
 
     def handle_ability_cards(self, filtered_list):
+        if len(filtered_list) <= 0: return
+        logger.info("Handling Ability Cards...")
         for card_name in filtered_list:
             if card_name not in self.permashop_cards:
                 self.permashop_cards.append(card_name)
@@ -324,16 +342,19 @@ class TouhouHBMContext(CommonContext):
                 self.try_unlock_card_in_shop(card_name)
 
     def handle_stages(self, filtered_list):
+        if len(filtered_list) <= 0: return
+        logger.info("Handling Stages...")
         for stage_short_name in filtered_list:
             if stage_short_name not in self.unlocked_stages:
                 self.unlocked_stages.append(stage_short_name)
                 self.handler.stages_unlocked[stage_short_name] = True
 
+        self.handler.updateStageList()
+
     def handle_filler_items(self, filtered_list):
-
-
-
-        pass
+        if len(filtered_list) <= 0: return
+        logger.info("Handling Filler Items...")
+        # Handle filler stuff here.
 
     def try_unlock_card_in_shop(self, card_name: str):
         if self.handler.isGameInStage(): return
@@ -358,46 +379,6 @@ class TouhouHBMContext(CommonContext):
         await self.send_msgs(
             [{"cmd": 'Set', "key": self.custom_data_keys_list[1], "default": 0, "operations": [{"operation": 'replace', "value": self.lastReceivedItem}]}]
         )
-
-    #
-    # Async for client needs
-    #
-    async def handle_received_items(self, network_index, network_items_list):
-        """
-        Handle items received from the server. Since some save data is also
-        embedded into the items list, the index will be ignored for them specifically.
-        The rest of the items will be put into a queue.
-
-        The first argument is the index, second is the NetworkItem list.
-		"""
-
-        # Handle everything related to the game's save data first.
-        # These items will not be given to the game directly.
-        # Card Shop unlocks, in particular, can only be done during menus.
-        # Don't give the game cards during that time, but just store them in the client.
-        asyncio.create_task(self.handle_unlock_items(network_items_list))
-
-        # We wait for the link to be established to the game before giving any items
-        while self.handler is None or self.handler.gameController is None:
-            await asyncio.sleep(0.5)
-
-        logger.info("Processing a ReceivedItems package from the server!")
-        logger.info(f"Last item index is: {network_index}")
-        for network_item in network_items_list:
-            self.receivedItemQueue.append(network_item.item)
-
-        self.handler.updateStageList()
-
-    async def handle_unlock_items(self, items_list):
-        for item_id in items_list:
-            if item_id in ITEM_TABLE_ID_TO_STAGE_NAME:
-                if ITEM_TABLE_ID_TO_STAGE_NAME[item_id] not in self.unlocked_stages:
-                    self.unlocked_stages.append(ITEM_TABLE_ID_TO_STAGE_NAME[item_id])
-                    self.handler.unlockStage(ITEM_TABLE_ID_TO_STAGE_NAME[item_id])
-            if item_id in ITEM_TABLE_ID_TO_CARD_ID:
-                if ITEM_TABLE_ID_TO_CARD_ID[item_id] not in self.permashop_cards:
-                    self.permashop_cards.append(ITEM_TABLE_ID_TO_CARD_ID[item_id])
-
 
     #
     # Async loops that handle the game process.
@@ -584,13 +565,15 @@ class TouhouHBMContext(CommonContext):
                             self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
                                                               True, 1)
                             new_locations.append(location_table[locationName])
-            elif self.options["challenge_checks"] is True:
+            else:
                 # Special Challenge Market clause
                 boss_set_id_loc = 1
                 for boss_set in ALL_BOSSES_LIST:
                     # If it's the Tutorial set or End of Market set, discard those.
                     if TUTORIAL_ID <= boss_set_id_loc >= STAGE_CHIMATA_ID: continue
                     for boss_name in boss_set:
+                        # Make sure to exclude the story bosses.
+                        if boss_name in STORY_BOSSES_LIST: continue
                         # There are only encounters. Check those.
                         if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name]):
                             locationName: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss_name)
@@ -649,7 +632,7 @@ class TouhouHBMContext(CommonContext):
             # The Funds variant is set to be unlocked at the Market Card Reward selection.
             if player_has_found_card_in_stage:
                 self.handler.setDexCardData(NAZRIN_CARD_1, True)
-                cardLocationName: str = get_card_location_name_str(NAZRIN_CARD_1, False)
+                cardLocationName: str = get_card_location_name_str(NAZRIN_CARD_1, True)
                 if (location_table[cardLocationName] in self.all_location_ids
                         and location_table[cardLocationName] not in self.previous_location_checked):
                     new_locations.append(location_table[cardLocationName])
@@ -709,11 +692,6 @@ class TouhouHBMContext(CommonContext):
                             self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], True)
 
     def load_save_data_stages(self):
-        starting_market_id = self.options["starting_market"]
-        starting_market_name = STAGE_ID_TO_SHORT_NAME[starting_market_id]
-        if starting_market_id != 9 and starting_market_name not in self.unlocked_stages:
-            self.unlocked_stages.append(starting_market_name)
-
         for stage_name in self.unlocked_stages:
             self.handler.unlockStage(stage_name)
 
@@ -729,15 +707,6 @@ class TouhouHBMContext(CommonContext):
             for card_string_id in ABILITY_CARD_LIST:
                 if CARD_ID_TO_NAME[card_string_id] in full_location_name:
                     self.handler.unconditionalDexUnlock(card_string_id)
-
-        # If the player has specified a Starting Card, add that here.
-        starting_card_option = self.options["starting_card"]
-        if starting_card_option != 0:
-            match starting_card_option:
-                case 1:
-                    self.handler.unconditionalDexUnlock(RINGO_CARD)
-                case 2:
-                    self.handler.unconditionalDexUnlock(MALLET_CARD)
 
 
     def load_save_data_shop(self):

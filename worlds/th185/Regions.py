@@ -76,7 +76,7 @@ def connect_regions(world):
         # Challenge Market is special in that it offers EVERY Ability Card the game has to offer.
         # The challenge is surviving 12 waves to even get there.
         # There is an option to not connect the Challenge Market to the Market Card Reward region.
-        if region_exits == CHALLENGE_TO_CHOOSE_NAME and getattr(world.options, "disable_challenge_logic"):
+        if region_exits == CHALLENGE_TO_CHOOSE_NAME and world.options.disable_challenge_logic:
             continue
 
         region_exit_list[region_stage_exit_id].connect(region_endstage, STAGE_TO_ENDSTAGE_LIST[region_stage_exit_id])

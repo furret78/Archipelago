@@ -27,12 +27,15 @@ icon_paths["th185_card"] = f"ap:{__name__}/icons/th185_card.png"
 
 class TouhouHBMWorld(World):
     """
-    100th Black Market is a vertical-scrolling bullet hell shooter, and the 18.5th official installment of the Touhou Project.
-    After the events of Unconnected Marketeers, the god of the market claimed that Ability Cards will eventually become obsolete,
-    and the markets will surely return to normalcy. Contrary to her words, however, their value only kept increasing;
-    at the peak of the chaos, so-called "black markets" trading under rules outside of her control have emerged.
-    As the ordinary magician Marisa Kirisame, you will be investigating these black markets to find out who the culprit is,
-    but truth to be told, you're just here to get your hands on every single Ability Card circulating out there.
+    The marketplace god spoke.
+    "The Ability Cards will inevitably spread, inevitably become obsolete,
+    and the market will return to its everyday routine."
+    But contrary to the god's intent, the value of the cards is somehow rising further and further.
+    Could someone be manipulating their value?
+    Or could it be because a select few collectors are buying up all the stock?
+    When the card market had reached the utter peak of chaos,
+    markets that the god couldn't intervene in--"black markets"--began to open.
+    (from thpatch.net)
     """
     game = DISPLAY_NAME
     web = TouhouHBMWebWorld()
@@ -67,12 +70,10 @@ class TouhouHBMWorld(World):
         # Does not affect gameplay but it is nice eye-candy.
         data = {
             # Options
-            "starting_market": self.options.starting_market.value,
-            "challenge_checks": self.options.challenge_checks.value,
             "disable_challenge_logic": self.options.disable_challenge_logic.value,
             "card_dex_checks": self.options.card_dex_checks.value,
             "trap_chance": self.options.trap_chance.value,
-            "starting_card": self.options.starting_card.value,
-            "completion_type": self.options.completion_type.value,
+            "low_skill_logic": self.options.low_skill_logic.value,
+            "completion_type": self.options.completion_type.value
         }
         return data
