@@ -1,3 +1,5 @@
+import os
+import pkgutil
 import traceback
 from typing import Optional
 import asyncio
@@ -16,10 +18,31 @@ from NetUtils import NetworkItem
 from .GameHandler import *
 from .Items import GAME_ONLY_ITEM_ID, check_if_item_id_exists
 from .Locations import *
-from ..smw.Rom import handle_ability_code
 
 
 # Handles the game itself. The watcher that runs loops is down below.
+
+def copy_and_replace(directory: str, target_name: str, backup_name: str = None):
+    ap_scorefile_data = pkgutil.get_data("worlds.th185", "scorefile/scoreth185.dat")
+    if ap_scorefile_data is None:
+        logger.error("The Client could not find its own pre-existing save data!")
+        return
+
+    # The actual scorefile used by the game.
+    full_file_path = os.path.join(directory, os.path.basename(target_name))
+    if os.path.exists(full_file_path):
+        os.remove(full_file_path)
+    with open(full_file_path, "wb") as binary_file:
+        binary_file.write(ap_scorefile_data)
+
+    # Remove the backup scorefile in there since it interferes with Archipelago functionality.
+    if backup_name is not None:
+        backup_file_path = os.path.join(directory, os.path.basename(backup_name))
+        if os.path.exists(backup_file_path):
+            os.remove(backup_file_path)
+
+    logger.info(f"Successfully replaced save data at: {full_file_path}")
+
 
 class TouhouHBMClientProcessor(ClientCommandProcessor):
     def __init__(self, ctx):
@@ -28,45 +51,70 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
     def _cmd_relink_game(self):
         self.ctx.inError = True
 
-    def _cmd_unlock_stage(self, stage_name: str):
-        """
-        Unlocks the stage according to its name:
-        Tutorial, 1st Market, 2nd Market, 3rd Market, 4th Market, 5th Market, 6th Market, End of Market, Challenge Market.
-        """
-        if stage_name not in STAGE_LIST:
-            logger.error("There is no stage with this number!")
-            return
-
-        self.ctx.handler.stages_unlocked[stage_name] = True
-        self.ctx.update_stage_list()
-
-        logger.info(f"{stage_name}: Set to {self.ctx.handler.stages_unlocked[stage_name]}")
-
     def _cmd_show_life(self):
         """
         Retrieves this slot's current number of lives.
         """
+        if not self.ctx.handler or not self.ctx.handler.gameController:
+            logger.error("The game is not running!")
+            return
+
         if self.ctx.handler.gameController.check_if_in_stage():
             life_count = self.ctx.handler.gameController.getLives()
             logger.info(f"Current lives: {life_count}")
         else:
             logger.error("This slot is currently not in a stage!")
 
+    def _cmd_show_funds(self):
+        """
+        Retrieves the number of Funds in the menu.
+        """
+        if not self.ctx.handler or not self.ctx.handler.gameController:
+            logger.error("The game is not running!")
+            return
+
+        funds_count = self.ctx.handler.gameController.getMenuFunds()
+        logger.info(f"Current Funds: {funds_count}")
+
     def _cmd_unlock_no_card(self):
         """
         Command to forcibly unlock the option to equip no cards in the loadout.
         """
+        if not self.ctx.handler or not self.ctx.handler.gameController:
+            logger.error("The game is not running!")
+            return
+
         self.ctx.handler.gameController.setNoCardData()
 
-    def _cmd_show_scorefile_path(self):
-        logger.info(f"Scorefile path is currently set to: {self.ctx.scorefile_path}")
+    def _cmd_show_save_directory(self):
+        """
+        Show the current save data directory the client is using.
+        """
+        logger.info(f"Save data directory is currently set to: {self.ctx.scorefile_path}")
+
+    def _cmd_set_save_directory(self, save_path: str = None):
+        """
+        Sets a new path to the save data directory.
+        """
+        if save_path is not None:
+            self.ctx.scorefile_path = save_path
+            logger.info(f"Save data directory was changed to: {self.ctx.scorefile_path}")
+        else:
+            default_appdata_path = os.getenv("APPDATA")
+            if default_appdata_path is None:
+                self.ctx.scorefile_path = None
+            else:
+                self.ctx.scorefile_path = default_appdata_path + APPDATA_PATH
+
+            logger.info(f"Save data directory was reset to default.")
 
     def _cmd_replace_save(self):
         """
-        Replaces the scorefile at the game's Appdata folder.
+        Replaces the game's scoreth185.dat file and deletes scoreth185bak.dat file.
         Recommended to manually back up save data before doing this.
+        The game's save data is often located at %appdata%/ShanghaiAlice/th185.
         """
-        empty_save_path = ""
+        copy_and_replace(self.ctx.scorefile_path, SCOREFILE_NAME, SCOREFILE_BACKUP_NAME)
 
 
 class TouhouHBMContext(CommonContext):
@@ -90,12 +138,18 @@ class TouhouHBMContext(CommonContext):
         self.command_processor = TouhouHBMClientProcessor
 
         self.no_card_unlocked: bool = False
-        self.scorefile_path = "os.getenv('APPDATA')"
         self.loadingDataSetup: bool = True
         self.retrievedCustomData: bool = False
         # Networking things concerning the Permanent Card Shop unlocks
         self.isWaitingReplyFromServer: bool = False
         self.replyFromServerReceived: bool = False
+
+        # Scorefile path.
+        default_appdata_path = os.getenv("APPDATA")
+        if default_appdata_path is None:
+            self.ctx.scorefile_path = None
+        else:
+            self.scorefile_path = default_appdata_path + APPDATA_PATH
 
         # Additional game data.
         # Funds as shown in the menu.
