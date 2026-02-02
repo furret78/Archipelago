@@ -1,7 +1,8 @@
+- Add function to check if game is actually running before modifying memory.
+- Add Ability Card slot and equip cost to data storage.
 - Finish new item reception functionality for filler items.
 - Fix Half Half-Ghost location in card dex not being registered. (needs testing to check if this happens again)
 - Add recommended Ability Card set for endgame to Rules.
-- Add Ability Card slot and equip cost to data storage.
 - Add last item received indexing.
 - Consider saving last item received index to a .txt file in the game's appdata folder
 - Consider saving the scorefile path last inputted by the user somehow.

@@ -193,6 +193,10 @@ class TouhouHBMContext(CommonContext):
         # Last received item index from the server.
         self.lastReceivedItem: int = 0
 
+        # Whether the game is running or not.
+        # Checks for whether it is the game itself or just the window resolution dialogue box.
+        self.isGameRunning: bool = False
+
         self.reset()
 
 
@@ -253,8 +257,6 @@ class TouhouHBMContext(CommonContext):
             if self.custom_data_keys_list[1] in args["keys"]:
                 if args["keys"][self.custom_data_keys_list[1]] is not None:
                     self.lastReceivedItem = args["keys"][self.custom_data_keys_list[1]]
-
-            logger.info("Data from the server has been received!")
 
         elif cmd == "DataPackage":
             if not self.all_location_ids:
@@ -873,10 +875,15 @@ async def game_watcher(ctx: TouhouHBMContext):
         # No connection issues. Start loops.
         if ctx.handler and ctx.handler.gameController:
             ctx.inError = False
+
+            if not ctx.isGameRunning:
+                ctx.isGameRunning = ctx.handler.gameController.check_if_in_game()
+                await asyncio.sleep(1)
+                continue
+
             if ctx.loadingDataSetup:
                 logger.info(f"Found {SHORT_NAME} process! Loading previous save data and initiating game loops...")
                 asyncio.create_task(ctx.load_save_data())
-                await asyncio.sleep(2)
                 ctx.loadingDataSetup = False
                 continue
 

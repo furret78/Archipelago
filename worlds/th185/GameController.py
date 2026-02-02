@@ -44,6 +44,17 @@ class GameController:
         """
         return int.from_bytes(self.pm.read_bytes(self.pm.base_address + ADDR_CURRENT_STAGE_PTR, 2)) != 0
 
+    def check_if_in_game(self):
+        """
+        Returns True if the game is open and not the window resolution selection dialogue box.
+        """
+        try:
+            card_slot = int.from_bytes(self.pm.read_bytes(self.getAddressFromPointerWithBase(ADDR_EQUIP_SLOT_COUNT), 4))
+        except Exception as e:
+            return False
+        # If this does not raise an exception, the game is running.
+        return True
+
     # Gameplay.
     # Lives (in-game) functions
     def getLives(self) -> int:
