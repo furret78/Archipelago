@@ -19,27 +19,25 @@ from .GameHandler import *
 from .Items import GAME_ONLY_ITEM_ID, check_if_item_id_exists
 from .Locations import *
 
-
 # Handles the game itself. The watcher that runs loops is down below.
 
-def copy_and_replace(directory: str, target_name: str, backup_name: str = None):
+def copy_and_replace(directory: str):
     ap_scorefile_data = pkgutil.get_data("worlds.th185", "scorefile/scoreth185.dat")
     if ap_scorefile_data is None:
         logger.error("The Client could not find its own pre-existing save data!")
         return
 
     # The actual scorefile used by the game.
-    full_file_path = os.path.join(directory, os.path.basename(target_name))
+    full_file_path = os.path.join(directory, os.path.basename(SCOREFILE_NAME))
     if os.path.exists(full_file_path):
         os.remove(full_file_path)
     with open(full_file_path, "wb") as binary_file:
         binary_file.write(ap_scorefile_data)
 
     # Remove the backup scorefile in there since it interferes with Archipelago functionality.
-    if backup_name is not None:
-        backup_file_path = os.path.join(directory, os.path.basename(backup_name))
-        if os.path.exists(backup_file_path):
-            os.remove(backup_file_path)
+    backup_file_path = os.path.join(directory, os.path.basename(SCOREFILE_BACKUP_NAME))
+    if os.path.exists(backup_file_path):
+        os.remove(backup_file_path)
 
     logger.info(f"Successfully replaced save data at: {full_file_path}")
 
@@ -114,7 +112,7 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
         Recommended to manually back up save data before doing this.
         The game's save data is often located at %appdata%/ShanghaiAlice/th185.
         """
-        copy_and_replace(self.ctx.scorefile_path, SCOREFILE_NAME, SCOREFILE_BACKUP_NAME)
+        copy_and_replace(self.ctx.scorefile_path)
 
 
 class TouhouHBMContext(CommonContext):
@@ -398,6 +396,7 @@ class TouhouHBMContext(CommonContext):
                 self.try_unlock_card_in_shop(card_name)
 
     def handle_stages(self, filtered_list):
+        logger.info("Currently trying to handle stages...")
         if len(filtered_list) <= 0: return
         logger.info("Handling Stages...")
         for stage_short_name in filtered_list:
@@ -490,32 +489,9 @@ class TouhouHBMContext(CommonContext):
 
     async def main_loop(self):
         """
-        Main loop. Responsible for general management of Items and scanning locations for checks.
+        Main loop. Responsible for scanning locations for checks.
         """
         try:
-            if len(self.receivedItemQueue) > 0:
-                logger.info(f"New Items received!")
-                logger.info(f"Current item queue: {self.receivedItemQueue}")
-                current_item_id = self.receivedItemQueue[0]
-
-                if check_if_item_id_exists(current_item_id):
-                    if current_item_id in GAME_ONLY_ITEM_ID:
-                        logger.info(f"Item of ID {current_item_id} is only for stages. Adding to the queue...")
-                        self.gameItemQueue.append(current_item_id)
-                    else:
-                        logger.info(f"Item of ID {current_item_id} is not stage exclusive. Adding to the queue...")
-                        match current_item_id:
-                            case 2: self.handler.addFunds(200)
-                            case 3: self.handler.addFunds(1000)
-                            case 10: self.handler.addFunds(5)
-                            case 11: self.handler.addFunds(10)
-                            case 51: self.handler.addFunds(-100)
-                            case 52: self.handler.addFunds(-50)
-                            case _: await self.handleValidItem(current_item_id)
-                else: logger.info(f"ID {current_item_id} is not a valid item!")
-
-                self.receivedItemQueue.pop(0)
-
             await self.update_locations_checked()
         except Exception as e:
             self.inError = True
@@ -749,7 +725,9 @@ class TouhouHBMContext(CommonContext):
 
     def load_save_data_stages(self):
         for stage_name in self.unlocked_stages:
-            self.handler.unlockStage(stage_name)
+            self.handler.stages_unlocked[stage_name] = True
+
+        self.handler.updateStageList()
 
     def load_save_data_dex(self):
         # Assume that the game is in 100% locked mode.
@@ -769,6 +747,7 @@ class TouhouHBMContext(CommonContext):
         self.handler.permashop_card_new = self.permashop_cards_new
         for card_name in self.permashop_cards:
             self.handler.permashop_card[card_name] = True
+            self.try_unlock_card_in_shop(card_name)
 
 
     async def transfer_from_menu_to_stage(self):

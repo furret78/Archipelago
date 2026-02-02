@@ -286,12 +286,3 @@ class GameHandler:
             self.setShopCardData(card_string_id, bytes([final_value]))
         else:
             self.setShopCardData(card_string_id, bytes([0x00]))
-
-    def unlockStage(self, stage_name: str):
-        self.stages_unlocked[stage_name] = True
-
-    def handleValidItem(self, item_id: int):
-        if 100 <= item_id <= 108:
-            self.unlockStage(ITEM_TABLE_ID_TO_STAGE_NAME[item_id])
-        elif item_id >= 200:
-            self.unlockCardInMenuShop(ITEM_TABLE_ID_TO_CARD_ID[item_id])
