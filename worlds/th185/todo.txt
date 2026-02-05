@@ -1,4 +1,3 @@
-- Add function to check if game is actually running before modifying memory.
 - Add Ability Card slot and equip cost to data storage.
 - Finish new item reception functionality for filler items.
 - Add recommended Ability Card set for endgame to Rules.

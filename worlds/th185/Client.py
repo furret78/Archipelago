@@ -182,7 +182,7 @@ class TouhouHBMContext(CommonContext):
         # Set to False when in stages.
         self.enable_card_shop_scanning: bool = True
 
-        self.receivedItemQueue: list = [] # All items freshly arrived. Will be filtered for wrong IDs as it's processed.
+        self.receivedItemQueue: list[NetworkItem] = [] # All items freshly arrived. Will be filtered for wrong IDs as it's processed.
         self.menuItemQueue: list = [] # Items received but not yet executed because game is in a stage.
         self.gameItemQueue: list = [] # Items received but not yet executed because game is in the menu.
         # Note: Funds do not go in here, but they have separate functions to execute
@@ -360,7 +360,7 @@ class TouhouHBMContext(CommonContext):
         The first argument is the index, second is the NetworkItem list.
         """
         # We wait for the link to be established to the game before giving any items
-        while self.handler is None or self.handler.gameController is None:
+        while self.handler is None or self.handler.gameController is None or not self.handler.gameController.check_if_in_game():
             await asyncio.sleep(0.5)
 
         logger.info("Processing a ReceivedItems package from the server!")
