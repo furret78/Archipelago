@@ -22,7 +22,6 @@ class GameController:
         self.addrCurrentStage = self.pm.base_address+ADDR_CURRENT_STAGE_PTR # Check if pointer itself is valid.
         self.addrGameFunds = self.pm.base_address+ADDR_GAME_FUNDS_PTR
         self.addrBulletMoney = self.pm.base_address+ADDR_BULLET_MONEY_PTR
-        self.addrBulletMoney2 = self.pm.base_address+ADDR_BULLET_MONEY_2_PTR
         self.addrLives = self.pm.base_address+ADDR_LIVES_PTR
 
         # Menu and record-keeping.

@@ -151,8 +151,8 @@ def check_if_item_id_exists(given_id: int) -> bool:
 item_table: Dict[str, TouhouHBMItemData] = {
     # Useful
     "+1 Life": TouhouHBMItemData(CATEGORY_ITEM, 1, ItemClassification.useful, 6),
-    "+200 Funds": TouhouHBMItemData(CATEGORY_ITEM, 2, ItemClassification.useful, 7),
-    "+1000 Funds": TouhouHBMItemData(CATEGORY_ITEM, 3, ItemClassification.useful, 4),
+    "+200 Funds": TouhouHBMItemData(CATEGORY_ITEM, 2, ItemClassification.useful, 5),
+    "+1000 Funds": TouhouHBMItemData(CATEGORY_ITEM, 3, ItemClassification.useful, 3),
     "+200 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 4, ItemClassification.useful, 7),
     "+500 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 5, ItemClassification.useful, 8),
 
@@ -163,9 +163,12 @@ item_table: Dict[str, TouhouHBMItemData] = {
     "+10 Bullet Money": TouhouHBMItemData(CATEGORY_FILLER, 13),
 
     # Trap
-    "-100 Bullet Money": TouhouHBMItemData(CATEGORY_TRAP, 50, ItemClassification.trap),
-    "-100 Funds": TouhouHBMItemData(CATEGORY_TRAP, 51, ItemClassification.trap),
-    "-50 Funds": TouhouHBMItemData(CATEGORY_TRAP, 52, ItemClassification.trap),
+    "-50 Bullet Money": TouhouHBMItemData(CATEGORY_TRAP, 50, ItemClassification.trap),
+    "-100 Bullet Money": TouhouHBMItemData(CATEGORY_TRAP, 51, ItemClassification.trap),
+    "-50 Funds": TouhouHBMItemData(CATEGORY_TRAP, 60, ItemClassification.trap),
+    "-100 Funds": TouhouHBMItemData(CATEGORY_TRAP, 61, ItemClassification.trap),
+    "-200 Funds": TouhouHBMItemData(CATEGORY_TRAP, 62, ItemClassification.trap),
+    "-50% Equip Cost": TouhouHBMItemData(CATEGORY_TRAP, 70, ItemClassification.trap),
 
     # Stage unlocks
     TUTORIAL_NAME_FULL: TouhouHBMItemData(CATEGORY_STAGE, 100, ItemClassification.progression),

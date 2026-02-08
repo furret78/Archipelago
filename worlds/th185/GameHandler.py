@@ -101,16 +101,16 @@ class GameHandler:
         newFunds = clamp(self.getCurrentMenuFunds() + value, 0, 999999)
         self.gameController.setMenuFunds(newFunds)
 
-    def addFunds(self, value: int):
-        if self.isGameInStage(): self.addGameFunds(value)
-        else: self.addMenuFunds(value)
-
     def getMenuFunds(self) -> int:
         return self.gameController.getMenuFunds()
 
     def addBulletMoney(self, value: int):
         newFunds = clamp(self.getCurrentBulletMoney() + value, 0, 2764472319)
         self.gameController.setGameFunds(newFunds)
+
+    def addEquipCost(self, value: int):
+        newEquipCost = clamp(self.getEquipCost() + value, 100, 2764472319)
+        self.gameController.setEquipCost(newEquipCost)
 
     # Other functions
     def reconnect(self):
