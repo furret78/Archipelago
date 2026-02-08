@@ -87,6 +87,30 @@ class GameController:
         addrMenuFunds = self.getAddressFromPointerWithBase(ADDR_MENU_FUNDS_PTR)
         self.pm.write_int(addrMenuFunds, value)
 
+    # Loadout Ability Card Slots functions
+    def getCardSlots(self) -> int:
+        addrCardSlot = self.getAddressFromPointerWithBase(ADDR_EQUIP_SLOT_COUNT)
+        return clamp(self.pm.read_int(addrCardSlot), 1, 34)
+
+    def setCardSlots(self, value: int):
+        addrCardSlot = self.getAddressFromPointerWithBase(ADDR_EQUIP_SLOT_COUNT)
+        self.pm.write_int(addrCardSlot, clamp(value, 1, 34))
+
+    # Equipment Cost functions
+    def getEquipCost(self) -> int:
+        addrEquipCost = self.getAddressFromPointerWithBase(ADDR_EQUIP_COST)
+        retrievedCost = self.pm.read_int(addrEquipCost)
+        if retrievedCost < 100: return 100
+        return retrievedCost
+
+    def setEquipCost(self, value: int):
+        addrEquipCost = self.getAddressFromPointerWithBase(ADDR_EQUIP_COST)
+
+        final_value: int = value
+        if value < 100: final_value = 100
+
+        self.pm.write_int(addrEquipCost, final_value)
+
     # Stage lock functions
     def getStageStatus(self, stage_id: int) -> bool:
         stageLockAddress = self.getAddressFromPointerWithBase(ADDR_STAGE_ID_TO_PTR[stage_id])

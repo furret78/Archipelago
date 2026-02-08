@@ -286,3 +286,15 @@ class GameHandler:
             self.setShopCardData(card_string_id, bytes([final_value]))
         else:
             self.setShopCardData(card_string_id, bytes([0x00]))
+
+    def getCardSlots(self) -> int:
+        return self.gameController.getCardSlots()
+
+    def setCardSlots(self, value: int):
+        self.gameController.setCardSlots(value)
+
+    def getEquipCost(self) -> int:
+        return self.gameController.getEquipCost()
+
+    def setEquipCost(self, value: int):
+        self.gameController.setEquipCost(value)

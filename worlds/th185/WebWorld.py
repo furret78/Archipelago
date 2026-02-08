@@ -1,7 +1,7 @@
 from BaseClasses import Tutorial
 from worlds.AutoWorld import WebWorld
-from worlds.th185.Options import option_groups, option_presets
-from worlds.th185.variables.meta_data import DISPLAY_NAME
+from .Options import option_groups, option_presets
+from .variables.meta_data import DISPLAY_NAME
 
 
 class TouhouHBMWebWorld(WebWorld):

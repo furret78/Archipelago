@@ -149,7 +149,7 @@ def check_if_item_id_exists(given_id: int) -> bool:
 # If anything new is added, add it to Client.py under give_item()
 # as well as add entries to the other tables below here.
 item_table: Dict[str, TouhouHBMItemData] = {
-    # In-game occurrences
+    # Useful
     "+1 Life": TouhouHBMItemData(CATEGORY_ITEM, 1, ItemClassification.useful, 6),
     "+200 Funds": TouhouHBMItemData(CATEGORY_ITEM, 2, ItemClassification.useful, 7),
     "+1000 Funds": TouhouHBMItemData(CATEGORY_ITEM, 3, ItemClassification.useful, 4),

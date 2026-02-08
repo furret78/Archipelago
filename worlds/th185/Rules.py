@@ -1,5 +1,3 @@
-import traceback
-
 from BaseClasses import CollectionState
 from worlds.generic.Rules import add_rule, set_rule
 from .Locations import get_boss_location_name_str, get_card_location_name_str

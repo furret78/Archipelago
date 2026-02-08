@@ -47,6 +47,9 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
         super().__init__(ctx)
 
     def _cmd_relink_game(self):
+        """
+        Internally forces the client to enter Error state in order to restart link to the game.
+        """
         self.ctx.inError = True
 
     def _cmd_show_life(self):
@@ -156,9 +159,9 @@ class TouhouHBMContext(CommonContext):
         # - Exiting a stage.
         self.menuFunds: int = 0
         # Number of Ability Cards the player can equip at the start of a stage.
-        self.loadout_slots: int = 0 # Max 7 in-game.
+        self.loadout_slots: int = 1 # Max 7 in-game.
         # Equipment cost.
-        self.equip_cost: int = 0 # Max 350% in-game.
+        self.equip_cost: int = 100 # Max 350% in-game.
         # This is for eye-candy. List contains the string IDs of cards marked as "New!" in the game.
         self.permashop_cards_new: list = []
         # List of Cards that are unlocked in Shop.
@@ -256,6 +259,17 @@ class TouhouHBMContext(CommonContext):
                 if args["keys"][self.custom_data_keys_list[1]] is not None:
                     self.lastReceivedItem = args["keys"][self.custom_data_keys_list[1]]
 
+            # Loadout Slots
+            if self.custom_data_keys_list[2] in args["keys"]:
+                if args["keys"][self.custom_data_keys_list[2]] is not None:
+                    self.loadout_slots = clamp(args["keys"][self.custom_data_keys_list[2]], 1, 34)
+
+            # Equip Cost
+            if self.custom_data_keys_list[3] in args["keys"]:
+                if args["keys"][self.custom_data_keys_list[3]] is not None:
+                    self.equip_cost = args["keys"][self.custom_data_keys_list[3]]
+                    if self.equip_cost < 100: self.equip_cost = 100
+
         elif cmd == "DataPackage":
             if not self.all_location_ids:
                 # Connected package not received yet, wait for datapackage request after connected package
@@ -307,43 +321,46 @@ class TouhouHBMContext(CommonContext):
         """
         Check if the player has won the game.
         """
+
+        def checkMinimumStory() -> bool:
+            return get_boss_location_name_str(STAGE6_ID, BOSS_TAKANE_NAME, True) in self.previous_location_checked
+
+        def checkFullStory() -> bool:
+            if get_boss_location_name_str(STAGE4_ID, BOSS_NITORI_NAME,
+                                          True) not in self.previous_location_checked: return False
+            if get_boss_location_name_str(STAGE_CHIMATA_ID, BOSS_CHIMATA_NAME,
+                                          True) not in self.previous_location_checked: return False
+            if not checkMinimumStory(): return False
+
+            return True
+
+        def checkAllCards() -> bool:
+            if not self.handler.dex_card_unlocked: return False
+            for name, data in self.handler.dex_card_unlocked:
+                if not data: return False
+            return True
+
+        def checkAllBosses() -> bool:
+            if not self.handler.bosses_beaten: return False
+
+            for stage_id_key in self.handler.bosses_beaten:
+                for boss_data_key in self.handler.bosses_beaten[stage_id_key]:
+                    if not self.handler.bosses_beaten[stage_id_key][boss_data_key]: return False
+            return True
+
+        def checkFullClear() -> bool:
+            return checkAllCards() and checkAllBosses()
+
         completion_goal = self.options["completion_type"]
 
         match completion_goal:
-            case 0: return self.checkFullStory()
-            case 1: return self.checkMinimumStory()
-            case 2: return self.checkAllCards()
-            case 3: return self.checkAllBosses()
-            case 4: return self.checkFullClear()
+            case 0: return checkFullStory()
+            case 1: return checkMinimumStory()
+            case 2: return checkAllCards()
+            case 3: return checkAllBosses()
+            case 4: return checkFullClear()
 
         return False
-
-    def checkMinimumStory(self) -> bool:
-        return get_boss_location_name_str(STAGE6_ID, BOSS_TAKANE_NAME, True) in self.previous_location_checked
-
-    def checkFullStory(self) -> bool:
-        if get_boss_location_name_str(STAGE4_ID, BOSS_NITORI_NAME, True) not in self.previous_location_checked: return False
-        if get_boss_location_name_str(STAGE_CHIMATA_ID, BOSS_CHIMATA_NAME, True) not in self.previous_location_checked: return False
-        if not self.checkMinimumStory(): return False
-
-        return True
-
-    def checkAllCards(self) -> bool:
-        if not self.handler.dex_card_unlocked: return False
-        for name, data in self.handler.dex_card_unlocked:
-            if not data: return False
-        return True
-
-    def checkAllBosses(self) -> bool:
-        if not self.handler.bosses_beaten: return False
-
-        for stage_id_key in self.handler.bosses_beaten:
-            for boss_data_key in self.handler.bosses_beaten[stage_id_key]:
-                if not self.handler.bosses_beaten[stage_id_key][boss_data_key]: return False
-        return True
-
-    def checkFullClear(self) -> bool:
-        return self.checkAllCards() and self.checkAllBosses()
 
     async def handleValidItem(self, item_id: int):
         self.handler.handleValidItem(item_id)
@@ -359,11 +376,10 @@ class TouhouHBMContext(CommonContext):
 
         The first argument is the index, second is the NetworkItem list.
         """
-        # We wait for the link to be established to the game before giving any items
+        # Wait until the game is online before processing the items.
         while self.handler is None or self.handler.gameController is None or not self.handler.gameController.check_if_in_game():
             await asyncio.sleep(0.5)
 
-        logger.info("Processing a ReceivedItems package from the server!")
         logger.info(f"Last item index is: {network_index}")
 
         self.handle_items(network_index, network_items_list)
@@ -396,7 +412,6 @@ class TouhouHBMContext(CommonContext):
                 self.try_unlock_card_in_shop(card_name)
 
     def handle_stages(self, filtered_list):
-        logger.info("Currently trying to handle stages...")
         if len(filtered_list) <= 0: return
         logger.info("Handling Stages...")
         for stage_short_name in filtered_list:
@@ -423,22 +438,59 @@ class TouhouHBMContext(CommonContext):
     #
     # Functions for saving custom data to server.
     #
-
-    # TODO: Fix networking with custom data sent to the server.
-    async def save_funds_to_server(self):
+    async def save_menu_stats_to_server(self):
         self.menuFunds = self.handler.getMenuFunds()
+        self.loadout_slots = clamp(self.handler.getCardSlots(), 1, 34)
+        self.equip_cost = self.handler.getEquipCost()
+
         await self.send_msgs(
-            [{"cmd": 'Set', "key": self.custom_data_keys_list[0], "default": 0, "operations": [{"operation": 'replace', "value": self.menuFunds}]}])
+            [
+                {
+                    "cmd": 'Set',
+                    "key": self.custom_data_keys_list[0],
+                    "default": 0,
+                    "operations": [{"operation": 'replace', "value": self.menuFunds}]
+                },
+                {
+                    "cmd": "Set",
+                    "key": self.custom_data_keys_list[2],
+                    "default": 1,
+                    "operations": [{"operation": 'replace', "value": self.loadout_slots}]
+                },
+                {
+                    "cmd": "Set",
+                    "key": self.custom_data_keys_list[3],
+                    "default": 100,
+                    "operations": [{"operation": 'replace', "value": self.equip_cost}]
+                }
+            ]
+        )
+
+    async def save_menu_funds_to_server(self):
+        self.menuFunds = self.handler.getMenuFunds()
+
+        await self.send_msgs(
+            [
+                {
+                    "cmd": 'Set',
+                    "key": self.custom_data_keys_list[0],
+                    "default": 0,
+                    "operations": [{"operation": 'replace', "value": self.menuFunds}]
+                }
+            ]
+        )
 
     async def save_last_received_item_index_to_server(self):
         await self.send_msgs(
-            [{"cmd": 'Set', "key": self.custom_data_keys_list[1], "default": 0, "operations": [{"operation": 'replace', "value": self.lastReceivedItem}]}]
+            [{"cmd": 'Set',
+              "key": self.custom_data_keys_list[1],
+              "default": 0,
+              "operations": [{"operation": 'replace', "value": self.lastReceivedItem}]}]
         )
 
     #
     # Async loops that handle the game process.
     #
-
     async def wait_for_initial_connection_info(self):
         """
         This method waits until the client finishes the initial conversation with the server.
@@ -497,6 +549,8 @@ class TouhouHBMContext(CommonContext):
             self.inError = True
             if e is pymem.exception.ProcessError:
                 logger.error(f"The client can't detect the game process!")
+            elif e is pymem.exception.ProcessNotFound:
+                logger.error(f"The client can't detect the game process!")
             else:
                 logger.error(f"Error in the MAIN loop.")
                 logger.error(traceback.format_exc())
@@ -534,6 +588,8 @@ class TouhouHBMContext(CommonContext):
             self.inError = True
             if e is pymem.exception.ProcessError:
                 logger.error(f"The client can't detect the game process!")
+            elif e is pymem.exception.ProcessNotFound:
+                logger.error(f"The client can't detect the game process!")
             else:
                 logger.error(f"Error in the GAME loop.")
                 logger.error(traceback.format_exc())
@@ -558,6 +614,8 @@ class TouhouHBMContext(CommonContext):
         except Exception as e:
             self.inError = True
             if e is pymem.exception.ProcessError:
+                logger.error(f"The client can't detect the game process!")
+            elif e is pymem.exception.ProcessNotFound:
                 logger.error(f"The client can't detect the game process!")
             else:
                 logger.error(f"Error in the MENU loop.")
@@ -669,7 +727,7 @@ class TouhouHBMContext(CommonContext):
                         and location_table[cardLocationName] not in self.previous_location_checked):
                     new_locations.append(location_table[cardLocationName])
 
-            if player_has_purchased_card_bool: await self.save_funds_to_server()
+            if player_has_purchased_card_bool: await self.save_menu_funds_to_server()
 
             self.previous_location_checked = self.previous_location_checked + new_locations
             await self.send_msgs([{"cmd": 'LocationChecks', "locations": new_locations}])
@@ -681,19 +739,23 @@ class TouhouHBMContext(CommonContext):
 
     async def get_custom_data_from_server(self):
         self.retrievedCustomData = True
-        await self.send_msgs([{"cmd": 'Get', "keys": self.custom_data_keys_list}])
-        await self.send_msgs([{"cmd": 'SetNotify', "keys": self.custom_data_keys_list}])
+        await self.send_msgs([{"cmd": "Get", "keys": self.custom_data_keys_list}])
+        await self.send_msgs([{"cmd": "SetNotify", "keys": self.custom_data_keys_list}])
 
     async def load_save_data(self):
         """
         Load all save data as needed before location checking can begin.
         Should be carried out at the very first game connection.
         """
+        while not self.retrievedCustomData or self.handler is None or self.handler.gameController is None or not self.handler.gameController.check_if_in_game():
+            await asyncio.sleep(0.5)
+
         self.load_save_data_bosses()
-        self.load_save_data_stages()
-        self.load_save_data_shop()
+        #self.load_save_data_stages()
+        #self.load_save_data_shop()
         self.load_save_data_dex()
-        self.handler.setMenuFunds(self.menuFunds)
+        self.load_save_data_menu()
+
         return
 
     def load_save_data_bosses(self):
@@ -731,8 +793,7 @@ class TouhouHBMContext(CommonContext):
 
     def load_save_data_dex(self):
         # Assume that the game is in 100% locked mode.
-        previous_checks = self.previous_location_checked
-        for location_id in previous_checks:
+        for location_id in self.previous_location_checked:
             full_location_name = location_id_to_name[location_id]
             # If none of these locations talk about the Card Dex, discard and move on.
             if CARD_DEX_NAME not in full_location_name:
@@ -750,6 +811,12 @@ class TouhouHBMContext(CommonContext):
             self.try_unlock_card_in_shop(card_name)
 
 
+    def load_save_data_menu(self):
+        self.handler.setMenuFunds(self.menuFunds)
+        self.handler.setCardSlots(self.loadout_slots)
+        self.handler.setEquipCost(self.equip_cost)
+
+
     async def transfer_from_menu_to_stage(self):
         """
         Handles transferring from the menu to the game stage.
@@ -757,7 +824,6 @@ class TouhouHBMContext(CommonContext):
         Previously checked locations are save data for Card Selection checks.
         """
         logger.info("Heading into a stage!")
-        await self.save_funds_to_server()
 
         self.handler.setDexCardData(NAZRIN_CARD_2, True)
 
@@ -781,13 +847,14 @@ class TouhouHBMContext(CommonContext):
                 if CARD_ID_TO_NAME[card_string_id] in full_location_name:
                     self.handler.setCardShopRecordGame(card_string_id, True)
 
+        await self.save_menu_stats_to_server()
+
     async def transfer_from_stage_to_menu(self):
         """
         Handles transferring from the game stage to the menu.
         Mainly for the Ability Card shop addresses.
         """
         logger.info("Heading back into the menu...")
-        await self.save_funds_to_server()
 
         menu_shop_card_list = ABILITY_CARD_LIST
         for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
@@ -804,6 +871,9 @@ class TouhouHBMContext(CommonContext):
                 self.handler.setCardShopRecordHandler(card_name, True)
                 self.handler.permashop_card_new = self.permashop_cards_new
             self.handler.setCardShopRecordGame(card_name, card_name in self.permashop_cards)
+
+        # Save Funds, Card Slots, and Equip Cost.
+        await self.save_menu_stats_to_server()
 
         # If the client was saving the card info, wait for a response from the server.
         if self.isWaitingReplyFromServer: await self.wait_for_setreply_from_server()

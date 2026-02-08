@@ -1,8 +1,6 @@
 import shutil
 import os
 
-from pymem import Pymem
-
 
 def getAddressFromPointer(pm, static_base, offsets=None):
     """

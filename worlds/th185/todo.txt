@@ -1,4 +1,4 @@
-- Add Ability Card slot and equip cost to data storage.
+- Add Ability Card slot and equip cost to data storage. (test this later)
 - Finish new item reception functionality for filler items.
 - Add recommended Ability Card set for endgame to Rules.
 - Add last item received indexing.
@@ -7,3 +7,6 @@
 - Add a separate tab for HBM configs at some point (mainly for scorefile path lol)
 - Add function to relink to the game after a disconnect without restarting client.
 - Add item groups and location groups.
+- Add additional item: Invincibility time.
+    - Need to measure how long 1s of invincibility is in float.
+- Add Death Link.
