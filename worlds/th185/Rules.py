@@ -79,9 +79,15 @@ def set_all_location_rules(world) -> None:
                 or has_challenge_access_item(state))
 
     # Lategame (Stage 4+). Does not show up in End of Market.
+    # Low Skill Logic forces the generation to include certain Ability Cards as compulsory.
     def has_lategame_access_item(state: CollectionState) -> bool:
-        return (state.has_any((STAGE4_NAME_FULL, STAGE5_NAME_FULL, STAGE6_NAME_FULL), world.player)
-                or has_challenge_access_item(state))
+        if world.options.low_skill_logic:
+            return ((state.has_any((STAGE4_NAME_FULL, STAGE5_NAME_FULL, STAGE6_NAME_FULL), world.player)
+                     and state.has_all((EIRIN_CARD_NAME, KAGUYA_CARD_NAME, MIKO_CARD_NAME, SHION_CARD_NAME, MOMOYO_CARD_NAME, EIKI_CARD_NAME), world.player))
+                    or has_challenge_access_item(state))
+        else:
+            return (state.has_any((STAGE4_NAME_FULL, STAGE5_NAME_FULL, STAGE6_NAME_FULL), world.player)
+                    or has_challenge_access_item(state))
 
     # Special access rules.
     def has_nitori_access(state: CollectionState) -> bool:

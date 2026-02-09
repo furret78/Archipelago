@@ -377,7 +377,7 @@ class TouhouHBMContext(CommonContext):
         while self.handler is None or self.handler.gameController is None or not self.handler.gameController.check_if_in_game():
             await asyncio.sleep(0.5)
 
-        logger.info(f"Last item index is: {network_index}")
+        # logger.info(f"Last item index is: {network_index}")
 
         self.handle_items(network_index, network_items_list)
 
