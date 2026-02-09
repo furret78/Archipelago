@@ -191,6 +191,9 @@ class TouhouHBMContext(CommonContext):
         # Note: Funds do not go in here, but they have separate functions to execute
         # depending on whether the game is in the menu or not instead.
 
+        # Checks whether Menu funds and stuff has been loaded yet.
+        self.menu_stats_initialized: bool = False
+
         # Last received item index from the server.
         self.lastReceivedItem: int = -1
 
@@ -399,7 +402,7 @@ class TouhouHBMContext(CommonContext):
 
         self.handle_ability_cards(ability_card_unlock_list)
         self.handle_stages(stage_unlock_list)
-        if item_index > 0: self.handle_filler_items(filler_list)
+        self.handle_filler_items(filler_list)
 
     def handle_ability_cards(self, filtered_list):
         if len(filtered_list) <= 0: return
@@ -424,10 +427,11 @@ class TouhouHBMContext(CommonContext):
         for filler_item in filtered_list:
             if filler_item in GAME_ONLY_ITEM_ID:
                 self.gameItemQueue.append(filler_item)
-            else:
-                self.menuItemQueue.append(filler_item)
+                continue
 
-        asyncio.create_task(self.handle_menu_items())
+            self.menuItemQueue.append(filler_item)
+
+        self.handle_menu_items()
         asyncio.create_task(self.handle_game_only_items())
 
     def try_unlock_card_in_shop(self, card_name: str):
@@ -443,17 +447,14 @@ class TouhouHBMContext(CommonContext):
         # Properly handle the items only meant for stages here.
         # This does not get to run if the queue is empty,
         # or the game is not running, or the game is not in a stage.
-        while (not self.handler.check_if_in_game()
-               or not self.enable_card_selection_checking
-               or not self.handler.isGameInStage()):
+        while not self.enable_card_selection_checking:
             await asyncio.sleep(0.5)
 
         received_bullet_money: int = 0
         received_lives: int = 0
 
         for item_id in self.gameItemQueue:
-            if not self.handler.isGameInStage(): continue
-
+            # if not self.handler.isGameInStage(): continue
             match item_id:
                 # Filler + Useful
                 case 1: received_lives += 1
@@ -465,22 +466,21 @@ class TouhouHBMContext(CommonContext):
                 case 50: received_bullet_money -= 50
                 case 51: received_bullet_money -= 100
                 # Default
-                case _: logger.error("Unknown game item!")
+                case _: logger.error("Unknown game item detected! Ignoring...")
 
             self.gameItemQueue.remove(item_id)
 
         if received_bullet_money != 0:
-            logger.info(f"Adding {received_bullet_money} Bullet Money to the game.")
             self.handler.addBulletMoney(received_bullet_money)
         if received_lives != 0:
-            logger.info(f"Giving Marisa +1 Life.")
             self.handler.addLife(received_lives)
 
-    async def handle_menu_items(self):
+        return
+
+    def handle_menu_items(self):
         # These items get processed no matter what,
         # but effects may differ depending on certain criteria.
-        while not self.handler.check_if_in_game():
-            await asyncio.sleep(0.5)
+        logger.info(f"Attempting to handle global items: {self.menuItemQueue}")
 
         received_funds: int = 0
         received_equip_cost: int = 0
@@ -498,19 +498,27 @@ class TouhouHBMContext(CommonContext):
                 case 62: received_funds -= 200
                 case 70: received_equip_cost -= 50
                 # Default
-                case _: logger.error("Unknown global item!")
+                case _: logger.error("Unknown global item! Ignoring...")
 
             self.menuItemQueue.remove(item_id)
 
         if received_funds != 0:
-            logger.info(f"Adding {received_funds} Funds to the game.")
-            if self.enable_card_selection_checking:
-                self.handler.addGameFunds(received_funds)
-            else:
-                self.handler.addMenuFunds(received_funds)
+            asyncio.create_task(self.addFundsToGame(received_funds))
         # Equip Cost never goes below 100%. This is checked when applying.
         if received_equip_cost != 0:
             self.handler.addEquipCost(received_equip_cost)
+
+        return
+
+    async def addFundsToGame(self, received_funds: int):
+        while not self.menu_stats_initialized:
+            await asyncio.sleep(0.5)
+
+        if self.enable_card_selection_checking:
+            self.handler.addGameFunds(received_funds)
+        else:
+            self.handler.addMenuFunds(received_funds)
+            await self.save_menu_funds_to_server()
 
     #
     # Functions for saving custom data to server.
@@ -809,12 +817,10 @@ class TouhouHBMContext(CommonContext):
         Load all save data as needed before location checking can begin.
         Should be carried out at the very first game connection.
         """
-        logger.info("Trying to load save data.")
         while self.handler is None or self.handler.gameController is None or not self.handler.gameController.check_if_in_game():
             logger.info("Cannot load just yet, trying again...")
             await asyncio.sleep(0.5)
 
-        logger.info("Loading data!")
         self.load_save_data_bosses()
         self.load_save_data_dex()
         self.load_save_data_menu()
@@ -866,6 +872,8 @@ class TouhouHBMContext(CommonContext):
         self.handler.setMenuFunds(self.menuFunds)
         self.handler.setCardSlots(self.loadout_slots)
         self.handler.setEquipCost(self.equip_cost)
+
+        self.menu_stats_initialized = True
 
 
     async def transfer_from_menu_to_stage(self):

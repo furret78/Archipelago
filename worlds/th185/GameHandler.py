@@ -94,19 +94,16 @@ class GameHandler:
         self.gameController.setLives(newLives)
 
     def addGameFunds(self, value: int):
-        newFunds = clamp(self.getCurrentGameFunds() + value, 0, 999999)
-        self.gameController.setGameFunds(newFunds)
+        self.gameController.addGameFunds(value)
 
     def addMenuFunds(self, value: int):
-        newFunds = clamp(self.getCurrentMenuFunds() + value, 0, 999999)
-        self.gameController.setMenuFunds(newFunds)
+        self.gameController.addMenuFunds(value)
 
     def getMenuFunds(self) -> int:
         return self.gameController.getMenuFunds()
 
     def addBulletMoney(self, value: int):
-        newFunds = clamp(self.getCurrentBulletMoney() + value, 0, 2764472319)
-        self.gameController.setGameFunds(newFunds)
+        self.gameController.addBulletMoney(value)
 
     def addEquipCost(self, value: int):
         newEquipCost = clamp(self.getEquipCost() + value, 100, 2764472319)

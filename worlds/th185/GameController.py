@@ -26,7 +26,7 @@ class GameController:
 
         # Menu and record-keeping.
         # These use pointers.
-        self.has_allocated_memory_to_anticheat = False
+        self.addrMenuFunds = self.getAddressFromPointerWithBase(ADDR_MENU_FUNDS_PTR)
 
     # Helper function
     def getAddressFromPointerWithBase(self, offset):
@@ -69,6 +69,10 @@ class GameController:
     def setGameFunds(self, value):
         self.pm.write_int(self.addrGameFunds, value)
 
+    def addGameFunds(self, value):
+        newGameFunds = clamp(self.pm.read_int(self.addrGameFunds) + value, 0, 999999)
+        self.pm.write_int(self.addrGameFunds, newGameFunds)
+
     # Bullet Money (in-game) functions
     def getBulletMoney(self) -> int:
         return self.pm.read_int(self.addrBulletMoney)
@@ -76,15 +80,25 @@ class GameController:
     def setBulletMoney(self, value):
         self.pm.write_int(self.addrBulletMoney, value)
 
+    def addBulletMoney(self, value):
+        newBulletMoney = clamp(self.pm.read_int(self.addrBulletMoney) + value, 0, 2764472319)
+        self.pm.write_int(self.addrBulletMoney, newBulletMoney)
+
     # Recordkeeping starts here.
     # Funds (menu) functions
     def getMenuFunds(self) -> int:
-        addrMenuFunds = self.getAddressFromPointerWithBase(ADDR_MENU_FUNDS_PTR)
-        return self.pm.read_int(addrMenuFunds)
+        self.addrMenuFunds = self.getAddressFromPointerWithBase(ADDR_MENU_FUNDS_PTR)
+        return self.pm.read_int(self.addrMenuFunds)
 
     def setMenuFunds(self, value):
-        addrMenuFunds = self.getAddressFromPointerWithBase(ADDR_MENU_FUNDS_PTR)
-        self.pm.write_int(addrMenuFunds, value)
+        self.addrMenuFunds = self.getAddressFromPointerWithBase(ADDR_MENU_FUNDS_PTR)
+        self.pm.write_int(self.addrMenuFunds, value)
+
+    def addMenuFunds(self, value):
+        self.addrMenuFunds = self.getAddressFromPointerWithBase(ADDR_MENU_FUNDS_PTR)
+        oldFunds = self.pm.read_int(self.addrMenuFunds)
+        newFunds = clamp(oldFunds + value, 0, 999999)
+        self.pm.write_int(self.addrMenuFunds, newFunds)
 
     # Loadout Ability Card Slots functions
     def getCardSlots(self) -> int:
