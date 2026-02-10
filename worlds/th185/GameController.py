@@ -69,7 +69,7 @@ class GameController:
     # Gameplay.
     # Lives (in-game) functions
     def getLives(self) -> int:
-        return int.from_bytes(self.pm.read_bytes(self.addrLives, 4))
+        return self.pm.read_int(self.addrLives)
 
     def setLives(self, value):
         self.pm.write_int(self.addrLives, value)
@@ -93,7 +93,8 @@ class GameController:
         self.pm.write_int(self.addrBulletMoney, value)
 
     def addBulletMoney(self, value):
-        newBulletMoney = clamp(self.pm.read_int(self.addrBulletMoney) + value, 0, 2764472319)
+        oldBulletMoney = self.pm.read_int(self.addrBulletMoney)
+        newBulletMoney = clamp(oldBulletMoney + value, 0, 2764472319)
         self.pm.write_int(self.addrBulletMoney, newBulletMoney)
 
     # Recordkeeping starts here.

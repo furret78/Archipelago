@@ -42,11 +42,11 @@ def copy_and_replace(directory: str):
 
     logger.info(f"Successfully replaced save data at: {full_file_path}")
 
-def erase_saved_index(directory: str):
+def erase_saved_indexes(directory: str):
     full_file_path = os.path.join(directory, os.path.basename(LAST_INDEX_FILE_NAME))
     if os.path.exists(full_file_path):
         os.remove(full_file_path)
-        logger.info(f"Successfully removed last item index data at: {full_file_path}")
+        logger.info(f"Successfully removed all last item index data in: {directory}")
     else:
         logger.error("No .json containing last item index data exists here...")
 
@@ -106,6 +106,7 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
         """
         Sets a new path to the save data directory.
         """
+
         if save_path is not None:
             self.ctx.scorefile_path = save_path
             logger.info(f"Save data directory was changed to: {self.ctx.scorefile_path}")
@@ -126,13 +127,13 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
         """
         copy_and_replace(self.ctx.scorefile_path)
 
-    def _cmd_erase_item_index(self):
-        """
-        Erases the local .json file containing the last saved item index saved.
-        Not recommended unless clearing out old data.
-        Uses the same directory as the game's save data, often located at %appdata%/ShanghaiAlice/th185.
-        """
-        erase_saved_index(self.ctx.scorefile_path)
+    #def _cmd_erase_item_index(self):
+        #"""
+        #Erases all local .json files containing the last saved item index saved.
+        #Not recommended unless clearing out old data.
+        #Uses the same directory as the game's save data, often located at %appdata%/ShanghaiAlice/th185.
+        #"""
+        #erase_saved_indexes(self.ctx.scorefile_path)
 
 
 class TouhouHBMContext(CommonContext):
@@ -259,6 +260,8 @@ class TouhouHBMContext(CommonContext):
         self.reset_game_data()
 
     def reset_game_data(self):
+        if not self.handler: return
+        if not self.handler.gameController: return
         self.is_game_running = self.handler.gameController.check_if_in_game()
         # If the game isn't running, no need to do anything.
         if not self.is_game_running: return
@@ -291,16 +294,23 @@ class TouhouHBMContext(CommonContext):
         """
         Manage the package received from the server
         """
+        if cmd == "RoomInfo":
+            self.seed_name = args["seed_name"]
+
         if cmd == "Connected":
             self.previous_location_checked = args['checked_locations']
             self.all_location_ids = set(args["missing_locations"] + args["checked_locations"])
             self.options = args["slot_data"]  # Yaml Options
             self.is_connected = True
+            self.slot = args["slot"]
 
             if self.handler is not None:
                 self.handler.reset()
 
             asyncio.create_task(self.send_msgs([{"cmd": "GetDataPackage", "games": [DISPLAY_NAME]}]))
+
+        elif cmd == "ConnectionRefused":
+            logger.error(f"Connection refused. Errors: {args["errors"]}")
 
         if cmd == "ReceivedItems":
             asyncio.create_task(self.handle_received_items(args["index"], args["items"]))
@@ -428,10 +438,9 @@ class TouhouHBMContext(CommonContext):
         while self.handler is None or self.handler.gameController is None or not self.handler.gameController.check_if_in_game():
             await asyncio.sleep(0.5)
 
-        logger.info(f"Received index: {network_index}. The list included: {network_items_list}")
-
-        self.handle_items(network_items_list)
-        return
+        network_item_in_id: list[int] = []
+        for network_item in network_items_list:
+            network_item_in_id.append(network_item.item)
 
         # Python slicing will exclude the index of the start point if it's a positive integer.
         # Before actually processing it, wait until the client has loaded the local list of received items.
@@ -446,40 +455,29 @@ class TouhouHBMContext(CommonContext):
         # Slice the server's list from that number onwards. Only process that.
         if network_index <= 0:
             # If the server's list is somehow shorter than the local one, raise an error and disconnect.
-            if local_list_length > len(network_items_list):
-                logger.error("Received item list is somehow smaller than the local list. Disconnecting...")
+            if len(network_items_list) < local_list_length:
+                logger.error("Received item list is somehow smaller than the local list.")
                 self.inError = True
-                self.server = None
                 return
             # Otherwise, business as usual.
             newly_received_items = network_items_list[local_list_length:]
-
         # If the index is not 0, check for the most common case first.
         else:
             # If the index is the same as the local list's length, process that as per usual.
-            if network_index == local_list_length and len(network_items_list) == 1:
+            if network_index == local_list_length:
                 newly_received_items = network_items_list
-            # If the index is somehow less than the local list's length,
-            # disconnect everything and force the client into an error.
-            elif network_index < local_list_length:
-                logger.error("Received item index is somehow smaller than the local index. Disconnecting...")
-                self.inError = True
-                self.server = None
-                return
-            # If the index is more than 1 higher, calculate the difference between the local length and that.
-            # Check if the difference matches the length of the received list.
+            # If the index is different, request a Sync.
             else:
-                list_length_difference = network_index - local_list_length
-                # If it is different, request a full resync.
-                if list_length_difference != len(network_items_list):
-                    pass
-                # If not, business as usual.
-                else:
-                    newly_received_items = network_items_list
+                sync_msg = [{'cmd': 'Sync'}]
+                if self.locations_checked:
+                    sync_msg.append({"cmd": "LocationChecks",
+                                     "locations": list(self.locations_checked)})
+                await self.send_msgs(sync_msg)
 
         # Safeguard if there are no newly received items.
         if len(newly_received_items) <= 0: return
         self.handle_items(newly_received_items)
+        await self.add_to_item_list(newly_received_items)
 
 
     def handle_items(self, network_item_list: list[NetworkItem]):
@@ -578,8 +576,6 @@ class TouhouHBMContext(CommonContext):
     def handle_menu_items(self):
         # These items get processed no matter what,
         # but effects may differ depending on certain criteria.
-        logger.info(f"Attempting to handle global items: {self.menuItemQueue}")
-
         received_funds: int = 0
         received_equip_cost: int = 0
 
@@ -1048,7 +1044,6 @@ class TouhouHBMContext(CommonContext):
 
         # Check if this operation has already been carried out before.
         if self.loaded_past_received_items: return
-        logger.info(f"Attempting to load item list for slot {self.slot} of seed {self.seed_name}")
 
         json_file_name = LAST_INDEX_FILE_NAME + self.seed_name + JSON_EXTENSION
         full_file_path = os.path.join(self.scorefile_path, os.path.basename(json_file_name))
@@ -1057,7 +1052,6 @@ class TouhouHBMContext(CommonContext):
         if os.path.exists(full_file_path):
             with open(full_file_path) as json_file:
                 saved_data_dict: dict = orjson.loads(json_file.read())
-                logger.info(f"Loaded last item dictionary: {saved_data_dict}")
                 # Check if the slot name matches and item list exists.
                 if saved_data_dict[JSON_SLOT_NAME] == self.slot and JSON_SLOT_ITEMS in saved_data_dict:
                     self.all_received_items = saved_data_dict[JSON_SLOT_ITEMS]
@@ -1065,18 +1059,24 @@ class TouhouHBMContext(CommonContext):
         self.loaded_past_received_items = True
         return
 
-    async def add_to_item_list(self, item_list: list[int]):
+    async def add_to_item_list(self, item_list: list[NetworkItem]):
         # Adds item to the list of received items.
         # Call the function to write the item list to a local file afterwards.
         if item_list is None or item_list == []:
             return
-        self.all_received_items = self.all_received_items + item_list
+
+        item_id_list: list[int] = []
+        for network_item in item_list:
+            item_id_list.append(network_item.item)
+
+        self.all_received_items = self.all_received_items + item_id_list
         await self.write_last_item_list()
 
     async def write_last_item_list(self):
         # Writes the last received item index to a .json file named "th185ap".
         # Initial check to make sure the client has not reset itself.
         if not self.is_connected: return
+        if len(self.all_received_items) <= 0: return
 
         json_file_name = LAST_INDEX_FILE_NAME + self.seed_name + JSON_EXTENSION
         full_file_path = os.path.join(self.scorefile_path, os.path.basename(json_file_name))

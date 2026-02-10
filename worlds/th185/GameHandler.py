@@ -92,7 +92,7 @@ class GameHandler:
     # Received Item functions
     def addLife(self, value: int = 1):
         currentLives = self.gameController.getLives()
-        if currentLives == 11: self.spare_lives += value
+        #if currentLives == 11: self.spare_lives += value
         newLives = clamp(currentLives + value, 0, 11)
         self.gameController.setLives(newLives)
 
