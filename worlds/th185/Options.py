@@ -3,7 +3,7 @@ from Options import *
 
 class DisableChallengeLogic(DefaultOnToggle):
     """
-    Prevents the game from taking Challenge Market into account when placing items in Market End Reward locations. Disable to allow Challenge Market in logic.
+    Prevents the game from taking Challenge Market into account when placing items in Market Card Reward locations. Disable to allow Challenge Market in logic.
     """
 
     display_name = "Disable Challenge Market in Logic"
@@ -19,7 +19,7 @@ class DexChecks(DefaultOnToggle):
 
 class TrapChance(Range):
     """
-    Percentage chance that any given filler Item will be replaced by a trap Item.
+    Percentage chance that any given filler Item will be replaced by a trap item.
     """
 
     display_name = "Trap Chance"
@@ -31,7 +31,9 @@ class TrapChance(Range):
 
 class LowSkillLogic(DefaultOnToggle):
     """
-    Whether the generation logic should include certain lategame cards as compulsory logic.
+    Whether the generation logic should include certain Ability Cards as compulsory.
+
+    This includes: Life Explosion Elixir, Princess Kaguya's Secret Stash, Soot-covered Uchiwa, Esteemed Authority, Gluttonous Centipede, and Money Is The Best Lawyer In Hell.
     """
 
     display_name = "Recommended Loadout in Logic"
@@ -40,14 +42,14 @@ class CompletionType(Choice):
     """
     A goal to reach.
 
-    Full Main Story - Chimata Tenkyuu, Nitori Kawashiro, and Takane Yamashiro defeated.
-    Minimum Main Story - Takane Yamashiro defeated.
-    All Cards Owned - Full Ability Card dex unlocked.
-    All Bosses Defeated - All bosses defeated (except in Challenge Market).
-    Full Clear - All of the above.
+    0. Full Main Story - Chimata Tenkyuu, Nitori Kawashiro, and Takane Yamashiro defeated.
+    1. Minimum Main Story - Takane Yamashiro defeated.
+    2. All Cards Owned - Full Ability Card dex unlocked.
+    3. All Bosses Defeated - All bosses defeated (except in Challenge Market).
+    4. Full Clear - All of the above.
     """
 
-    display_name = "Goal"
+    display_name = "Completion Goal"
 
     option_Full_Main_Story = 0
     option_Minimum_Main_Story = 1
@@ -71,11 +73,11 @@ class TouhouHBMDataclass(PerGameCommonOptions):
 option_groups = [
     OptionGroup(
         "Gameplay Options",
-        [TrapChance]
+        [TrapChance, CompletionType]
     ),
     OptionGroup(
         "Generation Options",
-        [DisableChallengeLogic, DexChecks, LowSkillLogic, CompletionType]
+        [DisableChallengeLogic, DexChecks, LowSkillLogic]
     )
 ]
 
@@ -85,34 +87,34 @@ option_presets = {
         "card_dex_checks": False,
         "trap_chance": 0,
         "low_skill_logic": True,
-        "completion_type": 0
+        "completion_type": 0 # Full Main Story
     },
     "normal": {
         "disable_challenge_logic": True,
         "card_dex_checks": True,
         "trap_chance": 5,
         "low_skill_logic": True,
-        "completion_type": 0
+        "completion_type": 0 # Full Main Story
     },
     "hard": {
         "disable_challenge_logic": True,
         "card_dex_checks": True,
         "trap_chance": 10,
         "low_skill_logic": False,
-        "completion_type": 1
+        "completion_type": 1 # Minimum Main Story
     },
     "lunatic": {
         "disable_challenge_logic": False,
         "card_dex_checks": True,
         "trap_chance": 20,
         "low_skill_logic": False,
-        "completion_type": 3
+        "completion_type": 3 # All Bosses Defeated
     },
     "overdrive": {
         "disable_challenge_logic": False,
         "card_dex_checks": True,
         "trap_chance": 25,
         "low_skill_logic": False,
-        "completion_type": 4
+        "completion_type": 4 # Full Clear
     }
 }

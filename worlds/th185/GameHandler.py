@@ -32,6 +32,9 @@ class GameHandler:
         """Check if the game is currently in any stage. Returns True if yes."""
         return self.gameController.check_if_in_stage()
 
+    def isBlackMarketOpen(self) -> bool:
+        return self.gameController.check_if_black_market()
+
     def getCurrentGameFunds(self) -> int:
         self.game_funds = self.gameController.getGameFunds()
         return self.game_funds

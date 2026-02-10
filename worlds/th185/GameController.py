@@ -23,6 +23,7 @@ class GameController:
         self.addrGameFunds = self.pm.base_address+ADDR_GAME_FUNDS_PTR
         self.addrBulletMoney = self.pm.base_address+ADDR_BULLET_MONEY_PTR
         self.addrLives = self.pm.base_address+ADDR_LIVES_PTR
+        self.addrBlackMarketStatus = self.pm.base_address+ADDR_BLACK_MARKET_PTR
 
         # Menu and record-keeping.
         # These use pointers.
@@ -53,6 +54,17 @@ class GameController:
             return False
         # If this does not raise an exception, the game is running.
         return True
+
+    def check_if_black_market(self) -> bool:
+        """
+        Returns True if a Black Market is open in a stage.
+        """
+        try:
+            black_market_int = self.pm.read_int(self.addrBlackMarketStatus)
+        except Exception as e:
+            return False
+
+        return black_market_int != 0
 
     # Gameplay.
     # Lives (in-game) functions

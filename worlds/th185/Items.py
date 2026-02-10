@@ -136,15 +136,6 @@ def create_all_items(world):
     # Submit item pool for the randomizer.
     world.multiworld.itempool += item_pool
 
-
-def check_if_item_id_exists(given_id: int) -> bool:
-    if 0 < given_id <= 5: return True
-    if 10 <= given_id <= 13: return True
-    if 50 <= given_id <= 52: return True
-    if 100 <= given_id <= 108: return True
-    if 200 <= given_id <= 282: return True
-    return False
-
 # An Item table documenting every Item and its data.
 # If anything new is added, add it to Client.py under give_item()
 # as well as add entries to the other tables below here.

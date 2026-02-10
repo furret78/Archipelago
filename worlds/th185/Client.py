@@ -4,6 +4,7 @@ import traceback
 from typing import Optional
 import asyncio
 import colorama
+import orjson
 import pymem.exception
 
 from CommonClient import (
@@ -16,7 +17,7 @@ from CommonClient import (
 )
 from NetUtils import NetworkItem
 from .GameHandler import *
-from .Items import GAME_ONLY_ITEM_ID, check_if_item_id_exists
+from .Items import GAME_ONLY_ITEM_ID
 from .Locations import *
 
 # Handles the game itself. The watcher that runs loops is down below.
@@ -40,6 +41,14 @@ def copy_and_replace(directory: str):
         os.remove(backup_file_path)
 
     logger.info(f"Successfully replaced save data at: {full_file_path}")
+
+def erase_saved_index(directory: str):
+    full_file_path = os.path.join(directory, os.path.basename(LAST_INDEX_FILE_NAME))
+    if os.path.exists(full_file_path):
+        os.remove(full_file_path)
+        logger.info(f"Successfully removed last item index data at: {full_file_path}")
+    else:
+        logger.error("No .json containing last item index data exists here...")
 
 
 class TouhouHBMClientProcessor(ClientCommandProcessor):
@@ -111,11 +120,19 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
 
     def _cmd_replace_save(self):
         """
-        Replaces the game's scoreth185.dat file and deletes scoreth185bak.dat file.
+        Replaces the game's scoreth185.dat file and deletes the scoreth185bak.dat file.
         Recommended to manually back up save data before doing this.
         The game's save data is often located at %appdata%/ShanghaiAlice/th185.
         """
         copy_and_replace(self.ctx.scorefile_path)
+
+    def _cmd_erase_item_index(self):
+        """
+        Erases the local .json file containing the last saved item index saved.
+        Not recommended unless clearing out old data.
+        Uses the same directory as the game's save data, often located at %appdata%/ShanghaiAlice/th185.
+        """
+        erase_saved_index(self.ctx.scorefile_path)
 
 
 class TouhouHBMContext(CommonContext):
@@ -148,7 +165,7 @@ class TouhouHBMContext(CommonContext):
         # Scorefile path.
         default_appdata_path = os.getenv("APPDATA")
         if default_appdata_path is None:
-            self.ctx.scorefile_path = None
+            self.scorefile_path = None
         else:
             self.scorefile_path = default_appdata_path + APPDATA_PATH
 
@@ -173,9 +190,9 @@ class TouhouHBMContext(CommonContext):
         # Owning a card and unlocking its dex entry is one and the same,
         # but it is separate for the player.
         self.custom_data_keys_list: list = [str(self.slot)+"Funds185",
-                                            str(self.slot)+"LastItem185",
                                             str(self.slot)+"Slots185",
-                                            str(self.slot)+"EquipCost185"]
+                                            str(self.slot)+"EquipCost185",
+                                            str(self.slot)+"LastItem185"]
 
         # Set to True when scanning the card shop addresses as locations.
         # Set to False when in the menu.
@@ -194,12 +211,13 @@ class TouhouHBMContext(CommonContext):
         # Checks whether Menu funds and stuff has been loaded yet.
         self.menu_stats_initialized: bool = False
 
-        # Last received item index from the server.
-        self.lastReceivedItem: int = -1
+        # List of all received items from the server.
+        self.all_received_items: list[int] = []
+        self.loaded_past_received_items: bool = False
 
         # Whether the game is running or not.
         # Checks for whether it is the game itself or just the window resolution dialogue box.
-        self.isGameRunning: bool = False
+        self.is_game_running: bool = False
 
         self.reset()
 
@@ -212,15 +230,51 @@ class TouhouHBMContext(CommonContext):
 
         self.inError = False
 
-        self.menuFunds = 0
-        self.permashop_cards_new = []
-        self.permashop_cards = []
-        self.unlocked_stages = []
-
         # List of items/locations
         self.previous_location_checked = None
         self.is_connected = False
         self.loadingDataSetup = True
+
+        self.menuFunds: int = 0
+        self.loadout_slots: int = 1
+        self.equip_cost: int = 100
+        self.permashop_cards_new: list = []
+        self.permashop_cards: list = []
+        self.unlocked_stages: list = []
+        self.custom_data_keys_list: list = [str(self.slot) + "Funds185",
+                                            str(self.slot) + "Slots185",
+                                            str(self.slot) + "EquipCost185",
+                                            str(self.slot) + "LastItem185"]
+
+        self.enable_card_selection_checking: bool = False
+        self.enable_card_shop_scanning: bool = True
+
+        self.receivedItemQueue: list[NetworkItem] = []
+        self.menuItemQueue: list = []
+        self.gameItemQueue: list = []
+        self.menu_stats_initialized: bool = False
+        self.is_game_running: bool = False
+        self.all_received_items: list[int] = []
+        self.loaded_past_received_items: bool = False
+        self.reset_game_data()
+
+    def reset_game_data(self):
+        self.is_game_running = self.handler.gameController.check_if_in_game()
+        # If the game isn't running, no need to do anything.
+        if not self.is_game_running: return
+        # If it is, reset all stats immediately.
+        # TODO: Implement full game reset.
+        # 1. Clear all boss records.
+
+        # 2. Clear all stage unlock records.
+
+        # 3. Clear all menu records (Funds, card slots, equip cost).
+
+        # 4. Clear all card dex records.
+
+        # 5. Clear all card shop records.
+
+        pass
 
     def make_gui(self):
         ui = super().make_gui()
@@ -257,20 +311,15 @@ class TouhouHBMContext(CommonContext):
                 if args["keys"][self.custom_data_keys_list[0]] is not None:
                     self.menuFunds = args["keys"][self.custom_data_keys_list[0]]
 
-            # Last Received Item Index integer
+            # Loadout Slots
             if self.custom_data_keys_list[1] in args["keys"]:
                 if args["keys"][self.custom_data_keys_list[1]] is not None:
-                    self.lastReceivedItem = args["keys"][self.custom_data_keys_list[1]]
-
-            # Loadout Slots
-            if self.custom_data_keys_list[2] in args["keys"]:
-                if args["keys"][self.custom_data_keys_list[2]] is not None:
-                    self.loadout_slots = clamp(args["keys"][self.custom_data_keys_list[2]], 1, 34)
+                    self.loadout_slots = clamp(args["keys"][self.custom_data_keys_list[1]], 1, 34)
 
             # Equip Cost
-            if self.custom_data_keys_list[3] in args["keys"]:
-                if args["keys"][self.custom_data_keys_list[3]] is not None:
-                    self.equip_cost = args["keys"][self.custom_data_keys_list[3]]
+            if self.custom_data_keys_list[2] in args["keys"]:
+                if args["keys"][self.custom_data_keys_list[2]] is not None:
+                    self.equip_cost = args["keys"][self.custom_data_keys_list[2]]
                     if self.equip_cost < 100: self.equip_cost = 100
 
         elif cmd == "DataPackage":
@@ -294,10 +343,9 @@ class TouhouHBMContext(CommonContext):
             # Funds update or the list for the above with the "New!" tag can be dropped,
             # but the unlock list itself is important since that interferes with checks.
             if args["value"] is not None:
+                pass
                 #if args["key"] == self.custom_data_keys_list[0]:
                 #    self.menuFunds = args["value"]
-                if args["key"] == self.custom_data_keys_list[1]:
-                    self.lastReceivedItem = args["value"]
             self.replyFromServerReceived = True
 
     def client_received_initial_server_data(self):
@@ -380,12 +428,62 @@ class TouhouHBMContext(CommonContext):
         while self.handler is None or self.handler.gameController is None or not self.handler.gameController.check_if_in_game():
             await asyncio.sleep(0.5)
 
-        # logger.info(f"Last item index is: {network_index}")
+        logger.info(f"Received index: {network_index}. The list included: {network_items_list}")
 
-        self.handle_items(network_index, network_items_list)
+        self.handle_items(network_items_list)
+        return
+
+        # Python slicing will exclude the index of the start point if it's a positive integer.
+        # Before actually processing it, wait until the client has loaded the local list of received items.
+        while not self.loaded_past_received_items:
+            await asyncio.sleep(0.5)
+
+        local_list_length = len(self.all_received_items)
+        newly_received_items: list[NetworkItem] = []
+
+        # Upon receiving this package, check if the index is 0.
+        # If it is, bring up the loaded local item list. Grab the length of that local list.
+        # Slice the server's list from that number onwards. Only process that.
+        if network_index <= 0:
+            # If the server's list is somehow shorter than the local one, raise an error and disconnect.
+            if local_list_length > len(network_items_list):
+                logger.error("Received item list is somehow smaller than the local list. Disconnecting...")
+                self.inError = True
+                self.server = None
+                return
+            # Otherwise, business as usual.
+            newly_received_items = network_items_list[local_list_length:]
+
+        # If the index is not 0, check for the most common case first.
+        else:
+            # If the index is the same as the local list's length, process that as per usual.
+            if network_index == local_list_length and len(network_items_list) == 1:
+                newly_received_items = network_items_list
+            # If the index is somehow less than the local list's length,
+            # disconnect everything and force the client into an error.
+            elif network_index < local_list_length:
+                logger.error("Received item index is somehow smaller than the local index. Disconnecting...")
+                self.inError = True
+                self.server = None
+                return
+            # If the index is more than 1 higher, calculate the difference between the local length and that.
+            # Check if the difference matches the length of the received list.
+            else:
+                list_length_difference = network_index - local_list_length
+                # If it is different, request a full resync.
+                if list_length_difference != len(network_items_list):
+                    pass
+                # If not, business as usual.
+                else:
+                    newly_received_items = network_items_list
+
+        # Safeguard if there are no newly received items.
+        if len(newly_received_items) <= 0: return
+        self.handle_items(newly_received_items)
 
 
-    def handle_items(self, item_index: int, network_item_list: list[NetworkItem]):
+    def handle_items(self, network_item_list: list[NetworkItem]):
+        # Function that handles the items filtered through the list.
         ability_card_unlock_list = []
         stage_unlock_list = []
         filler_list = []
@@ -538,13 +636,13 @@ class TouhouHBMContext(CommonContext):
                 },
                 {
                     "cmd": "Set",
-                    "key": self.custom_data_keys_list[2],
+                    "key": self.custom_data_keys_list[1],
                     "default": 1,
                     "operations": [{"operation": 'replace', "value": self.loadout_slots}]
                 },
                 {
                     "cmd": "Set",
-                    "key": self.custom_data_keys_list[3],
+                    "key": self.custom_data_keys_list[2],
                     "default": 100,
                     "operations": [{"operation": 'replace', "value": self.equip_cost}]
                 }
@@ -563,14 +661,6 @@ class TouhouHBMContext(CommonContext):
                     "operations": [{"operation": 'replace', "value": self.menuFunds}]
                 }
             ]
-        )
-
-    async def save_last_received_item_index_to_server(self):
-        await self.send_msgs(
-            [{"cmd": 'Set',
-              "key": self.custom_data_keys_list[1],
-              "default": 0,
-              "operations": [{"operation": 'replace', "value": self.lastReceivedItem}]}]
         )
 
     #
@@ -700,7 +790,7 @@ class TouhouHBMContext(CommonContext):
         new_locations = []
 
         if self.loadingDataSetup:
-            logger.info("Attempting to load previous data...")
+            # logger.info("Attempting to load previous data...")
             return
 
         # Check bosses first.
@@ -766,6 +856,12 @@ class TouhouHBMContext(CommonContext):
                     new_locations.append(location_table[cardLocationName])
                     player_has_found_card_in_stage = True
 
+            if self.handler.isBlackMarketOpen():
+                self.handler.setDexCardData(NAZRIN_CARD_2, True)
+                cardLocationName: str = get_card_location_name_str(NAZRIN_CARD_2, True)
+                if (location_table[cardLocationName] in self.all_location_ids
+                    and location_table[cardLocationName] not in self.previous_location_checked):
+                    new_locations.append(location_table[cardLocationName])
 
         # Dex
         player_has_purchased_card_bool = False
@@ -788,13 +884,13 @@ class TouhouHBMContext(CommonContext):
         if new_locations:
             # Since both of Nazrin's cards do not get unlocked at all past the Tutorial,
             # This is added so that it gets unlocked in the dex.
-            # The Bullet Money variant is set to be unlocked at the start of a stage.
+            # The Bullet Money variant is set to be unlocked at the opening of a Black Market.
             # The Funds variant is set to be unlocked at the Market Card Reward selection.
             if player_has_found_card_in_stage:
                 self.handler.setDexCardData(NAZRIN_CARD_1, True)
                 cardLocationName: str = get_card_location_name_str(NAZRIN_CARD_1, True)
                 if (location_table[cardLocationName] in self.all_location_ids
-                        and location_table[cardLocationName] not in self.previous_location_checked):
+                    and location_table[cardLocationName] not in self.previous_location_checked):
                     new_locations.append(location_table[cardLocationName])
 
             if player_has_purchased_card_bool: await self.save_menu_funds_to_server()
@@ -808,6 +904,7 @@ class TouhouHBMContext(CommonContext):
             await self.send_msgs([{"cmd": 'StatusUpdate', "status": 30}])
 
     async def get_custom_data_from_server(self):
+        # TODO: Implement selective Get command when there is local data for last item index.
         self.retrievedCustomData = True
         await self.send_msgs([{"cmd": "Get", "keys": self.custom_data_keys_list}])
         await self.send_msgs([{"cmd": "SetNotify", "keys": self.custom_data_keys_list}])
@@ -818,7 +915,6 @@ class TouhouHBMContext(CommonContext):
         Should be carried out at the very first game connection.
         """
         while self.handler is None or self.handler.gameController is None or not self.handler.gameController.check_if_in_game():
-            logger.info("Cannot load just yet, trying again...")
             await asyncio.sleep(0.5)
 
         self.load_save_data_bosses()
@@ -882,8 +978,6 @@ class TouhouHBMContext(CommonContext):
         Mainly for the Ability Card shop addresses.
         Previously checked locations are save data for Card Selection checks.
         """
-        self.handler.setDexCardData(NAZRIN_CARD_2, True)
-
         menu_shop_card_list = ABILITY_CARD_LIST
         for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
             if invalid_card in menu_shop_card_list: menu_shop_card_list.remove(invalid_card)
@@ -937,28 +1031,70 @@ class TouhouHBMContext(CommonContext):
     #
     # Last Received Item Index handling.
     #
+    # The data is saved in a .json named "th185ap_????.json", where ???? is the seed name.
+    # The data consists of a Dictionary, wherein there is the slot name and received item list.
+    # Only do this after connection has been established since this calls for the seed name and slot name.
+    #
+    # Use orjson functions for dealing with said .json.
     async def initial_load_last_item_list(self):
-        # Responsible for loading the index of the last item received when client launches.
-        # 1. Try to load the dedicated .json file containing the data.
-        #    - Use the file name "th185ap".
-        # 2. Try to find data according to world seed and slot name.
-        # 3. Set the index to the found index.
-        # If any of the above steps fail, set the index to 0.
-        self.lastReceivedItem = 0
+        # Responsible for loading the index of the last item received when client connects to the server.
+        # The usual workflow of this function is as follows:
+        # 1. Check if the file exists in the path.
+        # 2. If the file exists, read the entire file as one Dictionary.
+        # 3. Check if the slot name matches and if the item list exists.
+        # 5. Read the item list as a list.
+        #
+        # If at any point that any of the steps above fail, skip the entire thing.
+
+        # Check if this operation has already been carried out before.
+        if self.loaded_past_received_items: return
+        logger.info(f"Attempting to load item list for slot {self.slot} of seed {self.seed_name}")
+
+        json_file_name = LAST_INDEX_FILE_NAME + self.seed_name + JSON_EXTENSION
+        full_file_path = os.path.join(self.scorefile_path, os.path.basename(json_file_name))
+
+        # Check if the file exists.
+        if os.path.exists(full_file_path):
+            with open(full_file_path) as json_file:
+                saved_data_dict: dict = orjson.loads(json_file.read())
+                logger.info(f"Loaded last item dictionary: {saved_data_dict}")
+                # Check if the slot name matches and item list exists.
+                if saved_data_dict[JSON_SLOT_NAME] == self.slot and JSON_SLOT_ITEMS in saved_data_dict:
+                    self.all_received_items = saved_data_dict[JSON_SLOT_ITEMS]
+
+        self.loaded_past_received_items = True
         return
+
+    async def add_to_item_list(self, item_list: list[int]):
+        # Adds item to the list of received items.
+        # Call the function to write the item list to a local file afterwards.
+        if item_list is None or item_list == []:
+            return
+        self.all_received_items = self.all_received_items + item_list
+        await self.write_last_item_list()
 
     async def write_last_item_list(self):
         # Writes the last received item index to a .json file named "th185ap".
-        # 1. Read the entire .json file as a List of Lists.
-        # 2.
+        # Initial check to make sure the client has not reset itself.
+        if not self.is_connected: return
+
+        json_file_name = LAST_INDEX_FILE_NAME + self.seed_name + JSON_EXTENSION
+        full_file_path = os.path.join(self.scorefile_path, os.path.basename(json_file_name))
+
+        full_dict = {
+            JSON_SLOT_NAME: self.slot,
+            JSON_SLOT_ITEMS: self.all_received_items
+        }
+
+        # Remove the old file before writing.
+        if os.path.exists(full_file_path):
+            os.remove(full_file_path)
+        # Overwrite the entire thing.
+        with open(full_file_path, "wb") as json_file:
+            json_file.write(orjson.dumps(full_dict))
+
         return
 
-    def last_item_index_matches(self, server_index: int) -> bool:
-        """
-        Check if the last received item index from the server matches local data.
-        """
-
-        return True
 
 async def game_watcher(ctx: TouhouHBMContext):
     """
@@ -966,17 +1102,18 @@ async def game_watcher(ctx: TouhouHBMContext):
     Start the different loops once connected that will handle the game.
 	It will also attempt to reconnect if the connection to the game is lost.
     """
-    # Do last item received index loading here.
-    await ctx.initial_load_last_item_list()
-
     await ctx.wait_for_initial_connection_info()
+    await ctx.initial_load_last_item_list()
 
     while not ctx.exit_event.is_set():
         # Client was disconnected from the server
         if not ctx.server:
             # Reset the context in that case
+            if ctx.is_connected:
+                logger.info("Client was disconnected from the server.")
             ctx.reset()
             await ctx.wait_for_initial_connection_info()
+            await ctx.initial_load_last_item_list()
         else:
             if not ctx.retrievedCustomData:
                 try:
@@ -1010,8 +1147,8 @@ async def game_watcher(ctx: TouhouHBMContext):
         if ctx.handler and ctx.handler.gameController:
             ctx.inError = False
 
-            if not ctx.isGameRunning:
-                ctx.isGameRunning = ctx.handler.gameController.check_if_in_game()
+            if not ctx.is_game_running:
+                ctx.is_game_running = ctx.handler.gameController.check_if_in_game()
                 await asyncio.sleep(1)
                 continue
 

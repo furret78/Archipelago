@@ -1,5 +1,4 @@
 from .WebWorld import TouhouHBMWebWorld
-from .variables.meta_data import SHORT_NAME, DISPLAY_NAME
 from ..LauncherComponents import Component, components, launch_subprocess, Type, icon_paths
 from collections.abc import Mapping
 from typing import Any
