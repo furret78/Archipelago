@@ -4,7 +4,6 @@
 - Add function to relink to the game after a disconnect without restarting client. (test later)
 - Figure out seamless room switching while the game is running.
 - Consider saving the scorefile path last inputted by the user somehow.
-- Add item groups and location groups.
 - Add Death Link.
 - Linux support for the client.
 
@@ -13,3 +12,5 @@
 
 - Add Progressive Card Slot items.
 - Add Progressive Equip Cost items.
+
+- Change last item index .json to use player name instead of slot number. (potentially breaking change that requires local file editing)

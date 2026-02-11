@@ -49,6 +49,7 @@ class TouhouHBMWorld(World):
     origin_region_name = "Menu"
 
     item_name_groups = Items.get_item_groups()
+    location_name_groups = Locations.location_groups
 
     def create_regions(self):
         Regions.create_and_connect_regions(self)
