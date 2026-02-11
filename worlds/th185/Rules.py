@@ -92,20 +92,26 @@ def set_all_location_rules(world) -> None:
     def has_lategame_access_item(state: CollectionState) -> bool:
         if world.options.low_skill_logic:
             return ((state.has_any((STAGE4_NAME_FULL, STAGE5_NAME_FULL, STAGE6_NAME_FULL), world.player)
-                     and state.has_all((EIRIN_CARD_NAME, KAGUYA_CARD_NAME, MIKO_CARD_NAME, SHION_CARD_NAME, MOMOYO_CARD_NAME, EIKI_CARD_NAME), world.player))
-                    or has_challenge_access_item(state))
+                     and low_skill_rules(state)) or has_challenge_access_item(state))
         else:
             return (state.has_any((STAGE4_NAME_FULL, STAGE5_NAME_FULL, STAGE6_NAME_FULL), world.player)
                     or has_challenge_access_item(state))
 
+    def low_skill_rules(state: CollectionState) -> bool:
+        return state.has_all((EIRIN_CARD_NAME, KAGUYA_CARD_NAME, MIKO_CARD_NAME, SHION_CARD_NAME, MOMOYO_CARD_NAME, EIKI_CARD_NAME), world.player)
+
     # Special access rules.
     def has_nitori_access(state: CollectionState) -> bool:
-        return (state.has_all((STAGE4_NAME_FULL, BLANK_CARD_NAME), world.player)
-                or has_challenge_access_item(state))
+        if world.options.low_skill_logic:
+            return state.has_all((STAGE4_NAME_FULL, BLANK_CARD_NAME), world.player) and low_skill_rules(state)
+        else:
+            return state.has_all((STAGE4_NAME_FULL, BLANK_CARD_NAME), world.player)
 
     def has_takane_access(state: CollectionState) -> bool:
-        return (state.has_all((STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME), world.player)
-                or has_challenge_access_item(state))
+        if world.options.low_skill_logic:
+            return state.has_all((STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME), world.player) and low_skill_rules(state)
+        else:
+            return state.has_all((STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME), world.player)
 
     def has_teacup_access(state: CollectionState) -> bool:
         return state.has_all((ENDSTAGE_NAME_FULL, BLANK_CARD_NAME), world.player) or has_challenge_access_item(state)
@@ -195,11 +201,11 @@ def set_all_location_rules(world) -> None:
                 continue
             # Capitalist's Dilemma requires Blank Card and 4th Market unlock.
             if card == NITORI_STORY_CARD:
-                add_rule(location_card_reward, lambda state: has_nitori_access(state))
+                add_rule(location_card_reward, lambda state: has_nitori_access(state) or has_challenge_access_item(state))
                 continue
             # Hundredth Black Market requires Capitalist's Dilemma and 6th Market unlock.
             if card == TAKANE_STORY_CARD:
-                add_rule(location_card_reward, lambda state: has_takane_access(state))
+                add_rule(location_card_reward, lambda state: has_takane_access(state) or has_challenge_access_item(state))
                 continue
             # Teacup cards require Blank Card and End of Market unlock.
             if card == TEACUP_REIMU_CARD or card == TEACUP_MARISA_CARD:
