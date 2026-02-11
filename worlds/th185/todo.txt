@@ -12,3 +12,6 @@
 
 - Code refactoring for more clarity.
 - Refactoring Rules.py to accommodate Rule Builder.
+
+- Add Progressive Card Slot items.
+- Add Progressive Equip Cost items.

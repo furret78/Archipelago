@@ -42,14 +42,6 @@ def copy_and_replace(directory: str):
 
     logger.info(f"Successfully replaced save data at: {full_file_path}")
 
-def erase_saved_indexes(directory: str):
-    full_file_path = os.path.join(directory, os.path.basename(LAST_INDEX_FILE_NAME))
-    if os.path.exists(full_file_path):
-        os.remove(full_file_path)
-        logger.info(f"Successfully removed all last item index data in: {directory}")
-    else:
-        logger.error("No .json containing last item index data exists here...")
-
 
 class TouhouHBMClientProcessor(ClientCommandProcessor):
     def __init__(self, ctx):
@@ -60,20 +52,6 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
         Internally forces the client to enter Error state in order to restart link to the game.
         """
         self.ctx.inError = True
-
-    def _cmd_show_life(self):
-        """
-        Retrieves this slot's current number of lives.
-        """
-        if not self.ctx.handler or not self.ctx.handler.gameController:
-            logger.error("The game is not running!")
-            return
-
-        if self.ctx.handler.gameController.check_if_in_stage():
-            life_count = self.ctx.handler.gameController.getLives()
-            logger.info(f"Current lives: {life_count}")
-        else:
-            logger.error("This slot is currently not in a stage!")
 
     def _cmd_show_funds(self):
         """
@@ -126,14 +104,6 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
         The game's save data is often located at %appdata%/ShanghaiAlice/th185.
         """
         copy_and_replace(self.ctx.scorefile_path)
-
-    #def _cmd_erase_item_index(self):
-        #"""
-        #Erases all local .json files containing the last saved item index saved.
-        #Not recommended unless clearing out old data.
-        #Uses the same directory as the game's save data, often located at %appdata%/ShanghaiAlice/th185.
-        #"""
-        #erase_saved_indexes(self.ctx.scorefile_path)
 
 
 class TouhouHBMContext(CommonContext):
@@ -454,10 +424,14 @@ class TouhouHBMContext(CommonContext):
         # If it is, bring up the loaded local item list. Grab the length of that local list.
         # Slice the server's list from that number onwards. Only process that.
         if network_index <= 0:
-            # If the server's list is somehow shorter than the local one, raise an error and disconnect.
+            # If the server's list is somehow shorter than the local one,
+            # this is probably divergent history.
             if len(network_items_list) < local_list_length:
-                logger.error("Received item list is somehow smaller than the local list.")
-                self.inError = True
+                logger.info("Received item list is somehow smaller than the local list. Divergent history?")
+                self.all_received_items = []
+                for network_item in network_items_list:
+                    self.all_received_items.append(network_item.item)
+                await self.write_last_item_list()
                 return
             # Otherwise, business as usual.
             newly_received_items = network_items_list[local_list_length:]
@@ -474,31 +448,24 @@ class TouhouHBMContext(CommonContext):
                                      "locations": list(self.locations_checked)})
                 await self.send_msgs(sync_msg)
 
+        self.handle_save_data_items(network_items_list)
         # Safeguard if there are no newly received items.
         if len(newly_received_items) <= 0: return
-        self.handle_items(newly_received_items)
+        self.handle_filler_items(newly_received_items)
         await self.add_to_item_list(newly_received_items)
 
-
-    def handle_items(self, network_item_list: list[NetworkItem]):
-        # Function that handles the items filtered through the list.
+    def handle_save_data_items(self, network_item_list: list[NetworkItem]):
         ability_card_unlock_list = []
         stage_unlock_list = []
-        filler_list = []
 
         for network_item in network_item_list:
             if network_item.item in ITEM_TABLE_ID_TO_STAGE_NAME:
                 stage_unlock_list.append(ITEM_TABLE_ID_TO_STAGE_NAME[network_item.item])
             elif network_item.item in ITEM_TABLE_ID_TO_CARD_ID:
                 ability_card_unlock_list.append(ITEM_TABLE_ID_TO_CARD_ID[network_item.item])
-            else:
-                # Check against last indexed item here.
-                # This only matters for filler since the item list is also used as save data.
-                filler_list.append(network_item.item)
 
         self.handle_ability_cards(ability_card_unlock_list)
         self.handle_stages(stage_unlock_list)
-        self.handle_filler_items(filler_list)
 
     def handle_ability_cards(self, filtered_list):
         if len(filtered_list) <= 0: return
@@ -521,11 +488,14 @@ class TouhouHBMContext(CommonContext):
         if len(filtered_list) <= 0: return
 
         for filler_item in filtered_list:
-            if filler_item in GAME_ONLY_ITEM_ID:
-                self.gameItemQueue.append(filler_item)
+            item_id = filler_item.item
+            if item_id in ITEM_TABLE_ID_TO_STAGE_NAME: continue
+            if item_id in ITEM_TABLE_ID_TO_CARD_ID: continue
+            if item_id in GAME_ONLY_ITEM_ID:
+                self.gameItemQueue.append(item_id)
                 continue
 
-            self.menuItemQueue.append(filler_item)
+            self.menuItemQueue.append(item_id)
 
         self.handle_menu_items()
         asyncio.create_task(self.handle_game_only_items())
@@ -548,21 +518,62 @@ class TouhouHBMContext(CommonContext):
 
         received_bullet_money: int = 0
         received_lives: int = 0
+        received_shot_attack: int = 0
+        received_circle_atk: int = 0
+        received_circle_size: int = 0
+        received_circle_duration: int = 0
+        received_circle_graze: int = 0
+        received_speed: int = 0
+        received_invincibility: int = 0
 
         for item_id in self.gameItemQueue:
             # if not self.handler.isGameInStage(): continue
             match item_id:
                 # Filler + Useful
+                # Lives
                 case 1: received_lives += 1
+                # Bullet Money
                 case 4: received_bullet_money += 200
                 case 5: received_bullet_money += 500
                 case 12: received_bullet_money += 5
                 case 13: received_bullet_money += 10
+                # Shot Attack %
+                case 14: received_shot_attack += 15
+                case 15: received_shot_attack += 30
+                case 16: received_shot_attack += 45
+                case 17: received_shot_attack += 60
+                # Magic Circle Attack %
+                case 18: received_circle_atk += 30
+                case 19: received_circle_atk += 60
+                case 20: received_circle_atk += 90
+                case 21: received_circle_atk += 120
+                # Magic Circle Size %
+                case 22: received_circle_size += 5
+                case 23: received_circle_size += 10
+                case 24: received_circle_size += 15
+                case 25: received_circle_size += 20
+                # Magic Circle Duration %
+                case 26: received_circle_duration += 10
+                case 27: received_circle_duration += 20
+                # Magic Circle Graze Range %
+                case 28: received_circle_graze += 15
+                case 29: received_circle_graze += 30
+                case 30: received_circle_graze += 45
+                case 31: received_circle_graze += 60
+                # Movement Speed %
+                case 32: received_speed += 20
+                # Invincibility
+                case 40: received_invincibility += 120
+                case 41: received_invincibility += 300
+
                 # Traps
+                # Bullet Money
                 case 50: received_bullet_money -= 50
                 case 51: received_bullet_money -= 100
+                # Movement Speed
+                case 71: received_speed += 500
                 # Default
-                case _: logger.error("Unknown game item detected! Ignoring...")
+                case _: logger.info("Unknown game item detected! Ignoring...")
 
             self.gameItemQueue.remove(item_id)
 
@@ -570,6 +581,22 @@ class TouhouHBMContext(CommonContext):
             self.handler.addBulletMoney(received_bullet_money)
         if received_lives != 0:
             self.handler.addLife(received_lives)
+        if received_shot_attack != 0:
+            self.handler.gameController.addShotAttack(received_shot_attack)
+
+        if received_circle_atk != 0:
+            self.handler.gameController.addMagicCircleAttack(received_circle_size)
+        if received_circle_size != 0:
+            self.handler.gameController.addMagicCircleSize(received_circle_size)
+        if received_circle_duration != 0:
+            self.handler.gameController.addMagicCircleDuration(received_circle_duration)
+        if received_circle_graze != 0:
+            self.handler.gameController.addMagicCircleGraze(received_circle_graze)
+
+        if received_speed != 0:
+            self.handler.gameController.addSpeed(received_speed)
+        if received_invincibility != 0:
+            self.handler.gameController.addInvincibility(received_invincibility)
 
         return
 
@@ -592,7 +619,7 @@ class TouhouHBMContext(CommonContext):
                 case 62: received_funds -= 200
                 case 70: received_equip_cost -= 50
                 # Default
-                case _: logger.error("Unknown global item! Ignoring...")
+                case _: logger.info("Unknown global item! Ignoring...")
 
             self.menuItemQueue.remove(item_id)
 
@@ -1119,9 +1146,9 @@ async def game_watcher(ctx: TouhouHBMContext):
                 try:
                     await ctx.get_custom_data_from_server()
                 except Exception as e:
+                    ctx.inError = True
                     logger.error("Failed to retrieve save data.")
                     logger.error(traceback.format_exc())
-                    ctx.inError = True
 
         # Trying to make first connection to the game
         if ctx.handler is None and not ctx.inError:

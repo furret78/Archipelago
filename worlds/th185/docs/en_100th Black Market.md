@@ -39,6 +39,9 @@ All cards except two of Nazrin's "Money Comes and Goes On Its Own" cards are shu
 - Additional Funds
 - Additional Bullet Money
 - +1 Life
+- Various stat changes for the Magic Circle
+- Movement Speed
+- Shot Attack Strength
 
 ## What does another world's item look like in 100th Black Market?
 The items are **visually unchanged**. After collecting an item, a message will show up in the client.

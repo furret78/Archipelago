@@ -45,6 +45,10 @@ def get_random_filler_item_name(world) -> str:
     for name in get_items_by_category(CATEGORY_ITEM).keys():
         filler_item_list.append(name)
     for name in get_items_by_category(CATEGORY_FILLER).keys():
+        # Check if generation options allow for non-money filler.
+        if not world.options.include_gameplay_filler:
+            if 14 <= item_table[name].code <= 41: continue
+
         filler_item_list.append(name)
 
     final_item_name: str = world.random.choice(filler_item_list).__str__()
@@ -153,6 +157,33 @@ item_table: Dict[str, TouhouHBMItemData] = {
     "+5 Bullet Money": TouhouHBMItemData(CATEGORY_FILLER, 12),
     "+10 Bullet Money": TouhouHBMItemData(CATEGORY_FILLER, 13),
 
+    "+15% Shot Attack": TouhouHBMItemData(CATEGORY_FILLER, 14),
+    "+30% Shot Attack": TouhouHBMItemData(CATEGORY_FILLER, 15),
+    "+45% Shot Attack": TouhouHBMItemData(CATEGORY_FILLER, 16),
+    "+60% Shot Attack": TouhouHBMItemData(CATEGORY_FILLER, 17),
+
+    "+30% Magic Circle Attack": TouhouHBMItemData(CATEGORY_FILLER, 18),
+    "+60% Magic Circle Attack": TouhouHBMItemData(CATEGORY_FILLER, 19),
+    "+90% Magic Circle Attack": TouhouHBMItemData(CATEGORY_FILLER, 20),
+    "+120% Magic Circle Attack": TouhouHBMItemData(CATEGORY_FILLER, 21),
+
+    "+5% Magic Circle Size": TouhouHBMItemData(CATEGORY_FILLER, 22),
+    "+10% Magic Circle Size": TouhouHBMItemData(CATEGORY_FILLER, 23),
+    "+15% Magic Circle Size": TouhouHBMItemData(CATEGORY_FILLER, 24),
+    "+20% Magic Circle Size": TouhouHBMItemData(CATEGORY_FILLER, 25),
+
+    "+10% Magic Circle Duration": TouhouHBMItemData(CATEGORY_FILLER, 26),
+    "+20% Magic Circle Duration": TouhouHBMItemData(CATEGORY_FILLER, 27),
+
+    "+15% Magic Circle Graze Range": TouhouHBMItemData(CATEGORY_FILLER, 28),
+    "+30% Magic Circle Graze Range": TouhouHBMItemData(CATEGORY_FILLER, 29),
+    "+45% Magic Circle Graze Range": TouhouHBMItemData(CATEGORY_FILLER, 30),
+    "+60% Magic Circle Graze Range": TouhouHBMItemData(CATEGORY_FILLER, 31),
+
+    "+20% Movement Speed": TouhouHBMItemData(CATEGORY_FILLER, 32),
+    "2-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 40), # 120 in int (60 = 1s)
+    "5-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 41), # 300 in int
+
     # Trap
     "-50 Bullet Money": TouhouHBMItemData(CATEGORY_TRAP, 50, ItemClassification.trap),
     "-100 Bullet Money": TouhouHBMItemData(CATEGORY_TRAP, 51, ItemClassification.trap),
@@ -160,6 +191,7 @@ item_table: Dict[str, TouhouHBMItemData] = {
     "-100 Funds": TouhouHBMItemData(CATEGORY_TRAP, 61, ItemClassification.trap),
     "-200 Funds": TouhouHBMItemData(CATEGORY_TRAP, 62, ItemClassification.trap),
     "-50% Equip Cost": TouhouHBMItemData(CATEGORY_TRAP, 70, ItemClassification.trap),
+    "+500 Movement Speed": TouhouHBMItemData(CATEGORY_TRAP, 71, ItemClassification.trap),
 
     # Stage unlocks
     TUTORIAL_NAME_FULL: TouhouHBMItemData(CATEGORY_STAGE, 100, ItemClassification.progression),
@@ -356,4 +388,5 @@ ITEM_TABLE_ID_TO_CARD_ID: Dict[int, str] = {
     282: TEACUP_MARISA_CARD
 }
 
-GAME_ONLY_ITEM_ID = [1, 4, 5, 12, 13, 50]
+GAME_ONLY_ITEM_ID = [1, 4, 5, 12, 13, 50, 40, 41, 71, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+                     23, 24, 25, 26, 27, 28, 29, 30, 31, 32]

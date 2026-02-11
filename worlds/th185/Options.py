@@ -38,6 +38,15 @@ class LowSkillLogic(DefaultOnToggle):
 
     display_name = "Recommended Loadout in Logic"
 
+
+class IncludeGameplayFiller(DefaultOnToggle):
+    """
+    Whether filler items that are not Funds or Bullet Money will appear during generation. Does not affect Traps.
+    """
+
+    display_name = "Include Non-Money Filler"
+
+
 class CompletionType(Choice):
     """
     A goal to reach.
@@ -66,6 +75,7 @@ class TouhouHBMDataclass(PerGameCommonOptions):
     card_dex_checks: DexChecks
     trap_chance: TrapChance
     low_skill_logic: LowSkillLogic
+    include_gameplay_filler: IncludeGameplayFiller
     completion_type: CompletionType
     start_inventory_from_pool: StartInventoryPool
 
@@ -77,7 +87,7 @@ option_groups = [
     ),
     OptionGroup(
         "Generation Options",
-        [DisableChallengeLogic, DexChecks, LowSkillLogic]
+        [DisableChallengeLogic, DexChecks, LowSkillLogic, IncludeGameplayFiller]
     )
 ]
 
@@ -87,6 +97,7 @@ option_presets = {
         "card_dex_checks": False,
         "trap_chance": 0,
         "low_skill_logic": True,
+        "include_gameplay_filler": False,
         "completion_type": 0 # Full Main Story
     },
     "normal": {
@@ -94,6 +105,7 @@ option_presets = {
         "card_dex_checks": True,
         "trap_chance": 5,
         "low_skill_logic": True,
+        "include_gameplay_filler": False,
         "completion_type": 0 # Full Main Story
     },
     "hard": {
@@ -101,6 +113,7 @@ option_presets = {
         "card_dex_checks": True,
         "trap_chance": 10,
         "low_skill_logic": False,
+        "include_gameplay_filler": True,
         "completion_type": 1 # Minimum Main Story
     },
     "lunatic": {
@@ -108,13 +121,15 @@ option_presets = {
         "card_dex_checks": True,
         "trap_chance": 20,
         "low_skill_logic": False,
+        "include_gameplay_filler": True,
         "completion_type": 3 # All Bosses Defeated
     },
     "overdrive": {
         "disable_challenge_logic": False,
         "card_dex_checks": True,
-        "trap_chance": 25,
+        "trap_chance": 50,
         "low_skill_logic": False,
+        "include_gameplay_filler": True,
         "completion_type": 4 # Full Clear
     }
 }

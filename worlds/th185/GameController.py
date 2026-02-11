@@ -25,6 +25,13 @@ class GameController:
         self.addrLives = self.pm.base_address+ADDR_LIVES_PTR
         self.addrBlackMarketStatus = self.pm.base_address+ADDR_BLACK_MARKET_PTR
 
+        self.addrShotAttack = self.pm.base_address+ADDR_SHOT_ATTACK
+        self.addrMagicCircleAttack = self.pm.base_address+ADDR_CIRCLE_ATTACK
+        self.addrMagicCircleSize = self.pm.base_address+ADDR_CIRCLE_SIZE
+        self.addrMagicCircleDuration = self.pm.base_address+ADDR_CIRCLE_DURATION
+        self.addrMagicCircleGraze = self.pm.base_address+ADDR_CIRCLE_GRAZE_RANGE
+        self.addrMoveSpeed = self.pm.base_address+ADDR_MOVEMENT_SPEED
+
         # Menu and record-keeping.
         # These use pointers.
         self.addrMenuFunds = self.getAddressFromPointerWithBase(ADDR_MENU_FUNDS_PTR)
@@ -35,7 +42,10 @@ class GameController:
         Helper function. Essentially just tacks the static base address for the menu onto getAddressFromPointer.
         """
         static_base_pointer = self.pm.base_address + ADDR_BASE_MENU_PTR
+        return getPointerAddress(self.pm, static_base_pointer, [offset])
 
+    def getAddressFromPointerCustomBase(self, base, offset):
+        static_base_pointer = self.pm.base_address + base
         return getPointerAddress(self.pm, static_base_pointer, [offset])
 
     def check_if_in_stage(self) -> bool:
@@ -96,6 +106,47 @@ class GameController:
         oldBulletMoney = self.pm.read_int(self.addrBulletMoney)
         newBulletMoney = clamp(oldBulletMoney + value, 0, 2764472319)
         self.pm.write_int(self.addrBulletMoney, newBulletMoney)
+
+    # More gameplay only changes
+    # Invincibility
+    def addInvincibility(self, value):
+        addrInvincInt = self.getAddressFromPointerCustomBase(ADDR_GAMEPLAY_BASE_PTR, ADDR_INVINC_OFFSET_INT)
+        addrInvincFloat = self.getAddressFromPointerCustomBase(ADDR_GAMEPLAY_BASE_PTR, ADDR_INVINC_OFFSET_FLOAT)
+
+        newValue: int = self.pm.read_int(addrInvincInt) + value
+
+        self.pm.write_int(addrInvincInt, newValue)
+        self.pm.write_float(addrInvincFloat, float(newValue))
+
+    # Shot Attack %
+    def addShotAttack(self, value):
+        newValue = clamp(self.pm.read_short(self.addrShotAttack) + value, 0, 1000)
+        self.pm.write_short(self.addrShotAttack, newValue)
+
+    # Magic Circle Attack %
+    def addMagicCircleAttack(self, value):
+        newValue = clamp(self.pm.read_short(self.addrMagicCircleAttack) + value, 0, 1000)
+        self.pm.write_short(self.addrMagicCircleAttack, newValue)
+
+    # Magic Circle Size %
+    def addMagicCircleSize(self, value):
+        newValue = clamp(self.pm.read_short(self.addrMagicCircleSize) + value, 0, 1000)
+        self.pm.write_short(self.addrMagicCircleSize, newValue)
+
+    # Magic Circle Duration %
+    def addMagicCircleDuration(self, value):
+        newValue = clamp(self.pm.read_short(self.addrMagicCircleDuration) + value, 0, 1000)
+        self.pm.write_short(self.addrMagicCircleDuration, newValue)
+
+    # Magic Circle Graze Range %
+    def addMagicCircleGraze(self, value):
+        newValue = clamp(self.pm.read_short(self.addrMagicCircleGraze) + value, 0, 1000)
+        self.pm.write_short(self.addrMagicCircleGraze, newValue)
+
+    # Movement Speed %
+    def addSpeed(self, value):
+        newValue = clamp(self.pm.read_short(self.addrMoveSpeed) + value, 0, 1000)
+        self.pm.write_short(self.addrMoveSpeed, newValue)
 
     # Recordkeeping starts here.
     # Funds (menu) functions

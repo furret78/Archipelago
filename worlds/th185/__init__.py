@@ -65,14 +65,13 @@ class TouhouHBMWorld(World):
 
     # The place where player data goes.
     def fill_slot_data(self) -> Mapping[str, Any]:
-        # List that shows which cards should have the "New!" tag.
-        # Does not affect gameplay but it is nice eye-candy.
         data = {
             # Options
             "disable_challenge_logic": self.options.disable_challenge_logic.value,
             "card_dex_checks": self.options.card_dex_checks.value,
             "trap_chance": self.options.trap_chance.value,
             "low_skill_logic": self.options.low_skill_logic.value,
-            "completion_type": self.options.completion_type.value
+            "completion_type": self.options.completion_type.value,
+            "include_gameplay_filler": self.options.include_gameplay_filler.value
         }
         return data
