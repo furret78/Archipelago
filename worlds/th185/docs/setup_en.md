@@ -19,7 +19,7 @@ For Steam releases, disable Steam's Cloud saving feature for the game. This can 
 
 Before opening the game and playing, ensure that your local save data has been wiped, including its backups. It is recommended that you make a copy of your old save data for the game and keep it somewhere safe.
 
-The game's save data is typically located in `%appdata%\ShanghaiAlice\th185`, where you might find two files called `scoreth185.dat` and `scoreth185.bak.dat`. You may make a copy of these two files and paste them somewhere where you can find them.
+The game's save data is typically located in `%appdata%\ShanghaiAlice\th185`, where you might find two files called `scoreth185.dat` and `scoreth185bak.dat`. You may make a copy of these two files and paste them somewhere where you can find them.
 
 If 100th Black Market's .apworld has not yet been installed,  do so before playing. Before opening the game, open the client in the Archipelago Launcher and run one simple setup command to clear the game's save data. The command will also paste in fresh save data tailored specifically to the randomizer. It is recommended that this be done every time before opening the game to ensure that there is no inconvenience that arises during launch.
 
