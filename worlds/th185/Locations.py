@@ -99,7 +99,7 @@ for stages in STAGE_LIST:
             location_id_to_name[location_id_offset] = currentBossStringEncounter
             location_id_offset += 1
             challenge_boss_group.add(currentBossStringEncounter)
-        location_groups.update({CHALLENGE_NAME: challenge_boss_group})
+        location_groups.update({CHALLENGE_NAME_FULL: challenge_boss_group})
 
     stage_id += 1
 

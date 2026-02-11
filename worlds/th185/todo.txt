@@ -12,3 +12,4 @@
 
 - Add Progressive Card Slot items.
 - Add Progressive Equip Cost items.
+- Hints?
