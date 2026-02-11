@@ -11,28 +11,21 @@ def set_all_rules(world) -> None:
 
 
 def set_all_entrance_rules(world) -> None:
-    origin_to_tutorial = world.get_entrance(ORIGIN_TO_TUTORIAL_NAME)
-    origin_to_stage1 = world.get_entrance(ORIGIN_TO_STAGE1_NAME)
-    origin_to_stage2 = world.get_entrance(ORIGIN_TO_STAGE2_NAME)
-    origin_to_stage3 = world.get_entrance(ORIGIN_TO_STAGE3_NAME)
-    origin_to_stage4 = world.get_entrance(ORIGIN_TO_STAGE4_NAME)
-    origin_to_stage5 = world.get_entrance(ORIGIN_TO_STAGE5_NAME)
-    origin_to_stage6 = world.get_entrance(ORIGIN_TO_STAGE6_NAME)
-    origin_to_chimata = world.get_entrance(ORIGIN_TO_CHIMATA_NAME)
-    origin_to_challenge = world.get_entrance(ORIGIN_TO_CHALLENGE_NAME)
+    origin_to_region_dict = {
+        TUTORIAL_NAME_FULL: world.get_entrance(ORIGIN_TO_TUTORIAL_NAME),
+        STAGE1_NAME_FULL: world.get_entrance(ORIGIN_TO_STAGE1_NAME),
+        STAGE2_NAME_FULL: world.get_entrance(ORIGIN_TO_STAGE2_NAME),
+        STAGE3_NAME_FULL: world.get_entrance(ORIGIN_TO_STAGE3_NAME),
+        STAGE4_NAME_FULL: world.get_entrance(ORIGIN_TO_STAGE4_NAME),
+        STAGE5_NAME_FULL: world.get_entrance(ORIGIN_TO_STAGE5_NAME),
+        STAGE6_NAME_FULL: world.get_entrance(ORIGIN_TO_STAGE6_NAME),
+        ENDSTAGE_NAME_FULL: world.get_entrance(ORIGIN_TO_CHIMATA_NAME),
+        CHALLENGE_NAME_FULL: world.get_entrance(ORIGIN_TO_CHALLENGE_NAME)
+    }
 
-    origin_to_region_list = [
-        origin_to_tutorial, origin_to_stage1, origin_to_stage2, origin_to_stage3,
-        origin_to_stage4, origin_to_stage5, origin_to_stage6, origin_to_chimata,
-        origin_to_challenge
-    ]
-
-    stage_id = 0
     for i in STAGE_NAME_LIST:
-        if stage_id > len(origin_to_region_list) - 1: break
-
-        set_rule(origin_to_region_list[stage_id], lambda state: state.has(i, world.player))
-        stage_id += 1
+        if i not in origin_to_region_dict: continue
+        set_rule(origin_to_region_dict[i], lambda state: state.has(i, world.player))
 
 
 def set_all_location_rules(world) -> None:
@@ -58,7 +51,8 @@ def set_all_location_rules(world) -> None:
 
     def has_any_stage_access_item(state: CollectionState) -> bool:
         non_challenge_stages = STAGE_NAME_LIST
-        non_challenge_stages.remove(CHALLENGE_NAME_FULL)
+        if CHALLENGE_NAME_FULL in non_challenge_stages:
+            non_challenge_stages.remove(CHALLENGE_NAME_FULL)
         return state.has_any(non_challenge_stages, world.player) or has_challenge_access_item(state)
 
     # For more open reward pools. Of course, these all imply Challenge Market clauses as well.
@@ -115,8 +109,10 @@ def set_all_location_rules(world) -> None:
 
     def has_nazrin2_access(state: CollectionState) -> bool:
         black_market_stages = STAGE_NAME_LIST
-        black_market_stages.remove(ENDSTAGE_NAME_FULL)
-        black_market_stages.remove(CHALLENGE_NAME_FULL)
+        if ENDSTAGE_NAME_FULL in black_market_stages:
+            black_market_stages.remove(ENDSTAGE_NAME_FULL)
+        if CHALLENGE_NAME_FULL in black_market_stages:
+            black_market_stages.remove(CHALLENGE_NAME_FULL)
         return state.has_any(black_market_stages, world.player) or has_challenge_access_item(state)
 
     # Access rules for the Ability Card dex entries.
