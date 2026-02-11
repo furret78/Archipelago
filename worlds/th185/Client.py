@@ -1167,7 +1167,7 @@ class TouhouHBMContext(CommonContext):
         if not self.is_connected: return
         if len(self.all_received_items) <= 0: return
 
-        json_file_name = LAST_INDEX_FILE_NAME + self.seed_name + JSON_EXTENSION
+        json_file_name = LAST_INDEX_FILE_NAME + self.seed_name + JSON_EXTENSION # self.get_item_index_save_name(self.seed_name, self.team, self.slot)
         full_file_path = os.path.join(self.scorefile_path, os.path.basename(json_file_name))
 
         full_dict = {
@@ -1183,6 +1183,9 @@ class TouhouHBMContext(CommonContext):
             json_file.write(orjson.dumps(full_dict))
 
         return
+
+    def get_item_index_save_name(self, seed_name, team_number, slot_number):
+        return LAST_INDEX_FILE_NAME + seed_name + "_" + team_number + "_" + slot_number + JSON_EXTENSION
 
 
 async def game_watcher(ctx: TouhouHBMContext):

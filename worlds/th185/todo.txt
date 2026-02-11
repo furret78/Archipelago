@@ -12,5 +12,3 @@
 
 - Add Progressive Card Slot items.
 - Add Progressive Equip Cost items.
-
-- Change last item index .json to use player name instead of slot number. (potentially breaking change that requires local file editing)
