@@ -190,6 +190,20 @@ class TouhouHBMContext(CommonContext):
         # Checks for whether it is the game itself or just the window resolution dialogue box.
         self.is_game_running: bool = False
 
+        # Item reception stuff. This gets resets within the same function they are used.
+        self.received_funds: int = 0
+        self.received_bullet_money: int = 0
+        self.received_lives: int = 0
+        self.received_shot_attack: int = 0
+        self.received_circle_atk: int = 0
+        self.received_circle_size: int = 0
+        self.received_circle_duration: int = 0
+        self.received_circle_graze: int = 0
+        self.received_speed: int = 0
+        self.received_invincibility: int = 0
+        self.received_equip_cost: int = 0
+        self.received_invinc_cancel: bool = False
+
         self.reset()
 
 
@@ -227,7 +241,7 @@ class TouhouHBMContext(CommonContext):
         self.is_game_running: bool = False
         self.all_received_items: list[int] = []
         self.loaded_past_received_items: bool = False
-        self.reset_game_data()
+        #self.reset_game_data()
 
     def reset_game_data(self):
         if not self.handler: return
@@ -236,18 +250,57 @@ class TouhouHBMContext(CommonContext):
         # If the game isn't running, no need to do anything.
         if not self.is_game_running: return
         # If it is, reset all stats immediately.
-        # TODO: Implement full game reset.
         # 1. Clear all boss records.
+        def reset_boss_records():
+            for stage_name in STAGE_LIST:
+                if stage_name != CHALLENGE_NAME:
+                    for boss_name in ALL_BOSSES_LIST[STAGE_NAME_TO_ID[stage_name]]:
+                        # Get the location name first, convert that to ID,
+                        # and then append if it is not in previously checked locations.
+                        # Encounters
+                        self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], False, ENCOUNTER_ID)
+                        self.handler.getBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], False, DEFEAT_ID)
+                else:
+                    # Special Challenge Market clause
+                    boss_set_id_loc = 1
+                    for boss_set in ALL_BOSSES_LIST:
+                        # If it's the Tutorial set or End of Market set, discard those.
+                        if TUTORIAL_ID <= boss_set_id_loc >= STAGE_CHIMATA_ID: continue
+                        for boss_name in boss_set:
+                            # Make sure to exclude the story bosses.
+                            if boss_name in STORY_BOSSES_LIST: continue
+                            # There are only encounters. Check those.
+                            self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], False, ENCOUNTER_ID)
 
+        reset_boss_records()
         # 2. Clear all stage unlock records.
+        def reset_stage_unlocks():
+            if len(self.handler.stages_unlocked) > 0:
+                for i in self.handler.stages_unlocked.keys():
+                    self.handler.stages_unlocked[i] = False
+                self.update_stage_list()
 
+        reset_stage_unlocks()
         # 3. Clear all menu records (Funds, card slots, equip cost).
+        def reset_menu_records():
+            self.handler.setMenuFunds(0)
+            self.handler.setCardSlots(1)
+            self.handler.setEquipCost(100)
 
+        reset_menu_records()
         # 4. Clear all card dex records.
+        def reset_card_dex():
+            for card in ABILITY_CARD_LIST:
+                self.handler.setDexCardData(card, False)
 
+        reset_card_dex()
         # 5. Clear all card shop records.
+        def reset_card_shop():
+            for card in ABILITY_CARD_LIST:
+                if card == NAZRIN_CARD_1 or card == NAZRIN_CARD_2: continue
+                self.handler.setCardShopRecordGame(card, False)
 
-        pass
+        reset_card_shop()
 
     def make_gui(self):
         ui = super().make_gui()
@@ -513,118 +566,129 @@ class TouhouHBMContext(CommonContext):
         while not self.enable_card_selection_checking:
             await asyncio.sleep(0.5)
 
-        received_bullet_money: int = 0
-        received_lives: int = 0
-        received_shot_attack: int = 0
-        received_circle_atk: int = 0
-        received_circle_size: int = 0
-        received_circle_duration: int = 0
-        received_circle_graze: int = 0
-        received_speed: int = 0
-        received_invincibility: int = 0
-
         for item_id in self.gameItemQueue:
             # if not self.handler.isGameInStage(): continue
             match item_id:
                 # Filler + Useful
                 # Lives
-                case 1: received_lives += 1
+                case 1: self.received_lives += 1
+                case 8: self.received_lives += 2
                 # Bullet Money
-                case 4: received_bullet_money += 200
-                case 5: received_bullet_money += 500
-                case 12: received_bullet_money += 5
-                case 13: received_bullet_money += 10
+                case 4: self.received_bullet_money += 200
+                case 5: self.received_bullet_money += 500
+                case 7: self.received_bullet_money += 1000
+                case 12: self.received_bullet_money += 5
+                case 13: self.received_bullet_money += 10
                 # Shot Attack %
-                case 14: received_shot_attack += 15
-                case 15: received_shot_attack += 30
-                case 16: received_shot_attack += 45
-                case 17: received_shot_attack += 60
+                case 14: self.received_shot_attack += 15
+                case 15: self.received_shot_attack += 30
+                case 16: self.received_shot_attack += 45
+                case 17: self.received_shot_attack += 60
                 # Magic Circle Attack %
-                case 18: received_circle_atk += 30
-                case 19: received_circle_atk += 60
-                case 20: received_circle_atk += 90
-                case 21: received_circle_atk += 120
+                case 18: self.received_circle_atk += 30
+                case 19: self.received_circle_atk += 60
+                case 20: self.received_circle_atk += 90
+                case 21: self.received_circle_atk += 120
                 # Magic Circle Size %
-                case 22: received_circle_size += 5
-                case 23: received_circle_size += 10
-                case 24: received_circle_size += 15
-                case 25: received_circle_size += 20
+                case 22: self.received_circle_size += 5
+                case 23: self.received_circle_size += 10
+                case 24: self.received_circle_size += 15
+                case 25: self.received_circle_size += 20
                 # Magic Circle Duration %
-                case 26: received_circle_duration += 10
-                case 27: received_circle_duration += 20
+                case 26: self.received_circle_duration += 10
+                case 27: self.received_circle_duration += 20
                 # Magic Circle Graze Range %
-                case 28: received_circle_graze += 15
-                case 29: received_circle_graze += 30
-                case 30: received_circle_graze += 45
-                case 31: received_circle_graze += 60
+                case 28: self.received_circle_graze += 15
+                case 29: self.received_circle_graze += 30
+                case 30: self.received_circle_graze += 45
+                case 31: self.received_circle_graze += 60
                 # Movement Speed %
-                case 32: received_speed += 20
+                case 32: self.received_speed += 20
                 # Invincibility
-                case 40: received_invincibility += 120
-                case 41: received_invincibility += 300
+                case 40: self.received_invincibility += 120
+                case 41: self.received_invincibility += 300
+                case 42: self.received_invincibility += 600
 
                 # Traps
                 # Bullet Money
-                case 50: received_bullet_money -= 50
-                case 51: received_bullet_money -= 100
+                case 50: self.received_bullet_money -= 50
+                case 51: self.received_bullet_money -= 100
+                case 52: self.received_bullet_money -= 200
+                case 53: self.received_bullet_money -= 300
                 # Movement Speed
-                case 71: received_speed += 500
+                case 71: self.received_speed += 500
+                case 73: self.received_speed += 1000
+                # Invincibility
+                case 72: self.received_invinc_cancel = True
                 # Default
                 case _: logger.info("Unknown game item detected! Ignoring...")
 
             self.gameItemQueue.remove(item_id)
 
-        if received_bullet_money != 0:
-            self.handler.addBulletMoney(received_bullet_money)
-        if received_lives != 0:
-            self.handler.addLife(received_lives)
-        if received_shot_attack != 0:
-            self.handler.gameController.addShotAttack(received_shot_attack)
+        if self.received_bullet_money != 0:
+            self.handler.addBulletMoney(self.received_bullet_money)
+        if self.received_lives != 0:
+            self.handler.addLife(self.received_lives)
+        if self.received_shot_attack != 0:
+            self.handler.gameController.addShotAttack(self.received_shot_attack)
 
-        if received_circle_atk != 0:
-            self.handler.gameController.addMagicCircleAttack(received_circle_size)
-        if received_circle_size != 0:
-            self.handler.gameController.addMagicCircleSize(received_circle_size)
-        if received_circle_duration != 0:
-            self.handler.gameController.addMagicCircleDuration(received_circle_duration)
-        if received_circle_graze != 0:
-            self.handler.gameController.addMagicCircleGraze(received_circle_graze)
+        if self.received_circle_atk != 0:
+            self.handler.gameController.addMagicCircleAttack(self.received_circle_atk)
+        if self.received_circle_size != 0:
+            self.handler.gameController.addMagicCircleSize(self.received_circle_size)
+        if self.received_circle_duration != 0:
+            self.handler.gameController.addMagicCircleDuration(self.received_circle_duration)
+        if self.received_circle_graze != 0:
+            self.handler.gameController.addMagicCircleGraze(self.received_circle_graze)
 
-        if received_speed != 0:
-            self.handler.gameController.addSpeed(received_speed)
-        if received_invincibility != 0:
-            self.handler.gameController.addInvincibility(received_invincibility)
+        if self.received_speed != 0:
+            self.handler.gameController.addSpeed(self.received_speed)
+        if self.received_invincibility != 0:
+            self.handler.gameController.addInvincibility(self.received_invincibility)
+        if self.received_invinc_cancel:
+            self.handler.gameController.clearInvincibility()
+
+        self.received_bullet_money = 0
+        self.received_lives = 0
+        self.received_shot_attack = 0
+        self.received_circle_atk = 0
+        self.received_circle_size = 0
+        self.received_circle_duration = 0
+        self.received_circle_graze = 0
+        self.received_speed = 0
+        self.received_invincibility = 0
+        self.received_invinc_cancel = False
 
         return
 
     def handle_menu_items(self):
         # These items get processed no matter what,
         # but effects may differ depending on certain criteria.
-        received_funds: int = 0
-        received_equip_cost: int = 0
-
         for item_id in self.menuItemQueue:
             match item_id:
                 # Filler + Useful
-                case 2: received_funds += 200
-                case 3: received_funds += 1000
-                case 10: received_funds += 5
-                case 11: received_funds += 10
+                case 2: self.received_funds += 200
+                case 3: self.received_funds += 1000
+                case 6: self.received_funds += 500
+                case 10: self.received_funds += 5
+                case 11: self.received_funds += 10
                 # Traps
-                case 60: received_funds -= 50
-                case 61: received_funds -= 100
-                case 62: received_funds -= 200
-                case 70: received_equip_cost -= 50
+                case 60: self.received_funds -= 50
+                case 61: self.received_funds -= 100
+                case 62: self.received_funds -= 200
+                case 63: self.received_funds -= 300
+                case 70: self.received_equip_cost -= 50
                 # Default
                 case _: logger.info("Unknown global item! Ignoring...")
 
             self.menuItemQueue.remove(item_id)
 
-        if received_funds != 0:
-            asyncio.create_task(self.addFundsToGame(received_funds))
+        if self.received_funds != 0:
+            asyncio.create_task(self.addFundsToGame(self.received_funds))
         # Equip Cost never goes below 100%. This is checked when applying.
-        if received_equip_cost != 0:
-            self.handler.addEquipCost(received_equip_cost)
+        if self.received_equip_cost != 0:
+            self.handler.addEquipCost(self.received_equip_cost)
+            self.received_equip_cost = 0
 
         return
 
@@ -637,6 +701,8 @@ class TouhouHBMContext(CommonContext):
         else:
             self.handler.addMenuFunds(received_funds)
             await self.save_menu_funds_to_server()
+
+        self.received_funds = 0
 
     #
     # Functions for saving custom data to server.

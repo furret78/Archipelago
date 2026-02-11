@@ -5,8 +5,6 @@
 - Figure out seamless room switching while the game is running.
 - Consider saving the scorefile path last inputted by the user somehow.
 - Add item groups and location groups.
-- Add additional item: Invincibility time.
-    - Need to measure how long 1s of invincibility is in int.
 - Add Death Link.
 - Linux support for the client.
 

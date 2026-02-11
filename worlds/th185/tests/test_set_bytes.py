@@ -1,7 +1,7 @@
 import unittest
 import pymem
 
-from worlds.th185.Tools import getPointerAddress
+from worlds.th185.Tools import getPointerAddress, clamp
 from worlds.th185.variables.address_gameplay import *
 from worlds.th185.variables.address_menu import ADDR_BASE_MENU_PTR, ADDR_MENU_FUNDS_PTR
 from worlds.th185.variables.boss_and_stage import ADDR_STAGE_ID_TO_PTR, STAGE1_ID
@@ -56,7 +56,8 @@ class SetBytesTest(unittest.TestCase):
         self.pm = pymem.Pymem(process_name=FILE_NAME)
         self.addrToWrite = self.pm.base_address + ADDR_CIRCLE_ATTACK
         try:
-            self.pm.write_int(self.addrToWrite, 300)
+            newValue = clamp(self.pm.read_short(self.addrToWrite) + 15, 0, 1000)
+            self.pm.write_short(self.addrToWrite, newValue)
         except Exception as e:
             print(f"ERROR: {e}")
 

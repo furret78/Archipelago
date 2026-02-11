@@ -150,6 +150,9 @@ item_table: Dict[str, TouhouHBMItemData] = {
     "+1000 Funds": TouhouHBMItemData(CATEGORY_ITEM, 3, ItemClassification.useful, 3),
     "+200 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 4, ItemClassification.useful, 7),
     "+500 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 5, ItemClassification.useful, 8),
+    "+500 Funds": TouhouHBMItemData(CATEGORY_ITEM, 6, ItemClassification.useful, 4),
+    "+1000 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 7, ItemClassification.useful, 4),
+    "+2 Lives": TouhouHBMItemData(CATEGORY_ITEM, 8, ItemClassification.useful, 3),
 
     # Filler
     "+5 Funds": TouhouHBMItemData(CATEGORY_FILLER, 10),
@@ -183,15 +186,21 @@ item_table: Dict[str, TouhouHBMItemData] = {
     "+20% Movement Speed": TouhouHBMItemData(CATEGORY_FILLER, 32),
     "2-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 40), # 120 in int (60 = 1s)
     "5-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 41), # 300 in int
+    "10-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 42), # 600
 
     # Trap
     "-50 Bullet Money": TouhouHBMItemData(CATEGORY_TRAP, 50, ItemClassification.trap),
     "-100 Bullet Money": TouhouHBMItemData(CATEGORY_TRAP, 51, ItemClassification.trap),
+    "-200 Bullet Money": TouhouHBMItemData(CATEGORY_TRAP, 52, ItemClassification.trap),
+    "-300 Bullet Money": TouhouHBMItemData(CATEGORY_TRAP, 53, ItemClassification.trap),
     "-50 Funds": TouhouHBMItemData(CATEGORY_TRAP, 60, ItemClassification.trap),
     "-100 Funds": TouhouHBMItemData(CATEGORY_TRAP, 61, ItemClassification.trap),
     "-200 Funds": TouhouHBMItemData(CATEGORY_TRAP, 62, ItemClassification.trap),
+    "-300 Funds": TouhouHBMItemData(CATEGORY_TRAP, 63, ItemClassification.trap),
     "-50% Equip Cost": TouhouHBMItemData(CATEGORY_TRAP, 70, ItemClassification.trap),
-    "+500 Movement Speed": TouhouHBMItemData(CATEGORY_TRAP, 71, ItemClassification.trap),
+    "+500% Movement Speed": TouhouHBMItemData(CATEGORY_TRAP, 71, ItemClassification.trap),
+    "Instant Invincibility Cancel": TouhouHBMItemData(CATEGORY_TRAP, 72, ItemClassification.trap),
+    "Maximum Movement Speed": TouhouHBMItemData(CATEGORY_TRAP, 73, ItemClassification.trap),
 
     # Stage unlocks
     TUTORIAL_NAME_FULL: TouhouHBMItemData(CATEGORY_STAGE, 100, ItemClassification.progression),

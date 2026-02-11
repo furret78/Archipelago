@@ -118,6 +118,13 @@ class GameController:
         self.pm.write_int(addrInvincInt, newValue)
         self.pm.write_float(addrInvincFloat, float(newValue))
 
+    def clearInvincibility(self):
+        addrInvincInt = self.getAddressFromPointerCustomBase(ADDR_GAMEPLAY_BASE_PTR, ADDR_INVINC_OFFSET_INT)
+        addrInvincFloat = self.getAddressFromPointerCustomBase(ADDR_GAMEPLAY_BASE_PTR, ADDR_INVINC_OFFSET_FLOAT)
+
+        self.pm.write_int(addrInvincInt, 0)
+        self.pm.write_float(addrInvincFloat, 0.0)
+
     # Shot Attack %
     def addShotAttack(self, value):
         newValue = clamp(self.pm.read_short(self.addrShotAttack) + value, 0, 1000)
