@@ -608,6 +608,7 @@ class TouhouHBMContext(CommonContext):
                 case 40: self.received_invincibility += 120
                 case 41: self.received_invincibility += 300
                 case 42: self.received_invincibility += 600
+                case 400: self.received_invincibility += 420
 
                 # Traps
                 # Bullet Money

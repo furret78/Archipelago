@@ -145,14 +145,19 @@ def create_all_items(world):
 # as well as add entries to the other tables below here.
 item_table: Dict[str, TouhouHBMItemData] = {
     # Useful
-    "+1 Life": TouhouHBMItemData(CATEGORY_ITEM, 1, ItemClassification.useful, 6),
-    "+200 Funds": TouhouHBMItemData(CATEGORY_ITEM, 2, ItemClassification.useful, 5),
-    "+1000 Funds": TouhouHBMItemData(CATEGORY_ITEM, 3, ItemClassification.useful, 3),
-    "+200 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 4, ItemClassification.useful, 7),
-    "+500 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 5, ItemClassification.useful, 8),
+    "+1 Life": TouhouHBMItemData(CATEGORY_ITEM, 1, ItemClassification.useful, 5),
+    "+200 Funds": TouhouHBMItemData(CATEGORY_ITEM, 2, ItemClassification.useful, 4),
+    "+1000 Funds": TouhouHBMItemData(CATEGORY_ITEM, 3, ItemClassification.useful, 4),
+    "+200 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 4, ItemClassification.useful, 6),
+    "+500 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 5, ItemClassification.useful, 6),
     "+500 Funds": TouhouHBMItemData(CATEGORY_ITEM, 6, ItemClassification.useful, 4),
-    "+1000 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 7, ItemClassification.useful, 4),
-    "+2 Lives": TouhouHBMItemData(CATEGORY_ITEM, 8, ItemClassification.useful, 3),
+    "+1000 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 7, ItemClassification.useful, 6),
+    "+2 Lives": TouhouHBMItemData(CATEGORY_ITEM, 8, ItemClassification.useful, 5),
+
+    "+100% Shot Attack": TouhouHBMItemData(CATEGORY_ITEM, 300, ItemClassification.useful, 2),
+    "+200% Shot Attack": TouhouHBMItemData(CATEGORY_ITEM, 301, ItemClassification.useful, 2),
+
+    "7-second Invincibility": TouhouHBMItemData(CATEGORY_ITEM, 400, ItemClassification.useful, 4),
 
     # Filler
     "+5 Funds": TouhouHBMItemData(CATEGORY_FILLER, 10),
@@ -201,6 +206,9 @@ item_table: Dict[str, TouhouHBMItemData] = {
     "+500% Movement Speed": TouhouHBMItemData(CATEGORY_TRAP, 71, ItemClassification.trap),
     "Instant Invincibility Cancel": TouhouHBMItemData(CATEGORY_TRAP, 72, ItemClassification.trap),
     "Maximum Movement Speed": TouhouHBMItemData(CATEGORY_TRAP, 73, ItemClassification.trap),
+
+    # Debilitating Traps
+    # Receiving any of these means a reset of the current stage.
 
     # Stage unlocks
     TUTORIAL_NAME_FULL: TouhouHBMItemData(CATEGORY_STAGE, 100, ItemClassification.progression),

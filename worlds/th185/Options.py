@@ -23,7 +23,7 @@ class TrapChance(Range):
 
 class LowSkillLogic(DefaultOnToggle):
     """
-    Whether the generation logic should include certain Ability Cards as compulsory.
+    Whether the generation logic should include certain Ability Cards as compulsory before challenging late-game stages.
 
     This includes: Life Explosion Elixir, Princess Kaguya's Secret Stash, Soot-covered Uchiwa, Esteemed Authority, Gluttonous Centipede, and Money Is The Best Lawyer In Hell.
     """
