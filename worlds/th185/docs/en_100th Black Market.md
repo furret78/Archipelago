@@ -49,7 +49,6 @@ All cards except two of Nazrin's "Money Comes and Goes On Its Own" cards are shu
 - Equipment Cost Limit Reduction
 - Various Magic Circle stat changes
 - Hyper Movement Speed
-- Shot Attack Strength Reduction
 - Instant Invincibility Cancel
 
 Certain items received only take effect in a stage. If the player is not in a stage, the game will wait until they are in a stage before processing said items. These items last only during the current run of a stage and will disappear upon the start of a new run, except for items related to **Funds**, **Bullet Money**, and **Equipment Cost Limit**.
