@@ -7,7 +7,7 @@ options page link: [100th Black Market Player Options Page](../player-options).
 
 ## What does randomization do to this game?
 The following are now location checks:
-- All boss encounters and defeats from the _Tutorial_ to _End of Market_.
+- All boss encounters and defeats from the _Tutorial_ stage to _End of Market_.
 - All boss encounters in Challenge Market.
 - All card unlocks at the end of every run.
 - All card dex unlocks.
@@ -16,11 +16,11 @@ They may contain items for different games as well as different items from _with
 
 ## What is the goal of 100th Black Market when randomized?
 You may choose 1 out of 5 goals to reach for in this implementation.
-- Complete the full story line. This means defeating not just the boss of End of Market, but also the hidden bosses of the 4th and 6th Market.
-- Complete the minimum story line. This means only defeating the hidden boss of the 6th Market is necessary.
-- Collect all Ability Cards.
-- Defeat all bosses.
-- And both of the above, displayed as Full Clear.
+- Complete the **full story line**. This means defeating not just the boss of End of Market, but also the hidden bosses of the 4th and 6th Market.
+- Complete the **minimum story line**. This means only defeating the hidden boss of the 6th Market is necessary.
+- Collect **all Ability Cards**.
+- Defeat **all bosses**.
+- And both of the above, shown as **Full Clear** in the options page.
 
 ## Which items can be in another player's world?
 ### Stage Unlocks (Progression)
@@ -36,12 +36,23 @@ You may choose 1 out of 5 goals to reach for in this implementation.
 ### Ability Cards in Card Market (Progression)
 All cards except two of Nazrin's "Money Comes and Goes On Its Own" cards are shuffled. See [here](https://en.touhouwiki.net/wiki/100th_Black_Market/Ability_Cards) for specifics.
 ### Useful/Filler Items
+- Additional Lives
 - Additional Funds
 - Additional Bullet Money
-- +1 Life
-- Various stat changes for the Magic Circle
+- Various Magic Circle stat changes
 - Movement Speed
 - Shot Attack Strength
+- Temporary Invincibility
+### Traps (Toggleable via Trap Chance)
+- Funds Reduction
+- Bullet Money Reduction
+- Equipment Cost Limit Reduction
+- Various Magic Circle stat changes
+- Hyper Movement Speed
+- Shot Attack Strength Reduction
+- Instant Invincibility Cancel
+
+Certain items received only take effect in a stage. If the player is not in a stage, the game will wait until they are in a stage before processing said items. These items last only during the current run of a stage and will disappear upon the start of a new run, except for items related to **Funds**, **Bullet Money**, and **Equipment Cost Limit**.
 
 ## What does another world's item look like in 100th Black Market?
 The items are **visually unchanged**. After collecting an item, a message will show up in the client.
