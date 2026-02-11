@@ -88,7 +88,7 @@ for stages in STAGE_LIST:
 
             stage_boss_group.add(currentBossStringEncounter)
             stage_boss_group.add(currentBossStringDefeat)
-        location_groups.update({stages: stage_boss_group})
+        location_groups.update({STAGE_SHORT_TO_FULL_NAME[stages]: stage_boss_group})
 
     # Challenge Market
     if stage_id == STAGE_CHALLENGE_ID:
@@ -181,7 +181,7 @@ for card_string in ABILITY_CARD_LIST:
     card_groups_list[8].add(cardLocationNameString)
 
 for stage_short_name in STAGE_LIST:
-    location_groups[stage_short_name].update(card_groups_list[STAGE_LIST.index(stage_short_name)])
+    location_groups[STAGE_SHORT_TO_FULL_NAME[stage_short_name]].update(card_groups_list[STAGE_LIST.index(stage_short_name)])
 
 # Card Dex locations.
 # In location name group terms, these are "Everywhere". No need to do anything about them.
