@@ -1,13 +1,29 @@
 from BaseClasses import CollectionState
+from Options import StartInventoryPool
 from worlds.generic.Rules import add_rule, set_rule
 from .Locations import get_boss_location_name_str, get_card_location_name_str
 from .variables.card_const import *
 
 
 def set_all_rules(world) -> None:
+    check_for_softlock(world)
     set_all_entrance_rules(world)
     set_all_location_rules(world)
     set_goal_condition(world)
+
+def check_for_softlock(world) -> None:
+    start_inv = world.options.start_inventory_from_pool.value.keys()
+    has_no_valid_stage: bool = True
+    for stage_full_name in STAGE_NAME_LIST:
+        if world.options.disable_challenge_logic and CHALLENGE_NAME_FULL in start_inv:
+            break
+        if stage_full_name in start_inv:
+            has_no_valid_stage = False
+            break
+
+    if has_no_valid_stage:
+        from Fill import FillError
+        raise FillError(f"No valid stages found in Start Inventory from Pool for player {world.multiworld.player_name[world.player]} (Touhou 18.5). Go back and add some!")
 
 
 def set_all_entrance_rules(world) -> None:
@@ -23,9 +39,8 @@ def set_all_entrance_rules(world) -> None:
         CHALLENGE_NAME_FULL: world.get_entrance(ORIGIN_TO_CHALLENGE_NAME)
     }
 
-    for i in STAGE_NAME_LIST:
-        if i not in origin_to_region_dict: continue
-        set_rule(origin_to_region_dict[i], lambda state: state.has(i, world.player))
+    for stage_name in origin_to_region_dict.keys():
+        set_rule(origin_to_region_dict[stage_name], lambda state: state.has(stage_name, world.player))
 
 
 def set_all_location_rules(world) -> None:
@@ -44,10 +59,9 @@ def set_all_location_rules(world) -> None:
         else:
             return state.has(CHALLENGE_NAME_FULL, world.player)
 
-    # For specific stages.
+    # For specific stages (excludes Challenge Market by default).
     def has_stage_access_item(state: CollectionState, stage_id: int) -> bool:
-        return (state.has(STAGE_SHORT_TO_FULL_NAME[STAGE_ID_TO_SHORT_NAME[stage_id]], world.player)
-                or has_challenge_access_item(state))
+        return state.has(STAGE_SHORT_TO_FULL_NAME[STAGE_ID_TO_SHORT_NAME[stage_id]], world.player)
 
     def has_any_stage_access_item(state: CollectionState) -> bool:
         non_challenge_stages = STAGE_NAME_LIST

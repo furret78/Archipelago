@@ -1,4 +1,5 @@
 from .WebWorld import TouhouHBMWebWorld
+from .variables.boss_and_stage import STAGE2_NAME_FULL
 from ..LauncherComponents import Component, components, launch_subprocess, Type, icon_paths
 from collections.abc import Mapping
 from typing import Any

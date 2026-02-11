@@ -70,14 +70,13 @@ def connect_regions(world):
 
     # From the Markets to the card selection at the end.
     # Since not every card shows up here, each location will need a rule about requiring stage unlock minimums.
-    # TBD. Should probably put them in Locations.py
     region_stage_exit_id = 0
-    for region_exits in STAGE_TO_ENDSTAGE_LIST:
+    for region_exit_id in STAGE_TO_CARD_REWARD_DICT.keys():
         # Challenge Market is special in that it offers EVERY Ability Card the game has to offer.
         # The challenge is surviving 12 waves to even get there.
         # There is an option to not connect the Challenge Market to the Market Card Reward region.
-        if region_exits == CHALLENGE_TO_CHOOSE_NAME and world.options.disable_challenge_logic:
+        if region_exit_id == CHALLENGE_NAME and world.options.disable_challenge_logic:
             continue
 
-        region_exit_list[region_stage_exit_id].connect(region_endstage, STAGE_TO_ENDSTAGE_LIST[region_stage_exit_id])
+        region_exit_list[region_stage_exit_id].connect(region_endstage, STAGE_TO_CARD_REWARD_DICT[region_exit_id])
         region_stage_exit_id += 1
