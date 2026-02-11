@@ -19,6 +19,8 @@ from NetUtils import NetworkItem
 from .GameHandler import *
 from .Items import GAME_ONLY_ITEM_ID
 from .Locations import *
+from .Tools import get_item_index_save_name
+
 
 # Handles the game itself. The watcher that runs loops is down below.
 
@@ -185,6 +187,7 @@ class TouhouHBMContext(CommonContext):
         # List of all received items from the server.
         self.all_received_items: list[int] = []
         self.loaded_past_received_items: bool = False
+        self.last_received_item_index_server: int = -1
 
         # Whether the game is running or not.
         # Checks for whether it is the game itself or just the window resolution dialogue box.
@@ -352,6 +355,12 @@ class TouhouHBMContext(CommonContext):
                     self.equip_cost = args["keys"][self.custom_data_keys_list[2]]
                     if self.equip_cost < 100: self.equip_cost = 100
 
+            # Last Saved Index
+            if self.custom_data_keys_list[3] in args["keys"]:
+                if args["keys"][self.custom_data_keys_list[3]] is not None:
+                    self.last_received_item_index_server = args["keys"][self.custom_data_keys_list[3]]
+                else: self.last_received_item_index_server = 0
+
         elif cmd == "DataPackage":
             if not self.all_location_ids:
                 # Connected package not received yet, wait for datapackage request after connected package
@@ -464,10 +473,16 @@ class TouhouHBMContext(CommonContext):
 
         # Python slicing will exclude the index of the start point if it's a positive integer.
         # Before actually processing it, wait until the client has loaded the local list of received items.
-        while not self.loaded_past_received_items:
+        while not self.loaded_past_received_items or self.last_received_item_index_server <= -1:
             await asyncio.sleep(0.5)
 
+        datastorage_was_used: bool = False
         local_list_length = len(self.all_received_items)
+        # Backup index number from DataStorage. Does not get used if there is local data.
+        if (not self.all_received_items or self.all_received_items == []) and self.last_received_item_index_server > 0:
+            local_list_length = self.last_received_item_index_server
+            datastorage_was_used = True
+
         newly_received_items: list[NetworkItem] = []
 
         # Upon receiving this package, check if the index is 0.
@@ -485,6 +500,12 @@ class TouhouHBMContext(CommonContext):
                 return
             # Otherwise, business as usual.
             newly_received_items = network_items_list[local_list_length:]
+            # Check if Data Storage's index was used.
+            # This should only ever happen upon loading data for the first time.
+            if datastorage_was_used:
+                for network_item in network_items_list:
+                    self.all_received_items.append(network_item.item)
+                await self.write_last_item_list()
         # If the index is not 0, check for the most common case first.
         else:
             # If the index is the same as the local list's length, process that as per usual.
@@ -498,6 +519,7 @@ class TouhouHBMContext(CommonContext):
                                      "locations": list(self.locations_checked)})
                 await self.send_msgs(sync_msg)
 
+        # Save data items do not care about index.
         self.handle_save_data_items(network_items_list)
         # Safeguard if there are no newly received items.
         if len(newly_received_items) <= 0: return
@@ -584,6 +606,8 @@ class TouhouHBMContext(CommonContext):
                 case 15: self.received_shot_attack += 30
                 case 16: self.received_shot_attack += 45
                 case 17: self.received_shot_attack += 60
+                case 300: self.received_shot_attack += 100
+                case 301: self.received_shot_attack += 200
                 # Magic Circle Attack %
                 case 18: self.received_circle_atk += 30
                 case 19: self.received_circle_atk += 60
@@ -746,6 +770,19 @@ class TouhouHBMContext(CommonContext):
                     "key": self.custom_data_keys_list[0],
                     "default": 0,
                     "operations": [{"operation": 'replace', "value": self.menuFunds}]
+                }
+            ]
+        )
+
+    async def save_last_index_to_server(self):
+        self.last_received_item_index_server = len(self.all_received_items)
+        await self.send_msgs(
+            [
+                {
+                    "cmd": 'Set',
+                    "key": self.custom_data_keys_list[3],
+                    "default": 0,
+                    "operations": [{"operation": 'replace', "value": last_saved_index}]
                 }
             ]
         )
@@ -1134,7 +1171,7 @@ class TouhouHBMContext(CommonContext):
         # Check if this operation has already been carried out before.
         if self.loaded_past_received_items: return
 
-        json_file_name = self.get_item_index_save_name(self.seed_name, self.team, self.slot)
+        json_file_name = get_item_index_save_name(self.seed_name, self.team, self.slot)
         full_file_path = os.path.join(self.scorefile_path, os.path.basename(json_file_name))
 
         # Check if the file exists.
@@ -1167,7 +1204,7 @@ class TouhouHBMContext(CommonContext):
         if not self.is_connected: return
         if len(self.all_received_items) <= 0: return
 
-        json_file_name = self.get_item_index_save_name(self.seed_name, self.team, self.slot)
+        json_file_name = get_item_index_save_name(self.seed_name, self.team, self.slot)
         full_file_path = os.path.join(self.scorefile_path, os.path.basename(json_file_name))
 
         full_dict = {
@@ -1181,10 +1218,10 @@ class TouhouHBMContext(CommonContext):
         with open(full_file_path, "wb") as json_file:
             json_file.write(orjson.dumps(full_dict))
 
+        # Write this to the server. No need to wait for it, though.
+        # It's just a backup measure if local data is somehow gone.
+        asyncio.create_task(self.save_last_index_to_server())
         return
-
-    def get_item_index_save_name(self, seed_name, team_number, slot_number) -> str:
-        return LAST_INDEX_FILE_NAME + str(slot_number) + str(team_number) + str(slot_number) + JSON_EXTENSION
 
 
 async def game_watcher(ctx: TouhouHBMContext):

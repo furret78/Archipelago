@@ -12,4 +12,5 @@
 
 - Add Progressive Card Slot items.
 - Add Progressive Equip Cost items.
+- Make the ProcessError log look more pleasant in the client.
 - Hints?
