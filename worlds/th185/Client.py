@@ -160,10 +160,10 @@ class TouhouHBMContext(CommonContext):
         # Dex dictionary does not exist. Use the list of acquired checks for that.
         # Owning a card and unlocking its dex entry is one and the same,
         # but it is separate for the player.
-        self.custom_data_keys_list: list = [str(self.slot)+"Funds185",
-                                            str(self.slot)+"Slots185",
-                                            str(self.slot)+"EquipCost185",
-                                            str(self.slot)+"LastItem185"]
+        self.custom_data_keys_list: list = [str(self.team) + "_" + str(self.slot) + "Funds185",
+                                            str(self.team) + "_" + str(self.slot) + "Slots185",
+                                            str(self.team) + "_" + str(self.slot) + "EquipCost185",
+                                            str(self.team) + "_" + str(self.slot) + "LastItem185"]
 
         # Set to True when scanning the card shop addresses as locations.
         # Set to False when in the menu.
