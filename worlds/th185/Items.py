@@ -5,12 +5,11 @@ from .variables.card_const import *
 from .variables.boss_and_stage import *
 from .variables.meta_data import DISPLAY_NAME
 
-CATEGORY_ITEM = "Items"
+CATEGORY_ITEM = "Limited Items"
 CATEGORY_FILLER = "Filler"
-CATEGORY_STAGE = "Markets"
+CATEGORY_STAGE = "Stages"
 CATEGORY_TRAP = "Traps"
 CATEGORY_CARD = "Ability Cards"
-CATEGORY_START = "Starting Ability Cards"
 
 
 class TouhouHBMItem(Item):
@@ -144,6 +143,21 @@ def create_all_items(world):
 
     # Submit item pool for the randomizer.
     world.multiworld.itempool += item_pool
+
+# Item groups.
+def get_item_groups() -> dict[str, set[str]]:
+    item_groups: Dict[str, set[str]] = {}
+
+    item_group_list = [CATEGORY_CARD, CATEGORY_STAGE, CATEGORY_TRAP, CATEGORY_ITEM, CATEGORY_FILLER]
+
+    for category in item_group_list:
+        category_dict = get_items_by_category(category)
+        category_group: set[str] = set()
+        for entry in category_dict.keys():
+            category_group.add(entry)
+        item_groups.update({category: category_group})
+
+    return item_groups
 
 # An Item table documenting every Item and its data.
 # If anything new is added, add it to Client.py under give_item()
@@ -415,3 +429,4 @@ GAME_ONLY_ITEM_ID = [1, 4, 5, 7, 8, 12, 13, 50, 40, 41, 42, 71, 14, 15, 16, 17, 
                      300, 301, 400]
 NONMONEY_FILLER_ID = [1, 8, 300, 400, 40, 41, 42, 14, 15, 16, 17, 18, 19, 20, 21, 22,
                      23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 70, 71, 72, 73, 300, 301, 400]
+TRAP_ID = [50, 51, 52, 53, 60, 61, 62, 63, 70, 71, 72, 73]
