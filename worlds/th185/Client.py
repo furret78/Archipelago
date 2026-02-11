@@ -417,8 +417,8 @@ class TouhouHBMContext(CommonContext):
 
         def checkAllCards() -> bool:
             if not self.handler.dex_card_unlocked: return False
-            for name, data in self.handler.dex_card_unlocked:
-                if not data: return False
+            for name in ABILITY_CARD_LIST:
+                if not self.handler.getDexCardDataHandler(name): return False
             return True
 
         def checkAllBosses() -> bool:
@@ -876,9 +876,7 @@ class TouhouHBMContext(CommonContext):
         """
         new_locations = []
 
-        if self.loadingDataSetup:
-            # logger.info("Attempting to load previous data...")
-            return
+        if self.loadingDataSetup: return
 
         # Check bosses first.
         for stage_name in STAGE_LIST:

@@ -88,6 +88,10 @@ class GameHandler:
         if value: final_bytes = bytes([0x01])
 
         self.gameController.setDexCardData(card_string_id, final_bytes)
+        self.dex_card_unlocked[card_string_id] = value
+
+    def getDexCardDataHandler(self, card_string_id: str) -> int:
+        return self.dex_card_unlocked[card_string_id]
 
     # Received Item functions
     def addLife(self, value: int = 1):

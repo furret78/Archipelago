@@ -47,13 +47,18 @@ def get_random_filler_item_name(world) -> str:
     for name in get_items_by_category(CATEGORY_FILLER).keys():
         # Check if generation options allow for non-money filler.
         if not world.options.include_gameplay_filler:
-            if 14 <= item_table[name].code <= 41: continue
+            if item_table[name].code in NONMONEY_FILLER_ID: continue
 
         filler_item_list.append(name)
 
+    trap_item_list = []
+
+    for name in get_items_by_category(CATEGORY_TRAP).keys():
+        trap_item_list.append(name)
+
     final_item_name: str = world.random.choice(filler_item_list).__str__()
     if world.random.randint(0, 99) < world.options.trap_chance:
-        final_item_name = world.random.choice(filler_item_list).__str__()
+        final_item_name = world.random.choice(trap_item_list).__str__()
     return final_item_name
 
 
@@ -132,10 +137,10 @@ def create_all_items(world):
             continue
 
         item_pool.append(world.create_item(filler_item_name))
+        remain_index += 1
+
         # If the filler item is useful, remove 1 count from the limit dictionary.
         if filler_item_name in filler_limit_dict: filler_limit_dict[filler_item_name] -= 1
-
-        remain_index += 1
 
     # Submit item pool for the randomizer.
     world.multiworld.itempool += item_pool
@@ -405,5 +410,8 @@ ITEM_TABLE_ID_TO_CARD_ID: Dict[int, str] = {
     282: TEACUP_MARISA_CARD
 }
 
-GAME_ONLY_ITEM_ID = [1, 4, 5, 12, 13, 50, 40, 41, 71, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-                     23, 24, 25, 26, 27, 28, 29, 30, 31, 32]
+GAME_ONLY_ITEM_ID = [1, 4, 5, 7, 8, 12, 13, 50, 40, 41, 42, 71, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+                     23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 70, 71, 72, 73, 50, 51, 52, 53,
+                     300, 301, 400]
+NONMONEY_FILLER_ID = [1, 8, 300, 400, 40, 41, 42, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+                     23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 70, 71, 72, 73, 300, 301, 400]
