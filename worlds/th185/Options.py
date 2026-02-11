@@ -9,14 +9,6 @@ class DisableChallengeLogic(DefaultOnToggle):
     display_name = "Disable Challenge Market in Logic"
 
 
-class DexChecks(DefaultOnToggle):
-    """
-    Enables checks for Ability Card Dex unlocks.
-    """
-
-    display_name = "Ability Card Dex"
-
-
 class TrapChance(Range):
     """
     Percentage chance that any given filler Item will be replaced by a trap item.
@@ -72,7 +64,6 @@ class CompletionType(Choice):
 @dataclass()
 class TouhouHBMDataclass(PerGameCommonOptions):
     disable_challenge_logic: DisableChallengeLogic
-    card_dex_checks: DexChecks
     trap_chance: TrapChance
     low_skill_logic: LowSkillLogic
     include_gameplay_filler: IncludeGameplayFiller
@@ -87,14 +78,13 @@ option_groups = [
     ),
     OptionGroup(
         "Generation Options",
-        [DisableChallengeLogic, DexChecks, LowSkillLogic, IncludeGameplayFiller]
+        [DisableChallengeLogic, LowSkillLogic, IncludeGameplayFiller]
     )
 ]
 
 option_presets = {
     "easy": {
         "disable_challenge_logic": True,
-        "card_dex_checks": False,
         "trap_chance": 0,
         "low_skill_logic": True,
         "include_gameplay_filler": False,
@@ -102,7 +92,6 @@ option_presets = {
     },
     "normal": {
         "disable_challenge_logic": True,
-        "card_dex_checks": True,
         "trap_chance": 5,
         "low_skill_logic": True,
         "include_gameplay_filler": False,
@@ -110,7 +99,6 @@ option_presets = {
     },
     "hard": {
         "disable_challenge_logic": True,
-        "card_dex_checks": True,
         "trap_chance": 10,
         "low_skill_logic": False,
         "include_gameplay_filler": True,
@@ -118,7 +106,6 @@ option_presets = {
     },
     "lunatic": {
         "disable_challenge_logic": False,
-        "card_dex_checks": True,
         "trap_chance": 20,
         "low_skill_logic": False,
         "include_gameplay_filler": True,
@@ -126,7 +113,6 @@ option_presets = {
     },
     "overdrive": {
         "disable_challenge_logic": False,
-        "card_dex_checks": True,
         "trap_chance": 50,
         "low_skill_logic": False,
         "include_gameplay_filler": True,

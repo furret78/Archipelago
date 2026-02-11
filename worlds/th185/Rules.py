@@ -57,7 +57,9 @@ def set_all_location_rules(world) -> None:
                 or has_challenge_access_item(state))
 
     def has_any_stage_access_item(state: CollectionState) -> bool:
-        return state.has_any(STAGE_NAME_LIST, world.player)
+        non_challenge_stages = STAGE_NAME_LIST
+        non_challenge_stages.remove(CHALLENGE_NAME_FULL)
+        return state.has_any(non_challenge_stages, world.player) or has_challenge_access_item(state)
 
     # For more open reward pools. Of course, these all imply Challenge Market clauses as well.
     # Common. Shows up in every stage except Tutorial.
@@ -110,6 +112,12 @@ def set_all_location_rules(world) -> None:
 
     def has_doremy_access(state: CollectionState) -> bool:
         return has_early_game_access_item(state) or has_stage_access_item(state, STAGE5_ID)
+
+    def has_nazrin2_access(state: CollectionState) -> bool:
+        black_market_stages = STAGE_NAME_LIST
+        black_market_stages.remove(ENDSTAGE_NAME_FULL)
+        black_market_stages.remove(CHALLENGE_NAME_FULL)
+        return state.has_any(black_market_stages, world.player) or has_challenge_access_item(state)
 
     # Access rules for the Ability Card dex entries.
     # Ensures that the player has a way to grind for Funds + the card in the Permanent Card Shop.
@@ -196,8 +204,8 @@ def set_all_location_rules(world) -> None:
             # Generic boss conditions otherwise.
             add_rule(location_card_reward, lambda state: has_stage_access_item(state, STAGE_NAME_TO_ID[stage_name]))
 
-    def add_generic_access_card_rule(card_id: str, access_level: int):
-        generic_location_card_name: str = get_card_location_name_str(card_string_id, False)
+    def add_generic_access_card_rule(card_name_id: str, access_level: int):
+        generic_location_card_name: str = get_card_location_name_str(card_name_id, False)
         generic_location_card = world.get_location(generic_location_card_name)
 
         match access_level:
@@ -238,11 +246,11 @@ def set_all_location_rules(world) -> None:
     #
     # Location rules for Ability Card dex entries here.
     #
-    # Nazrin's cards don't have rules for unlocking. Every stage has it.
+    # Nazrin's cards don't have rules for unlocking. Practically every stage has it.
     nazrin_card1_location = world.get_location(get_card_location_name_str(NAZRIN_CARD_1, True))
-    nazrin_card2_location = world.get_location(get_card_location_name_str(NAZRIN_CARD_2, True))
     add_rule(nazrin_card1_location, lambda state: has_any_stage_access_item(state))
-    add_rule(nazrin_card2_location, lambda state: has_any_stage_access_item(state))
+    nazrin_card2_location = world.get_location(get_card_location_name_str(NAZRIN_CARD_2, True))
+    add_rule(nazrin_card2_location, lambda state: has_nazrin2_access(state))
     # The rest are only available if their respective item is available in the shop.
     for card_string_id in ABILITY_CARD_LIST:
         # Skip Nazrin's cards.

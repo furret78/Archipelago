@@ -279,9 +279,6 @@ class TouhouHBMContext(CommonContext):
 
             asyncio.create_task(self.send_msgs([{"cmd": "GetDataPackage", "games": [DISPLAY_NAME]}]))
 
-        elif cmd == "ConnectionRefused":
-            logger.error(f"Connection refused. Errors: {args["errors"]}")
-
         if cmd == "ReceivedItems":
             asyncio.create_task(self.handle_received_items(args["index"], args["items"]))
 

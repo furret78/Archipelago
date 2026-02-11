@@ -68,7 +68,6 @@ class TouhouHBMWorld(World):
         data = {
             # Options
             "disable_challenge_logic": self.options.disable_challenge_logic.value,
-            "card_dex_checks": self.options.card_dex_checks.value,
             "trap_chance": self.options.trap_chance.value,
             "low_skill_logic": self.options.low_skill_logic.value,
             "completion_type": self.options.completion_type.value,
