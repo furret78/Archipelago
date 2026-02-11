@@ -38,7 +38,7 @@ Once this is done, you may open the game. The client will attempt to connect to 
 ## Modding Compatibility
 
 - Mods which _**directly**_ modify the game executable will break compatibility. As the client relies on consistent memory addresses to operate, directly editing the executable will derail the entire thing.
-- Mods run via the [Touhou Community Reliant Automatic Patcher (thcrap)](https://github.com/thpatch/thcrap) _may_ work, at least for language patches.
+- Mods run via the [Touhou Community Reliant Automatic Patcher (thcrap)](https://github.com/thpatch/thcrap) _may_ work, at least for language patches. This patcher is not bundled in with this AP implementation.
 
 ## Troubleshooting
 
