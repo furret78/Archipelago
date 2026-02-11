@@ -18,7 +18,7 @@ You may choose 1 out of 5 goals to reach for in this implementation.
 - Complete the **full story line**. This means defeating not just the boss of End of Market, but also the hidden bosses of the 4th and 6th Market.
 - Complete the **minimum story line**. This means only defeating the hidden boss of the 6th Market is necessary.
 - Collect **all Ability Cards**.
-- Defeat **all bosses**.
+- Defeat **all bosses**. Challenge Market does not count.
 - And both of the above, shown as **Full Clear** in the options page.
 
 ## Which items can be in another player's world?
