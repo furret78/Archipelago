@@ -226,10 +226,10 @@ class TouhouHBMContext(CommonContext):
         self.permashop_cards_new: list = []
         self.permashop_cards: list = []
         self.unlocked_stages: list = []
-        self.custom_data_keys_list: list = [str(self.slot) + "Funds185",
-                                            str(self.slot) + "Slots185",
-                                            str(self.slot) + "EquipCost185",
-                                            str(self.slot) + "LastItem185"]
+        self.custom_data_keys_list: list = [str(self.team) + "_" + str(self.slot) + "Funds185",
+                                            str(self.team) + "_" + str(self.slot) + "Slots185",
+                                            str(self.team) + "_" + str(self.slot) + "EquipCost185",
+                                            str(self.team) + "_" + str(self.slot) + "LastItem185"]
 
         self.enable_card_selection_checking: bool = False
         self.enable_card_shop_scanning: bool = True
@@ -1134,7 +1134,7 @@ class TouhouHBMContext(CommonContext):
         # Check if this operation has already been carried out before.
         if self.loaded_past_received_items: return
 
-        json_file_name = LAST_INDEX_FILE_NAME + self.seed_name + JSON_EXTENSION
+        json_file_name = self.get_item_index_save_name(self.seed_name, self.team, self.slot)
         full_file_path = os.path.join(self.scorefile_path, os.path.basename(json_file_name))
 
         # Check if the file exists.
@@ -1142,7 +1142,7 @@ class TouhouHBMContext(CommonContext):
             with open(full_file_path) as json_file:
                 saved_data_dict: dict = orjson.loads(json_file.read())
                 # Check if the slot name matches and item list exists.
-                if saved_data_dict[JSON_SLOT_NAME] == self.slot and JSON_SLOT_ITEMS in saved_data_dict:
+                if JSON_SLOT_ITEMS in saved_data_dict:
                     self.all_received_items = saved_data_dict[JSON_SLOT_ITEMS]
 
         self.loaded_past_received_items = True
@@ -1167,11 +1167,10 @@ class TouhouHBMContext(CommonContext):
         if not self.is_connected: return
         if len(self.all_received_items) <= 0: return
 
-        json_file_name = LAST_INDEX_FILE_NAME + self.seed_name + JSON_EXTENSION # self.get_item_index_save_name(self.seed_name, self.team, self.slot)
+        json_file_name = self.get_item_index_save_name(self.seed_name, self.team, self.slot)
         full_file_path = os.path.join(self.scorefile_path, os.path.basename(json_file_name))
 
         full_dict = {
-            JSON_SLOT_NAME: self.slot,
             JSON_SLOT_ITEMS: self.all_received_items
         }
 
@@ -1184,8 +1183,8 @@ class TouhouHBMContext(CommonContext):
 
         return
 
-    def get_item_index_save_name(self, seed_name, team_number, slot_number):
-        return LAST_INDEX_FILE_NAME + seed_name + "_" + team_number + "_" + slot_number + JSON_EXTENSION
+    def get_item_index_save_name(self, seed_name, team_number, slot_number) -> str:
+        return LAST_INDEX_FILE_NAME + str(slot_number) + str(team_number) + str(slot_number) + JSON_EXTENSION
 
 
 async def game_watcher(ctx: TouhouHBMContext):
