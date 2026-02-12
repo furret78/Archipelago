@@ -67,6 +67,7 @@ class TouhouHBMDataclass(PerGameCommonOptions):
     trap_chance: TrapChance
     low_skill_logic: LowSkillLogic
     include_gameplay_filler: IncludeGameplayFiller
+    death_link: DeathLink
     completion_type: CompletionType
     start_inventory_from_pool: StartInventoryPool
 
@@ -88,6 +89,7 @@ option_presets = {
         "trap_chance": 0,
         "low_skill_logic": True,
         "include_gameplay_filler": False,
+        "death_link": False,
         "completion_type": 0 # Full Main Story
     },
     "normal": {
@@ -95,6 +97,7 @@ option_presets = {
         "trap_chance": 5,
         "low_skill_logic": True,
         "include_gameplay_filler": False,
+        "death_link": False,
         "completion_type": 0 # Full Main Story
     },
     "hard": {
@@ -102,6 +105,7 @@ option_presets = {
         "trap_chance": 10,
         "low_skill_logic": False,
         "include_gameplay_filler": True,
+        "death_link": True,
         "completion_type": 1 # Minimum Main Story
     },
     "lunatic": {
@@ -109,6 +113,7 @@ option_presets = {
         "trap_chance": 20,
         "low_skill_logic": False,
         "include_gameplay_filler": True,
+        "death_link": True,
         "completion_type": 3 # All Bosses Defeated
     },
     "overdrive": {
@@ -116,6 +121,7 @@ option_presets = {
         "trap_chance": 50,
         "low_skill_logic": False,
         "include_gameplay_filler": True,
+        "death_link": True,
         "completion_type": 4 # Full Clear
     }
 }

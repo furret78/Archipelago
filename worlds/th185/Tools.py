@@ -1,6 +1,7 @@
 import shutil
 import os
 
+
 from .variables.meta_data import *
 
 
@@ -48,3 +49,8 @@ def copy_paste_to_path(source_file, destination_directory):
 
 def get_item_index_save_name(seed_name, team_number, slot_number) -> str:
     return LAST_INDEX_FILE_NAME + str(seed_name) + str(team_number) + str(slot_number) + JSON_EXTENSION
+
+def simple_get_thread_context(process, game_thread):
+
+
+    pass

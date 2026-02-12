@@ -48,7 +48,7 @@ class SetBytesTest(unittest.TestCase):
         self.pm.write_bytes(self.pm.base_address + ADDR_ANTICHEAT_HACK, bytes([0x90, 0x90]), 2)
         self.addrToWrite = getPointerAddress(self.pm, self.pm.base_address+ADDR_BASE_MENU_PTR, [ADDR_MENU_FUNDS_PTR])
         try:
-            self.pm.write_int(self.addrToWrite, 20000)
+            self.pm.write_int(self.addrToWrite, 100)
         except Exception as e:
             print(f"ERROR: {e}")
 

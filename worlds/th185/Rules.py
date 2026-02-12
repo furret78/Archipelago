@@ -56,7 +56,11 @@ def set_all_location_rules(world) -> None:
             return False
         # Challenge Market is NOT disabled in logic.
         else:
-            return state.has(CHALLENGE_NAME_FULL, world.player)
+            # Challenge Market is also lategame content. Remember that.
+            if world.options.low_skill_logic:
+                return state.has(CHALLENGE_NAME_FULL, world.player) and state.has_all(LOW_SKILL_CARD_LIST, world.player)
+            else:
+                return state.has(CHALLENGE_NAME_FULL, world.player)
 
     # For specific stages (excludes Challenge Market by default).
     def has_stage_access_item(state: CollectionState, stage_id: int) -> bool:
@@ -98,7 +102,7 @@ def set_all_location_rules(world) -> None:
                     or has_challenge_access_item(state))
 
     def low_skill_rules(state: CollectionState) -> bool:
-        return state.has_all((EIRIN_CARD_NAME, KAGUYA_CARD_NAME, MIKO_CARD_NAME, SHION_CARD_NAME, MOMOYO_CARD_NAME, EIKI_CARD_NAME), world.player)
+        return state.has_all(LOW_SKILL_CARD_LIST, world.player)
 
     # Special access rules.
     def has_nitori_access(state: CollectionState) -> bool:

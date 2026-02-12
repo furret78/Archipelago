@@ -2,9 +2,7 @@ from typing import Dict
 
 from .Regions import get_regions_dict
 from .variables.boss_and_stage import *
-from .variables.card_const import ABILITY_CARD_LIST, CARD_ID_TO_NAME, RINGO_CARD, MALLET_CARD, \
-    ABILITY_CARD_CANNOT_EQUIP, STAGE_EXCLUSIVE_CARD_LIST, STAGE_COMMON_CARD_LIST, STAGE1_CARD_LIST, STAGE2_CARD_LIST, \
-    LILY_WHITE_CARD, DOREMY_CARD, STAGE3_CARD_LIST, LATEGAME_CARD_LIST, SEKIBANKI_CARD
+from .variables.card_const import *
 from .variables.meta_data import *
 from BaseClasses import Location
 
@@ -110,6 +108,7 @@ card_groups_list: list[set[str]] = [set(), set(), set(), set(), set(), set(), se
 for card_string in ABILITY_CARD_LIST:
     # Automatically filter out Nazrin's cards.
     if card_string in ABILITY_CARD_CANNOT_EQUIP: continue
+    if card_string == MALLET_CARD: continue
 
     cardLocationNameString: str = get_card_location_name_str(card_string, False)
     location_table[cardLocationNameString] = location_id_offset

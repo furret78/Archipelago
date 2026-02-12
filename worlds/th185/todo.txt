@@ -4,7 +4,7 @@
 - Add function to relink to the game after a disconnect without restarting client. (test later)
 - Figure out seamless room switching while the game is running.
 - Consider saving the scorefile path last inputted by the user somehow.
-- Add Death Link.
+- Add Death Link. (1/2)
 - Linux support for the client.
 
 - Code refactoring for more clarity.
