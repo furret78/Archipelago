@@ -4,9 +4,10 @@
 - Add function to relink to the game after a disconnect without restarting client. (test later)
 - Figure out seamless room switching while the game is running.
 - Consider saving the scorefile path last inputted by the user somehow.
-- Add Death Link. (1/2)
-- Prevent Death Link from occurring at the end of a stage.
 - Linux support for the client.
+
+- Randomize Death Link cause of death messages.
+- Implement Energy Link functions.
 
 - Code refactoring for more clarity.
 - Refactoring Rules.py to accommodate Rule Builder.

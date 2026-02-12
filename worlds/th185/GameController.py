@@ -82,7 +82,7 @@ class GameController:
         return self.pm.read_int(self.addrLives)
 
     def setLives(self, value):
-        self.pm.write_int(self.addrLives, value)
+        self.pm.write_int(self.addrLives, clamp(value, 0, 7))
 
     # Funds (in-game) functions
     def getGameFunds(self) -> int:
@@ -92,7 +92,7 @@ class GameController:
         self.pm.write_int(self.addrGameFunds, value)
 
     def addGameFunds(self, value):
-        newGameFunds = clamp(self.pm.read_int(self.addrGameFunds) + value, 0, 999999)
+        newGameFunds = clamp(self.pm.read_int(self.addrGameFunds) + value, 0, MAX_FUNDS)
         self.pm.write_int(self.addrGameFunds, newGameFunds)
 
     # Bullet Money (in-game) functions
@@ -104,7 +104,7 @@ class GameController:
 
     def addBulletMoney(self, value):
         oldBulletMoney = self.pm.read_int(self.addrBulletMoney)
-        newBulletMoney = clamp(oldBulletMoney + value, 0, 2764472319)
+        newBulletMoney = clamp(oldBulletMoney + value, 0, MAX_BULLET_MONEY)
         self.pm.write_int(self.addrBulletMoney, newBulletMoney)
 
     # More gameplay only changes

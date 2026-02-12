@@ -65,6 +65,26 @@ class InvincAgainstDeathLink(DefaultOnToggle):
     display_name = "Anti-Death Link Invincibility"
 
 
+class EnergyLink(Toggle):
+    """
+    Allows usage of the EnergyLink pool.
+    Funds can be deposited and withdrawn at a certain exchange rate.
+    However, undeposited and withdrawn Funds will not be automatically saved.
+    """
+
+    display_name = "Energy Link"
+
+
+class EnergyLinkBulletMoney(Toggle):
+    """
+    If enabled, EnergyLink exchanges permit exchanging energy for Bullet Money as well.
+    Conversion rates for Bullet Money differ from that for Funds.
+    Bullet Money cannot be deposited nor withdrawn outside of stages.
+    """
+
+    display_name = "Energy Link Bullet Money Exchanges"
+
+
 class CompletionType(Choice):
     """
     A goal to reach.
@@ -96,6 +116,8 @@ class TouhouHBMDataclass(PerGameCommonOptions):
     death_link: DeathLink
     death_link_trigger: DeathLinkTrigger
     death_link_invincibility: InvincAgainstDeathLink
+    energy_link: EnergyLink
+    energy_link_bullet_money: EnergyLinkBulletMoney
     completion_type: CompletionType
     start_inventory_from_pool: StartInventoryPool
 
@@ -103,7 +125,7 @@ class TouhouHBMDataclass(PerGameCommonOptions):
 option_groups = [
     OptionGroup(
         "Game Options",
-        [TrapChance, DeathLinkTrigger, InvincAgainstDeathLink, CompletionType]
+        [TrapChance, DeathLinkTrigger, InvincAgainstDeathLink, EnergyLink, EnergyLinkBulletMoney, CompletionType]
     ),
     OptionGroup(
         "Generation Options",
@@ -120,6 +142,8 @@ option_presets = {
         "death_link": False,
         "death_link_trigger": 0,
         "death_link_invincibility": True,
+        "energy_link": False,
+        "energy_link_bullet_money": False,
         "completion_type": 0 # Full Main Story
     },
     "normal": {
@@ -130,6 +154,8 @@ option_presets = {
         "death_link": False,
         "death_link_trigger": 0,
         "death_link_invincibility": True,
+        "energy_link": False,
+        "energy_link_bullet_money": False,
         "completion_type": 0 # Full Main Story
     },
     "hard": {
@@ -140,6 +166,8 @@ option_presets = {
         "death_link": True,
         "death_link_trigger": 1,
         "death_link_invincibility": False,
+        "energy_link": False,
+        "energy_link_bullet_money": False,
         "completion_type": 1 # Minimum Main Story
     },
     "lunatic": {
@@ -150,6 +178,8 @@ option_presets = {
         "death_link": True,
         "death_link_trigger": 0,
         "death_link_invincibility": False,
+        "energy_link": False,
+        "energy_link_bullet_money": False,
         "completion_type": 3 # All Bosses Defeated
     },
     "overdrive": {
@@ -160,6 +190,8 @@ option_presets = {
         "death_link": True,
         "death_link_trigger": 0,
         "death_link_invincibility": False,
+        "energy_link": False,
+        "energy_link_bullet_money": False,
         "completion_type": 4 # Full Clear
     }
 }

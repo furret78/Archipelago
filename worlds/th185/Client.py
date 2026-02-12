@@ -195,13 +195,17 @@ class TouhouHBMContext(CommonContext):
         # Checks for whether it is the game itself or just the window resolution dialogue box.
         self.is_game_running: bool = False
 
-        # Death Link status
+        # DeathLink-related fields
         self.deathlink_enabled: bool = False
         self.pending_received_deathlink: bool = False
         self.pending_life_deduction: bool = False
         self.died_to_deathlink: bool = False
         self.caused_deathlink: bool = False
         self.deathlink_trigger: int = DEATH_LINK_TRIGGER_LIFE
+
+        # EnergyLink-related fields
+        # self.menuFunds get repurposed here as it is not linked to DataStorage anymore.
+        self.energylink_enabled: bool = False
 
         # Item reception stuff. This gets resets within the same function they are used.
         self.received_funds: int = 0
@@ -257,6 +261,8 @@ class TouhouHBMContext(CommonContext):
         self.caused_deathlink = False
         self.deathlink_trigger = DEATH_LINK_TRIGGER_LIFE
         self.last_death_link = 0
+
+        self.energylink_enabled: bool = False
 
         self.received_funds = 0
         self.received_bullet_money = 0
@@ -375,7 +381,7 @@ class TouhouHBMContext(CommonContext):
 
         elif cmd == "Retrieved":  # Custom data
             # Menu Funds
-            if self.custom_data_keys_list[0] in args["keys"]:
+            if self.custom_data_keys_list[0] in args["keys"] and not self.energylink_enabled:
                 if args["keys"][self.custom_data_keys_list[0]] is not None:
                     self.menuFunds = args["keys"][self.custom_data_keys_list[0]]
 
@@ -416,16 +422,9 @@ class TouhouHBMContext(CommonContext):
             if "DeathLink" in tags and self.last_death_link != args["data"]["time"]:
                 self.last_death_link = args["data"]["time"]
                 self.on_deathlink(args["data"])
-            # TODO: Something for Energy Link here later.
 
         if cmd == "SetReply":
-            # Main concern is with the Permanent Shop Card unlock list.
-            # Funds update or the list for the above with the "New!" tag can be dropped,
-            # but the unlock list itself is important since that interferes with checks.
-            if args["value"] is not None:
-                pass
-                #if args["key"] == self.custom_data_keys_list[0]:
-                #    self.menuFunds = args["value"]
+            # TODO: EnergyLink
             self.replyFromServerReceived = True
 
     def client_received_initial_server_data(self):
@@ -1462,6 +1461,9 @@ async def game_watcher(ctx: TouhouHBMContext):
 
                 if ctx.options["death_link_trigger"]:
                     ctx.deathlink_trigger = ctx.options["death_link_trigger"]
+
+                if ctx.options["energy_link"]:
+                    ctx.energy_link = ctx.options["energy_link"]
 
                 ctx.loadingDataSetup = False
                 continue
