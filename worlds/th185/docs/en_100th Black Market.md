@@ -2,7 +2,7 @@
 
 ## Where is the options page?
 
-The player options page for this game contains all the options you need to configure and export a config file. Player options page link: [100th Black Market Player Options Page](../player-options). If installed as a custom .apworld, it is recommended to use the Archipelago Launcher's Options Creator instead.
+The player options page for this game contains all the options you need to configure and export a config file. Player options page link: [100th Black Market Player Options Page](../player-options). If installed as a custom .apworld, it is recommended to use the Archipelago Launcher's **Options Creator** instead.
 
 ## What does randomization do to this game?
 The following are now location checks:
