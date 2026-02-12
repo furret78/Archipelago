@@ -121,14 +121,14 @@ def set_all_location_rules(world) -> None:
         return state.has_all((ENDSTAGE_NAME_FULL, BLANK_CARD_NAME), world.player) or has_challenge_access_item(state)
 
     def has_sekibanki_access(state: CollectionState) -> bool:
-        return has_stage_access_item(state, STAGE2_ID) or has_stage_access_item(state, STAGE_CHIMATA_ID)
+        return has_stage_access_item(state, STAGE2_ID) or has_stage_access_item(state, STAGE_CHIMATA_ID) or has_challenge_access_item(state)
 
     # Lily White's and Doremy's cards are a little more open.
     def has_lily_white_access(state: CollectionState) -> bool:
-        return has_very_early_game_access_item(state) or has_stage_access_item(state, STAGE5_ID)
+        return has_very_early_game_access_item(state) or has_stage_access_item(state, STAGE5_ID) or has_challenge_access_item(state)
 
     def has_doremy_access(state: CollectionState) -> bool:
-        return has_early_game_access_item(state) or has_stage_access_item(state, STAGE5_ID)
+        return has_early_game_access_item(state) or has_stage_access_item(state, STAGE5_ID) or has_challenge_access_item(state)
 
     def has_nazrin2_access(state: CollectionState) -> bool:
         black_market_stages = STAGE_NAME_LIST

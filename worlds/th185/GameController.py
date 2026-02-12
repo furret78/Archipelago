@@ -125,6 +125,10 @@ class GameController:
         self.pm.write_int(addrInvincInt, 0)
         self.pm.write_float(addrInvincFloat, 0.0)
 
+    def getInvincibility(self) -> int:
+        addrInvincInt = self.getAddressFromPointerCustomBase(ADDR_GAMEPLAY_BASE_PTR, ADDR_INVINC_OFFSET_INT)
+        return self.pm.read_int(addrInvincInt)
+
     # Shot Attack %
     def addShotAttack(self, value):
         newValue = clamp(self.pm.read_short(self.addrShotAttack) + value, 0, 1000)
@@ -248,3 +252,15 @@ class GameController:
     def setNoCardData(self):
         addrFromCardDex = self.getAddressFromPointerWithBase(ADDR_DEX_NO_CARD)
         self.pm.write_bytes(addrFromCardDex, bytes([0x01]), 1)
+
+    # Check if the player's state.
+    # Does not check if the player is in a stage or if the player is at the end of a stage.
+    def checkForPlayerState(self) -> bytes:
+        addrPlayerState = self.getAddressFromPointerCustomBase(ADDR_GAMEPLAY_BASE_PTR, ADDR_PLAYER_STATUS_OFFSET)
+        return self.pm.read_bytes(addrPlayerState, 1)
+
+    # Kills the player, complete with animations.
+    # Plays no sound this way.
+    def setPlayerDeath(self):
+        addrPlayerState = self.getAddressFromPointerCustomBase(ADDR_GAMEPLAY_BASE_PTR, ADDR_PLAYER_STATUS_OFFSET)
+        self.pm.write_bytes(addrPlayerState, bytes([0x04]), 1)

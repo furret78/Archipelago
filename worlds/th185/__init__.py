@@ -75,6 +75,8 @@ class TouhouHBMWorld(World):
             "trap_chance": self.options.trap_chance.value,
             "low_skill_logic": self.options.low_skill_logic.value,
             "death_link": self.options.death_link.value,
+            "death_link_trigger": self.options.death_link_trigger.value,
+            "death_link_invincibility": self.options.death_link_invincibility.value,
             "completion_type": self.options.completion_type.value,
             "include_gameplay_filler": self.options.include_gameplay_filler.value
         }

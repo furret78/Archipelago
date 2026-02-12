@@ -4,10 +4,11 @@ import unittest
 import pymem
 import ctypes
 
+import pywintypes
 from pymem.ressources.kernel32 import GetThreadContext, SetThreadContext, OpenThread, ResumeThread, CloseHandle, \
     CreateRemoteThread
 from pymem.ressources.structure import LPSECURITY_ATTRIBUTES
-from win32con import CONTEXT_INTEGER
+from win32con import CONTEXT_INTEGER, NULL
 from win32process import CREATE_SUSPENDED
 
 from test.bases import WorldTestBase
@@ -37,9 +38,11 @@ class PythonTestFunctions(unittest.TestCase):
             self.death_function = self.pm.base_address+0x00063450
             #game_thread = self.pm.start_thread(self.death_function)
             something_idk = None
+            security_attribute = pywintypes.SECURITY_ATTRIBUTES()
+            security_attribute.SECURITY_DESCRIPTOR = pywintypes.SECURITY_DESCRIPTOR()
             game_thread = CreateRemoteThread(
                 self.pm.process_handle,
-                None,
+                security_attribute,
                 0,
                 self.death_function,
                 0,

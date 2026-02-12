@@ -5,6 +5,7 @@
 - Figure out seamless room switching while the game is running.
 - Consider saving the scorefile path last inputted by the user somehow.
 - Add Death Link. (1/2)
+- Prevent Death Link from occurring at the end of a stage.
 - Linux support for the client.
 
 - Code refactoring for more clarity.
@@ -14,3 +15,7 @@
 - Add Progressive Equip Cost items.
 - Make the ProcessError log look more pleasant in the client.
 - Hints?
+
+- Add trap item: Lily White Trap
+    - Requires figuring out how to run game functions from outside.
+- Add trap: -1 Life

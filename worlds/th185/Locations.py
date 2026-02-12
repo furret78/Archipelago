@@ -236,9 +236,9 @@ def create_regular_locations(world):
 
                 region_dict[CHALLENGE_NAME].locations.append(boss_encounter_location)
 
-    # Ability Card Shop Unlocks
+    # Market Card Reward
     for stage_card in ABILITY_CARD_LIST:
-        if stage_card in ABILITY_CARD_CANNOT_EQUIP: continue
+        if stage_card in ABILITY_CARD_CANNOT_EQUIP or stage_card == MALLET_CARD: continue
         # End-level Card Selection.
         cardLocationName: str = get_card_location_name_str(stage_card, False)
 

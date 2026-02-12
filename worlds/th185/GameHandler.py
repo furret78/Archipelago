@@ -26,6 +26,61 @@ class GameHandler:
         self.initGame()
 
     # Init Resources
+    def reconnect(self):
+        self.gameController = GameController()
+        self.initGame()
+
+    def reset(self):
+        """
+        Initialize everything to defaults.
+        """
+        self.spare_lives = 0
+        self.game_funds = 0
+        self.menu_funds = 0
+        self.end_stage_card_chosen = {}
+        self.permashop_card_new = []
+        self.permashop_card = {}
+        self.dex_card_unlocked = {}
+        self.gameController = None
+        self.bosses_beaten = {}
+        self.bosses_met = {}
+        self.stages_unlocked = {}
+        self.previous_location_checked = []
+
+        for i in ABILITY_CARD_LIST:
+            self.dex_card_unlocked[i] = False
+            if i != NAZRIN_CARD_1 and i != NAZRIN_CARD_2:
+                self.end_stage_card_chosen[i] = False
+                self.permashop_card[i] = False
+
+        self.bosses_beaten = {
+            TUTORIAL_ID: {BOSS_MIKE: False},
+            STAGE1_ID: {BOSS_MIKE: False, BOSS_MINORIKO: False, BOSS_ETERNITY: False, BOSS_NEMUNO: False},
+            STAGE2_ID: {BOSS_CIRNO: False, BOSS_WAKASAGI: False, BOSS_SEKIBANKI: False, BOSS_URUMI: False},
+            STAGE3_ID: {BOSS_EBISU: False, BOSS_KUTAKA: False, BOSS_NARUMI: False, BOSS_KOMACHI: False},
+            STAGE4_ID: {BOSS_SANAE: False, BOSS_SAKUYA: False, BOSS_YOUMU: False, BOSS_REIMU: False, BOSS_NITORI: False},
+            STAGE5_ID: {BOSS_TSUKASA: False, BOSS_MEGUMU: False, BOSS_CLOWNPIECE: False, BOSS_TENSHI: False},
+            STAGE6_ID: {BOSS_SUIKA: False, BOSS_MAMIZOU: False, BOSS_SAKI: False, BOSS_MOMOYO: False, BOSS_TAKANE: False},
+            STAGE_CHIMATA_ID: {BOSS_CHIMATA: False},
+        }
+
+        self.bosses_met = self.bosses_beaten
+        self.bosses_met[STAGE_CHALLENGE_ID] = {
+                BOSS_MIKE: False, BOSS_MINORIKO: False, BOSS_ETERNITY: False, BOSS_NEMUNO: False,
+                BOSS_CIRNO: False, BOSS_WAKASAGI: False, BOSS_SEKIBANKI: False, BOSS_URUMI: False,
+                BOSS_EBISU: False, BOSS_KUTAKA: False, BOSS_NARUMI: False, BOSS_KOMACHI: False,
+                BOSS_SANAE: False, BOSS_SAKUYA: False, BOSS_YOUMU: False, BOSS_REIMU: False,
+                BOSS_TSUKASA: False, BOSS_MEGUMU: False, BOSS_CLOWNPIECE: False, BOSS_TENSHI: False,
+                BOSS_SUIKA: False, BOSS_MAMIZOU: False, BOSS_SAKI: False, BOSS_MOMOYO: False
+            }
+
+        for stage_name in STAGE_LIST:
+            self.stages_unlocked[stage_name] = False
+
+    def initGame(self):
+        if self.gameController is None: return
+        self.gameController.initAnticheatHack()
+        self.gameController.setNoCardData()
 
     # Get Handler functions
     def isGameInStage(self):
@@ -117,62 +172,6 @@ class GameHandler:
         self.gameController.setEquipCost(newEquipCost)
 
     # Other functions
-    def reconnect(self):
-        self.gameController = GameController()
-        self.initGame()
-
-    def reset(self):
-        """
-        Initialize everything to defaults.
-        """
-        self.spare_lives = 0
-        self.game_funds = 0
-        self.menu_funds = 0
-        self.end_stage_card_chosen = {}
-        self.permashop_card_new = []
-        self.permashop_card = {}
-        self.dex_card_unlocked = {}
-        self.gameController = None
-        self.bosses_beaten = {}
-        self.bosses_met = {}
-        self.stages_unlocked = {}
-        self.previous_location_checked = []
-
-        for i in ABILITY_CARD_LIST:
-            self.dex_card_unlocked[i] = False
-            if i != NAZRIN_CARD_1 and i != NAZRIN_CARD_2:
-                self.end_stage_card_chosen[i] = False
-                self.permashop_card[i] = False
-
-        self.bosses_beaten = {
-            TUTORIAL_ID: {BOSS_MIKE: False},
-            STAGE1_ID: {BOSS_MIKE: False, BOSS_MINORIKO: False, BOSS_ETERNITY: False, BOSS_NEMUNO: False},
-            STAGE2_ID: {BOSS_CIRNO: False, BOSS_WAKASAGI: False, BOSS_SEKIBANKI: False, BOSS_URUMI: False},
-            STAGE3_ID: {BOSS_EBISU: False, BOSS_KUTAKA: False, BOSS_NARUMI: False, BOSS_KOMACHI: False},
-            STAGE4_ID: {BOSS_SANAE: False, BOSS_SAKUYA: False, BOSS_YOUMU: False, BOSS_REIMU: False, BOSS_NITORI: False},
-            STAGE5_ID: {BOSS_TSUKASA: False, BOSS_MEGUMU: False, BOSS_CLOWNPIECE: False, BOSS_TENSHI: False},
-            STAGE6_ID: {BOSS_SUIKA: False, BOSS_MAMIZOU: False, BOSS_SAKI: False, BOSS_MOMOYO: False, BOSS_TAKANE: False},
-            STAGE_CHIMATA_ID: {BOSS_CHIMATA: False},
-        }
-
-        self.bosses_met = self.bosses_beaten
-        self.bosses_met[STAGE_CHALLENGE_ID] = {
-                BOSS_MIKE: False, BOSS_MINORIKO: False, BOSS_ETERNITY: False, BOSS_NEMUNO: False,
-                BOSS_CIRNO: False, BOSS_WAKASAGI: False, BOSS_SEKIBANKI: False, BOSS_URUMI: False,
-                BOSS_EBISU: False, BOSS_KUTAKA: False, BOSS_NARUMI: False, BOSS_KOMACHI: False,
-                BOSS_SANAE: False, BOSS_SAKUYA: False, BOSS_YOUMU: False, BOSS_REIMU: False,
-                BOSS_TSUKASA: False, BOSS_MEGUMU: False, BOSS_CLOWNPIECE: False, BOSS_TENSHI: False,
-                BOSS_SUIKA: False, BOSS_MAMIZOU: False, BOSS_SAKI: False, BOSS_MOMOYO: False
-            }
-
-        for stage_name in STAGE_LIST:
-            self.stages_unlocked[stage_name] = False
-
-    def initGame(self):
-        if self.gameController is None: return
-        self.gameController.initAnticheatHack()
-        self.gameController.setNoCardData()
-
     def updateStageList(self):
         """
         Updates the unlock state of stages.
@@ -302,3 +301,21 @@ class GameHandler:
 
     def setEquipCost(self, value: int):
         self.gameController.setEquipCost(value)
+
+    # Death Link functionalities
+    # If True, the player died and has just teleported below the screen in order to recover.
+    # Does not check if the player is not in a stage.
+    def checkForPlayerDeath(self) -> bool:
+        bytes_read = self.gameController.checkForPlayerState()
+        return bytes_read == bytes([0x02]) or bytes_read == bytes([0x04])
+
+    # If True, the player's state is Normal.
+    def checkForPlayerNormal(self) -> bool:
+        return self.gameController.checkForPlayerState() == bytes([0x01])
+
+    # Returns True if the player is invincible.
+    def checkInvincibility(self) -> bool:
+        return self.gameController.getInvincibility() > 0
+
+    def killPlayer(self):
+        self.gameController.setPlayerDeath()

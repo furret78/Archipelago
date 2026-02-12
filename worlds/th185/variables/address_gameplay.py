@@ -18,6 +18,12 @@ ADDR_BLACK_MARKET_PTR = 0x000D7AC4 # If does not return 0, Black Market is open.
 ADDR_GAMEPLAY_BASE_PTR = 0X000D7C3C
 ADDR_INVINC_OFFSET_INT = 0X00048078 # Use 4-byte integers.
 ADDR_INVINC_OFFSET_FLOAT = 0X0004807C # Use floats.
+# Death Link stuff. 1-byte.
+# 0x00 - Respawning from death. Clears bullets. Not recommended to set to.
+# 0x01 - Normal.
+# 0x02 - Player disappears from screen and returns to screen. Changes to 0x00 quickly after that.
+# 0x04 - Kill the player on the spot. No sounds.
+ADDR_PLAYER_STATUS_OFFSET = 0x00047FAC
 
 # All of the below uses 2-bytes.
 # All of them max out at 1000.

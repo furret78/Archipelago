@@ -1,6 +1,7 @@
 import os
 import pkgutil
 import traceback
+import typing
 from typing import Optional
 import asyncio
 import colorama
@@ -8,12 +9,12 @@ import orjson
 import pymem.exception
 
 from CommonClient import (
-	CommonContext,
-	ClientCommandProcessor,
-	get_base_parser,
-	logger,
-	server_loop,
-	gui_enabled,
+    CommonContext,
+    ClientCommandProcessor,
+    get_base_parser,
+    logger,
+    server_loop,
+    gui_enabled,
 )
 from NetUtils import NetworkItem
 from .GameHandler import *
@@ -149,9 +150,9 @@ class TouhouHBMContext(CommonContext):
         # - Exiting a stage.
         self.menuFunds: int = 0
         # Number of Ability Cards the player can equip at the start of a stage.
-        self.loadout_slots: int = 1 # Max 7 in-game.
+        self.loadout_slots: int = 1  # Max 7 in-game.
         # Equipment cost.
-        self.equip_cost: int = 100 # Max 350% in-game.
+        self.equip_cost: int = 100  # Max 350% in-game.
         # This is for eye-candy. List contains the string IDs of cards marked as "New!" in the game.
         self.permashop_cards_new: list = []
         # List of Cards that are unlocked in Shop.
@@ -175,9 +176,10 @@ class TouhouHBMContext(CommonContext):
         # Set to False when in stages.
         self.enable_card_shop_scanning: bool = True
 
-        self.receivedItemQueue: list[NetworkItem] = [] # All items freshly arrived. Will be filtered for wrong IDs as it's processed.
-        self.menuItemQueue: list = [] # Items received but not yet executed because game is in a stage.
-        self.gameItemQueue: list = [] # Items received but not yet executed because game is in the menu.
+        self.receivedItemQueue: list[
+            NetworkItem] = []  # All items freshly arrived. Will be filtered for wrong IDs as it's processed.
+        self.menuItemQueue: list = []  # Items received but not yet executed because game is in a stage.
+        self.gameItemQueue: list = []  # Items received but not yet executed because game is in the menu.
         # Note: Funds do not go in here, but they have separate functions to execute
         # depending on whether the game is in the menu or not instead.
 
@@ -192,6 +194,14 @@ class TouhouHBMContext(CommonContext):
         # Whether the game is running or not.
         # Checks for whether it is the game itself or just the window resolution dialogue box.
         self.is_game_running: bool = False
+
+        # Death Link status
+        self.deathlink_enabled: bool = False
+        self.pending_received_deathlink: bool = False
+        self.pending_life_deduction: bool = False
+        self.died_to_deathlink: bool = False
+        self.caused_deathlink: bool = False
+        self.deathlink_trigger: int = DEATH_LINK_TRIGGER_LIFE
 
         # Item reception stuff. This gets resets within the same function they are used.
         self.received_funds: int = 0
@@ -209,7 +219,6 @@ class TouhouHBMContext(CommonContext):
 
         self.reset()
 
-
     def reset(self):
         self.previous_location_checked = []
         self.all_location_ids = []
@@ -218,32 +227,50 @@ class TouhouHBMContext(CommonContext):
 
         self.inError = False
 
-        # List of items/locations
         self.previous_location_checked = None
         self.is_connected = False
         self.loadingDataSetup = True
 
-        self.menuFunds: int = 0
-        self.loadout_slots: int = 1
-        self.equip_cost: int = 100
-        self.permashop_cards_new: list = []
-        self.permashop_cards: list = []
-        self.unlocked_stages: list = []
-        self.custom_data_keys_list: list = [str(self.team) + "_" + str(self.slot) + "Funds185",
-                                            str(self.team) + "_" + str(self.slot) + "Slots185",
-                                            str(self.team) + "_" + str(self.slot) + "EquipCost185",
-                                            str(self.team) + "_" + str(self.slot) + "LastItem185"]
+        self.menuFunds = 0
+        self.loadout_slots = 1
+        self.equip_cost = 100
+        self.permashop_cards_new = []
+        self.permashop_cards = []
+        self.unlocked_stages = []
 
-        self.enable_card_selection_checking: bool = False
-        self.enable_card_shop_scanning: bool = True
+        self.enable_card_selection_checking = False
+        self.enable_card_shop_scanning = True
 
-        self.receivedItemQueue: list[NetworkItem] = []
-        self.menuItemQueue: list = []
-        self.gameItemQueue: list = []
-        self.menu_stats_initialized: bool = False
-        self.is_game_running: bool = False
-        self.all_received_items: list[int] = []
-        self.loaded_past_received_items: bool = False
+        self.receivedItemQueue = []
+        self.menuItemQueue = []
+        self.gameItemQueue = []
+        self.menu_stats_initialized = False
+        self.is_game_running = False
+        self.all_received_items = []
+        self.loaded_past_received_items = False
+        self.last_received_item_index_server = -1
+
+        self.deathlink_enabled = False
+        self.pending_received_deathlink = False
+        self.pending_life_deduction = False
+        self.died_to_deathlink = False
+        self.caused_deathlink = False
+        self.deathlink_trigger = DEATH_LINK_TRIGGER_LIFE
+        self.last_death_link = 0
+
+        self.received_funds = 0
+        self.received_bullet_money = 0
+        self.received_lives = 0
+        self.received_shot_attack = 0
+        self.received_circle_atk = 0
+        self.received_circle_size = 0
+        self.received_circle_duration = 0
+        self.received_circle_graze = 0
+        self.received_speed = 0
+        self.received_invincibility = 0
+        self.received_equip_cost = 0
+        self.received_invinc_cancel = False
+
         #self.reset_game_data()
 
     def reset_game_data(self):
@@ -252,6 +279,7 @@ class TouhouHBMContext(CommonContext):
         self.is_game_running = self.handler.gameController.check_if_in_game()
         # If the game isn't running, no need to do anything.
         if not self.is_game_running: return
+
         # If it is, reset all stats immediately.
         # 1. Clear all boss records.
         def reset_boss_records():
@@ -261,8 +289,10 @@ class TouhouHBMContext(CommonContext):
                         # Get the location name first, convert that to ID,
                         # and then append if it is not in previously checked locations.
                         # Encounters
-                        self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], False, ENCOUNTER_ID)
-                        self.handler.getBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], False, DEFEAT_ID)
+                        self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], False,
+                                                       ENCOUNTER_ID)
+                        self.handler.getBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], False,
+                                                       DEFEAT_ID)
                 else:
                     # Special Challenge Market clause
                     boss_set_id_loc = 1
@@ -273,9 +303,11 @@ class TouhouHBMContext(CommonContext):
                             # Make sure to exclude the story bosses.
                             if boss_name in STORY_BOSSES_LIST: continue
                             # There are only encounters. Check those.
-                            self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], False, ENCOUNTER_ID)
+                            self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], False,
+                                                           ENCOUNTER_ID)
 
         reset_boss_records()
+
         # 2. Clear all stage unlock records.
         def reset_stage_unlocks():
             if len(self.handler.stages_unlocked) > 0:
@@ -284,6 +316,7 @@ class TouhouHBMContext(CommonContext):
                 self.update_stage_list()
 
         reset_stage_unlocks()
+
         # 3. Clear all menu records (Funds, card slots, equip cost).
         def reset_menu_records():
             self.handler.setMenuFunds(0)
@@ -291,12 +324,14 @@ class TouhouHBMContext(CommonContext):
             self.handler.setEquipCost(100)
 
         reset_menu_records()
+
         # 4. Clear all card dex records.
         def reset_card_dex():
             for card in ABILITY_CARD_LIST:
                 self.handler.setDexCardData(card, False)
 
         reset_card_dex()
+
         # 5. Clear all card shop records.
         def reset_card_shop():
             for card in ABILITY_CARD_LIST:
@@ -338,7 +373,7 @@ class TouhouHBMContext(CommonContext):
         if cmd == "ReceivedItems":
             asyncio.create_task(self.handle_received_items(args["index"], args["items"]))
 
-        elif cmd == "Retrieved": # Custom data
+        elif cmd == "Retrieved":  # Custom data
             # Menu Funds
             if self.custom_data_keys_list[0] in args["keys"]:
                 if args["keys"][self.custom_data_keys_list[0]] is not None:
@@ -359,7 +394,8 @@ class TouhouHBMContext(CommonContext):
             if self.custom_data_keys_list[3] in args["keys"]:
                 if args["keys"][self.custom_data_keys_list[3]] is not None:
                     self.last_received_item_index_server = args["keys"][self.custom_data_keys_list[3]]
-                else: self.last_received_item_index_server = 0
+                else:
+                    self.last_received_item_index_server = 0
 
         elif cmd == "DataPackage":
             if not self.all_location_ids:
@@ -373,9 +409,14 @@ class TouhouHBMContext(CommonContext):
             self.location_ap_id_to_name = {v: k for k, v in self.location_name_to_ap_id.items()}
             self.item_name_to_ap_id = args["data"]["games"][DISPLAY_NAME]["item_name_to_id"]
             self.item_ap_id_to_name = {v: k for k, v in self.item_name_to_ap_id.items()}
-            
+
         elif cmd == "Bounced":
             tags = args.get("tags", [])
+            # Skip checking if DeathLink is in ctx.tags. Wouldn't have been sent this otherwise.
+            if "DeathLink" in tags and self.last_death_link != args["data"]["time"]:
+                self.last_death_link = args["data"]["time"]
+                self.on_deathlink(args["data"])
+            # TODO: Something for Energy Link here later.
 
         if cmd == "SetReply":
             # Main concern is with the Permanent Shop Card unlock list.
@@ -444,11 +485,16 @@ class TouhouHBMContext(CommonContext):
         completion_goal = self.options["completion_type"]
 
         match completion_goal:
-            case 0: return checkFullStory()
-            case 1: return checkMinimumStory()
-            case 2: return checkAllCards()
-            case 3: return checkAllBosses()
-            case 4: return checkFullClear()
+            case 0:
+                return checkFullStory()
+            case 1:
+                return checkMinimumStory()
+            case 2:
+                return checkAllCards()
+            case 3:
+                return checkAllBosses()
+            case 4:
+                return checkFullClear()
 
         return False
 
@@ -593,60 +639,100 @@ class TouhouHBMContext(CommonContext):
             match item_id:
                 # Filler + Useful
                 # Lives
-                case 1: self.received_lives += 1
-                case 8: self.received_lives += 2
+                case 1:
+                    self.received_lives += 1
+                case 8:
+                    self.received_lives += 2
                 # Bullet Money
-                case 4: self.received_bullet_money += 200
-                case 5: self.received_bullet_money += 500
-                case 7: self.received_bullet_money += 1000
-                case 12: self.received_bullet_money += 5
-                case 13: self.received_bullet_money += 10
+                case 4:
+                    self.received_bullet_money += 200
+                case 5:
+                    self.received_bullet_money += 500
+                case 7:
+                    self.received_bullet_money += 1000
+                case 12:
+                    self.received_bullet_money += 5
+                case 13:
+                    self.received_bullet_money += 10
                 # Shot Attack %
-                case 14: self.received_shot_attack += 15
-                case 15: self.received_shot_attack += 30
-                case 16: self.received_shot_attack += 45
-                case 17: self.received_shot_attack += 60
-                case 300: self.received_shot_attack += 100
-                case 301: self.received_shot_attack += 200
+                case 14:
+                    self.received_shot_attack += 15
+                case 15:
+                    self.received_shot_attack += 30
+                case 16:
+                    self.received_shot_attack += 45
+                case 17:
+                    self.received_shot_attack += 60
+                case 300:
+                    self.received_shot_attack += 100
+                case 301:
+                    self.received_shot_attack += 200
                 # Magic Circle Attack %
-                case 18: self.received_circle_atk += 30
-                case 19: self.received_circle_atk += 60
-                case 20: self.received_circle_atk += 90
-                case 21: self.received_circle_atk += 120
+                case 18:
+                    self.received_circle_atk += 30
+                case 19:
+                    self.received_circle_atk += 60
+                case 20:
+                    self.received_circle_atk += 90
+                case 21:
+                    self.received_circle_atk += 120
                 # Magic Circle Size %
-                case 22: self.received_circle_size += 5
-                case 23: self.received_circle_size += 10
-                case 24: self.received_circle_size += 15
-                case 25: self.received_circle_size += 20
+                case 22:
+                    self.received_circle_size += 5
+                case 23:
+                    self.received_circle_size += 10
+                case 24:
+                    self.received_circle_size += 15
+                case 25:
+                    self.received_circle_size += 20
                 # Magic Circle Duration %
-                case 26: self.received_circle_duration += 10
-                case 27: self.received_circle_duration += 20
+                case 26:
+                    self.received_circle_duration += 10
+                case 27:
+                    self.received_circle_duration += 20
                 # Magic Circle Graze Range %
-                case 28: self.received_circle_graze += 15
-                case 29: self.received_circle_graze += 30
-                case 30: self.received_circle_graze += 45
-                case 31: self.received_circle_graze += 60
+                case 28:
+                    self.received_circle_graze += 15
+                case 29:
+                    self.received_circle_graze += 30
+                case 30:
+                    self.received_circle_graze += 45
+                case 31:
+                    self.received_circle_graze += 60
                 # Movement Speed %
-                case 32: self.received_speed += 20
+                case 32:
+                    self.received_speed += 20
                 # Invincibility
-                case 40: self.received_invincibility += 120
-                case 41: self.received_invincibility += 300
-                case 42: self.received_invincibility += 600
-                case 400: self.received_invincibility += 420
+                case 40:
+                    self.received_invincibility += 120
+                case 41:
+                    self.received_invincibility += 300
+                case 42:
+                    self.received_invincibility += 600
+                case 400:
+                    self.received_invincibility += 420
 
                 # Traps
                 # Bullet Money
-                case 50: self.received_bullet_money -= 50
-                case 51: self.received_bullet_money -= 100
-                case 52: self.received_bullet_money -= 200
-                case 53: self.received_bullet_money -= 300
+                case 50:
+                    self.received_bullet_money -= 50
+                case 51:
+                    self.received_bullet_money -= 100
+                case 52:
+                    self.received_bullet_money -= 200
+                case 53:
+                    self.received_bullet_money -= 300
                 # Movement Speed
-                case 71: self.received_speed += 500
-                case 73: self.received_speed += 1000
+                case 71:
+                    self.received_speed += 500
+                case 73:
+                    self.received_speed += 1000
                 # Invincibility
-                case 72: self.received_invinc_cancel = True
+                case 72:
+                    self.received_invinc_cancel = True
                 # Default
-                case _: logger.info("Unknown game item detected! Ignoring...")
+                case _:
+                    logger.info("Unknown game item detected! Ignoring...")
 
             self.gameItemQueue.remove(item_id)
 
@@ -692,19 +778,30 @@ class TouhouHBMContext(CommonContext):
         for item_id in self.menuItemQueue:
             match item_id:
                 # Filler + Useful
-                case 2: self.received_funds += 200
-                case 3: self.received_funds += 1000
-                case 6: self.received_funds += 500
-                case 10: self.received_funds += 5
-                case 11: self.received_funds += 10
+                case 2:
+                    self.received_funds += 200
+                case 3:
+                    self.received_funds += 1000
+                case 6:
+                    self.received_funds += 500
+                case 10:
+                    self.received_funds += 5
+                case 11:
+                    self.received_funds += 10
                 # Traps
-                case 60: self.received_funds -= 50
-                case 61: self.received_funds -= 100
-                case 62: self.received_funds -= 200
-                case 63: self.received_funds -= 300
-                case 70: self.received_equip_cost -= 50
+                case 60:
+                    self.received_funds -= 50
+                case 61:
+                    self.received_funds -= 100
+                case 62:
+                    self.received_funds -= 200
+                case 63:
+                    self.received_funds -= 300
+                case 70:
+                    self.received_equip_cost -= 50
                 # Default
-                case _: logger.info("Unknown global item! Ignoring...")
+                case _:
+                    logger.info("Unknown global item! Ignoring...")
 
             self.menuItemQueue.remove(item_id)
 
@@ -782,7 +879,7 @@ class TouhouHBMContext(CommonContext):
                     "cmd": 'Set',
                     "key": self.custom_data_keys_list[3],
                     "default": 0,
-                    "operations": [{"operation": 'replace', "value": last_saved_index}]
+                    "operations": [{"operation": 'replace', "value": self.last_received_item_index_server}]
                 }
             ]
         )
@@ -836,48 +933,34 @@ class TouhouHBMContext(CommonContext):
             self.isWaitingReplyFromServer = False
             self.replyFromServerReceived = False
             return True
-        else: return False
+        else:
+            return False
 
     async def main_loop(self):
         """
-        Main loop. Responsible for scanning locations for checks.
+        Main loop. Responsible for scanning locations for checks and stage updates.
         """
         try:
             await self.update_locations_checked()
+            self.update_stage_list()
         except Exception as e:
             self.inError = True
-            if e is pymem.exception.ProcessError:
-                logger.error(f"The client can't detect the game process!")
-            elif e is pymem.exception.ProcessNotFound:
-                logger.error(f"The client can't detect the game process!")
-            else:
-                logger.error(f"Error in the MAIN loop.")
-                logger.error(traceback.format_exc())
-
+            logger.error(f"Error in the MAIN loop.")
+            logger.error(traceback.format_exc())
 
     async def game_loop(self):
         """
-        Game loop. Responsible for handling resources during gameplay.
+        Game loop. Doesn't really do much.
         """
-        # Handles items that go only into stages.
         try:
-            if not self.handler.isGameInStage(): return
-
             if self.enable_card_shop_scanning: self.enable_card_shop_scanning = False
             if not self.enable_card_selection_checking:
                 await self.transfer_from_menu_to_stage()
                 self.enable_card_selection_checking = True
-            return
         except Exception as e:
             self.inError = True
-            if e is pymem.exception.ProcessError:
-                logger.error(f"The client can't detect the game process!")
-            elif e is pymem.exception.ProcessNotFound:
-                logger.error(f"The client can't detect the game process!")
-            else:
-                logger.error(f"Error in the GAME loop.")
-                logger.error(traceback.format_exc())
-
+            logger.error(f"Error in the GAME loop.")
+            logger.error(traceback.format_exc())
 
     async def menu_loop(self):
         """
@@ -897,14 +980,8 @@ class TouhouHBMContext(CommonContext):
                 self.enable_card_shop_scanning = True
         except Exception as e:
             self.inError = True
-            if e is pymem.exception.ProcessError:
-                logger.error(f"The client can't detect the game process!")
-            elif e is pymem.exception.ProcessNotFound:
-                logger.error(f"The client can't detect the game process!")
-            else:
-                logger.error(f"Error in the MENU loop.")
-                logger.error(traceback.format_exc())
-
+            logger.error(f"Error in the MENU loop.")
+            logger.error(traceback.format_exc())
 
     async def update_locations_checked(self):
         """
@@ -950,7 +1027,8 @@ class TouhouHBMContext(CommonContext):
                         if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name]):
                             locationName: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss_name)
                             if locationName not in location_table: continue
-                            if location_table[locationName] not in self.previous_location_checked and location_table[locationName] in self.all_location_ids:
+                            if location_table[locationName] not in self.previous_location_checked and location_table[
+                                locationName] in self.all_location_ids:
                                 self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
                                 new_locations.append(location_table[locationName])
 
@@ -964,6 +1042,7 @@ class TouhouHBMContext(CommonContext):
             shop_card_list = ABILITY_CARD_LIST
             for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
                 if invalid_card in shop_card_list: shop_card_list.remove(invalid_card)
+            if MALLET_CARD in shop_card_list: shop_card_list.remove(MALLET_CARD)
 
             for card in shop_card_list:
                 cardLocationName: str = get_card_location_name_str(card, False)
@@ -982,7 +1061,7 @@ class TouhouHBMContext(CommonContext):
                 self.handler.setDexCardData(NAZRIN_CARD_2, True)
                 cardLocationName: str = get_card_location_name_str(NAZRIN_CARD_2, True)
                 if (location_table[cardLocationName] in self.all_location_ids
-                    and location_table[cardLocationName] not in self.previous_location_checked):
+                        and location_table[cardLocationName] not in self.previous_location_checked):
                     new_locations.append(location_table[cardLocationName])
 
         # Dex
@@ -1012,7 +1091,7 @@ class TouhouHBMContext(CommonContext):
                 self.handler.setDexCardData(NAZRIN_CARD_1, True)
                 cardLocationName: str = get_card_location_name_str(NAZRIN_CARD_1, True)
                 if (location_table[cardLocationName] in self.all_location_ids
-                    and location_table[cardLocationName] not in self.previous_location_checked):
+                        and location_table[cardLocationName] not in self.previous_location_checked):
                     new_locations.append(location_table[cardLocationName])
 
             if player_has_purchased_card_bool: await self.save_menu_funds_to_server()
@@ -1026,7 +1105,6 @@ class TouhouHBMContext(CommonContext):
             await self.send_msgs([{"cmd": 'StatusUpdate', "status": 30}])
 
     async def get_custom_data_from_server(self):
-        # TODO: Implement selective Get command when there is local data for last item index.
         self.retrievedCustomData = True
         await self.send_msgs([{"cmd": "Get", "keys": self.custom_data_keys_list}])
         await self.send_msgs([{"cmd": "SetNotify", "keys": self.custom_data_keys_list}])
@@ -1069,9 +1147,10 @@ class TouhouHBMContext(CommonContext):
                             if boss_name not in full_location_name: continue
                             record_type = ENCOUNTER_ID
                             if DEFEAT_TYPE_NAME in full_location_name: record_type = DEFEAT_ID
-                            self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], True, record_type)
-                            self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], True, record_type)
-
+                            self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
+                                                              True, record_type)
+                            self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
+                                                           True, record_type)
 
     def load_save_data_dex(self):
         # Assume that the game is in 100% locked mode.
@@ -1085,14 +1164,12 @@ class TouhouHBMContext(CommonContext):
                 if CARD_ID_TO_NAME[card_string_id] in full_location_name:
                     self.handler.unconditionalDexUnlock(card_string_id)
 
-
     def load_save_data_menu(self):
         self.handler.setMenuFunds(self.menuFunds)
         self.handler.setCardSlots(self.loadout_slots)
         self.handler.setEquipCost(self.equip_cost)
 
         self.menu_stats_initialized = True
-
 
     async def transfer_from_menu_to_stage(self):
         """
@@ -1143,12 +1220,17 @@ class TouhouHBMContext(CommonContext):
                 self.handler.permashop_card_new = self.permashop_cards_new
             self.handler.setCardShopRecordGame(card_name, card_name in self.permashop_cards)
 
+        # Resets stats for Death Link if it is active.
+        if self.deathlink_enabled: self.reset_deathlink_stats()
+
         # Save Funds, Card Slots, and Equip Cost.
         await self.save_menu_stats_to_server()
 
         # If the client was saving the card info, wait for a response from the server.
-        if self.isWaitingReplyFromServer: await self.wait_for_setreply_from_server()
-        else: return
+        if self.isWaitingReplyFromServer:
+            await self.wait_for_setreply_from_server()
+        else:
+            return
 
     #
     # Last Received Item Index handling.
@@ -1223,6 +1305,95 @@ class TouhouHBMContext(CommonContext):
         asyncio.create_task(self.save_last_index_to_server())
         return
 
+    #
+    # Death Link
+    #
+    def on_deathlink(self, data: typing.Dict[str, typing.Any]) -> None:
+        """
+        Called when receiving a Death Link from the server.
+        """
+        self.pending_received_deathlink = True
+        if not self.enable_card_selection_checking:
+            self.pending_life_deduction = True
+            self.pending_received_deathlink = False
+        return super().on_deathlink(data)
+
+    async def send_deathlink(self):
+        """
+        Sends a Deathlink to the server, if the server is active.
+        """
+        # If Death Link is not enabled, don't send anything.
+        if not self.deathlink_enabled: return
+
+        cause_of_death = ""
+
+        # TODO: Randomize death messages.
+        if self.deathlink_trigger == DEATH_LINK_TRIGGER_STAGE:
+            cause_of_death = DEATH_LINK_STAGE_MSG
+
+        await self.send_death(cause_of_death)
+
+    async def deathlink_loop(self):
+        # If going back to the menu, the first transition will turn off
+        # both pending Death Link and the "Died to Death Link" flag.
+
+        # If Death Link isn't enabled, return.
+        if not self.deathlink_enabled: return
+        try:
+            # This loop will only run when the game is currently in a stage.
+            # Skip the loop otherwise.
+
+            # If not in a stage, don't do anything here.
+            if not self.handler.isGameInStage() or not self.enable_card_selection_checking: return
+
+            # If a Death Link had already arrived, it will be stored as a life lost.
+            # Upon entering a stage, immediately deduct 1 Life.
+            if self.pending_life_deduction:
+                self.handler.addLife(-1)
+                self.pending_life_deduction = False
+                return
+
+            # There is no need to check for deathbomb since the player has no bombs here anyways.
+            # If the player received a Death Link from the server and they are not dead, try to kill the player.
+            # Then, turn off the Death Link flag.
+            if self.pending_received_deathlink and not self.died_to_deathlink:
+                # If Anti-Death Link Invincibility is enabled, check against invincibility.
+                if self.death_link_check_invincibility(): self.handler.killPlayer()
+                self.died_to_deathlink = True
+                self.pending_received_deathlink = False
+            # In case there is no pending Death Link but the player died due to it before,
+            # monitor them until death/invincibility wears off.
+            elif self.died_to_deathlink:
+                if self.handler.checkForPlayerNormal():
+                    self.died_to_deathlink = False
+            # If the player has not received a Death Link and did not die to Death Link before,
+            # monitor them until their death kicks in.
+            # If a death is registered, send a Death Link.
+            elif self.handler.checkForPlayerDeath():
+                if not self.caused_deathlink:
+                    if (self.deathlink_trigger == DEATH_LINK_TRIGGER_LIFE
+                        or (self.deathlink_trigger == DEATH_LINK_TRIGGER_STAGE and self.handler.gameController.getLives() <= 0)):
+                        self.caused_deathlink = True
+                        await self.send_deathlink()
+            elif self.caused_deathlink and self.handler.checkForPlayerNormal():
+                self.caused_deathlink = False
+        except Exception as e:
+            self.inError = True
+            logger.error(f"Error in the DEATH LINK loop.")
+            logger.error(traceback.format_exc())
+
+    def reset_deathlink_stats(self):
+        self.pending_received_deathlink = False
+        self.pending_life_deduction = False
+        self.died_to_deathlink = False
+        self.caused_deathlink = False
+
+    def generic_loop_running_condition(self):
+        return not self.exit_event.is_set() and self.handler and not self.inError
+
+    def death_link_check_invincibility(self) -> bool:
+        return not self.options["death_link_invincibility"] or (self.options["death_link_invincibility"] and not self.handler.checkInvincibility())
+
 
 async def game_watcher(ctx: TouhouHBMContext):
     """
@@ -1259,7 +1430,8 @@ async def game_watcher(ctx: TouhouHBMContext):
                 await asyncio.sleep(1)
 
         # Trying to reconnect to the game after an error
-        if ctx.inError or (ctx.handler.gameController is None and not ctx.exit_event.is_set()) and ctx.retrievedCustomData:
+        if ctx.inError or (
+                ctx.handler.gameController is None and not ctx.exit_event.is_set()) and ctx.retrievedCustomData:
             if ctx.inError:
                 logger.info(f"Connection was lost. Trying to reconnect...")
             ctx.handler.gameController = None
@@ -1283,6 +1455,14 @@ async def game_watcher(ctx: TouhouHBMContext):
             if ctx.loadingDataSetup:
                 logger.info(f"Found {SHORT_NAME} process! Loading previous save data and initiating game loops...")
                 asyncio.create_task(ctx.load_save_data())
+
+                if ctx.options["death_link"]:
+                    await ctx.update_death_link(True)
+                    ctx.deathlink_enabled = True
+
+                if ctx.options["death_link_trigger"]:
+                    ctx.deathlink_trigger = ctx.options["death_link_trigger"]
+
                 ctx.loadingDataSetup = False
                 continue
 
@@ -1291,9 +1471,8 @@ async def game_watcher(ctx: TouhouHBMContext):
             loops.append(asyncio.create_task(ctx.main_loop()))
             loops.append(asyncio.create_task(ctx.menu_loop()))
             loops.append(asyncio.create_task(ctx.game_loop()))
-
-            await ctx.update_locations_checked()
-            ctx.update_stage_list()
+            if ctx.deathlink_enabled:
+                loops.append(asyncio.create_task(ctx.deathlink_loop()))
 
             # Potential Death Link implementation here.
 
@@ -1307,8 +1486,11 @@ async def game_watcher(ctx: TouhouHBMContext):
 
             if ctx.inError or ctx.exit_event.is_set() or not ctx.server:
                 for loop in loops:
-                    try: loop.cancel()
-                    except: pass
+                    try:
+                        loop.cancel()
+                    except:
+                        pass
+
 
 def launch():
     """
