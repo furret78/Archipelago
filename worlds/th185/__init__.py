@@ -78,6 +78,7 @@ class TouhouHBMWorld(World):
             "death_link_trigger": self.options.death_link_trigger.value,
             "death_link_invincibility": self.options.death_link_invincibility.value,
             "energy_link": self.options.energy_link.value,
+            "energy_link_bullet_money": self.options.energy_link_bullet_money.value,
             "completion_type": self.options.completion_type.value,
             "include_gameplay_filler": self.options.include_gameplay_filler.value
         }

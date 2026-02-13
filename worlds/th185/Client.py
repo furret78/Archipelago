@@ -6,7 +6,6 @@ from typing import Optional
 import asyncio
 import colorama
 import orjson
-import pymem.exception
 
 from CommonClient import (
     CommonContext,
@@ -108,6 +107,32 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
         """
         copy_and_replace(self.ctx.scorefile_path)
 
+    def _cmd_deposit(self, amount: int = 0, currency_type: str = None):
+        """
+        Does not work if EnergyLink is not enabled.
+        Deposits a set amount of currency (integer) into the EnergyLink pool.
+        Conversion rate differs between Funds ("f") and Bullet Money ("b").
+        """
+        if not self.energylink_enabled:
+            logger.info("EnergyLink is not enabled for this slot.")
+            return
+
+        final_currency_type: int = 0
+
+        if currency_type in CURRENCY_FUNDS_ARGS_LIST:
+            final_currency_type = CURRENCY_FUNDS_ID
+        elif currency_type in CURRENCY_BULLET_MONEY_ARGS_LIST and self.ctx.energylink_bulletmoney_enabled:
+            final_currency_type = CURRENCY_BULLET_MONEY_ID
+        else:
+            logger.info(INVALID_CURRENCY_STRING)
+            return
+
+        self.ctx.deposit_currency(amount, final_currency_type)
+
+    def _cmd_withdraw(self, amount: int = 0, currency_type: str = None):
+
+        pass
+
 
 class TouhouHBMContext(CommonContext):
     """Touhou 18.5 Game Context"""
@@ -132,9 +157,6 @@ class TouhouHBMContext(CommonContext):
         self.no_card_unlocked: bool = False
         self.loadingDataSetup: bool = True
         self.retrievedCustomData: bool = False
-        # Networking things concerning the Permanent Card Shop unlocks
-        self.isWaitingReplyFromServer: bool = False
-        self.replyFromServerReceived: bool = False
 
         # Scorefile path.
         default_appdata_path = os.getenv("APPDATA")
@@ -206,8 +228,11 @@ class TouhouHBMContext(CommonContext):
         # EnergyLink-related fields
         # self.menuFunds get repurposed here as it is not linked to DataStorage anymore.
         self.energylink_enabled: bool = False
-        self.amount_to_deposit: int = 0
-        self.amount_to_withdraw: int = 0
+        self.energylink_bulletmoney_enabled: bool = False
+        self.actual_withdrawn_amount: int = 0
+        self.withdraw_currency_type: int = CURRENCY_FUNDS_ID
+        self.isWaitingReplyFromServer: bool = False
+        self.replyFromServerReceived: bool = False
 
         # Item reception stuff. This gets resets within the same function they are used.
         self.received_funds: int = 0
@@ -265,8 +290,9 @@ class TouhouHBMContext(CommonContext):
         self.last_death_link = 0
 
         self.energylink_enabled = False
-        self.amount_to_deposit = 0
-        self.amount_to_withdraw = 0
+        self.energylink_bulletmoney_enabled = False
+        self.actual_withdrawn_amount = 0
+        self.withdraw_currency_type = CURRENCY_FUNDS_ID
 
         self.received_funds = 0
         self.received_bullet_money = 0
@@ -447,6 +473,13 @@ class TouhouHBMContext(CommonContext):
     #
     def update_stage_list(self):
         self.handler.updateStageList()
+
+    def checkIfGameInStage(self):
+        """
+        Helper function that checks if the game is currently in a stage.
+        If it is, return True.
+        """
+        return self.handler.isGameInStage() and self.enable_card_selection_checking
 
     #
     # Victory conditions
@@ -638,7 +671,6 @@ class TouhouHBMContext(CommonContext):
             await asyncio.sleep(0.5)
 
         for item_id in self.gameItemQueue:
-            # if not self.handler.isGameInStage(): continue
             match item_id:
                 # Filler + Useful
                 # Lives
@@ -1042,7 +1074,7 @@ class TouhouHBMContext(CommonContext):
 
         # Stage-exclusive.
         player_has_found_card_in_stage = False
-        if self.handler.isGameInStage() and self.enable_card_selection_checking:
+        if self.checkIfGameInStage():
             shop_card_list = ABILITY_CARD_LIST
             for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
                 if invalid_card in shop_card_list: shop_card_list.remove(invalid_card)
@@ -1230,12 +1262,6 @@ class TouhouHBMContext(CommonContext):
         # Save Funds, Card Slots, and Equip Cost.
         await self.save_menu_stats_to_server()
 
-        # If the client was saving the card info, wait for a response from the server.
-        if self.isWaitingReplyFromServer:
-            await self.wait_for_setreply_from_server()
-        else:
-            return
-
     #
     # Last Received Item Index handling.
     #
@@ -1348,7 +1374,7 @@ class TouhouHBMContext(CommonContext):
             # Skip the loop otherwise.
 
             # If not in a stage, don't do anything here.
-            if not self.handler.isGameInStage() or not self.enable_card_selection_checking: return
+            if not self.checkIfGameInStage(): return
 
             # If a Death Link had already arrived, it will be stored as a life lost.
             # Upon entering a stage, immediately deduct 1 Life.
@@ -1407,75 +1433,102 @@ class TouhouHBMContext(CommonContext):
     # subtract that number instead.
     # Otherwise, subtract according to the desired amount.
     # If at 0, reactions differ depending on whether the game is in a stage or not.
-    async def deposit_currency(self, amount: int, type: int):
-        self.amount_to_deposit = 0
+    async def deposit_currency(self, amount: int, currency_type: int):
+        amount_to_deposit: int = 0
 
-        if type == CURRENCY_FUNDS_ID or type is None:
+        if currency_type == CURRENCY_FUNDS_ID:
             self.menuFunds = self.handler.getMenuFunds()
 
             # Check if the game is in the menu.
-            if not self.handler.isGameInStage() and not self.enable_card_selection_checking:
+            if not self.checkIfGameInStage():
                 if self.menuFunds < amount:
-                    self.amount_to_deposit = self.menuFunds
-                else: self.amount_to_deposit = amount
+                    amount_to_deposit = self.menuFunds
+                else: amount_to_deposit = amount
 
-                self.handler.addMenuFunds(-self.amount_to_deposit)
+                self.handler.addMenuFunds(-amount_to_deposit)
             # Otherwise, the game is in a stage.
             # Deduct from the current Funds in the stage first.
             else:
                 gameFunds = self.handler.getGameFunds()
                 # If game Funds are insufficient, dip into the menu Funds.
                 if gameFunds < amount:
-                    self.amount_to_deposit = gameFunds
-                    self.handler.addGameFunds(-self.amount_to_deposit)
+                    amount_to_deposit = gameFunds
+                    self.handler.addGameFunds(-amount_to_deposit)
                     # Dipping into the menu Funds here.
                     # Check if it can cover the remaining difference.
                     # If it cannot, add all of it to the deposit and set it to 0.
-                    if self.menuFunds < (amount - self.amount_to_deposit):
-                        self.amount_to_deposit += self.menuFunds
+                    if self.menuFunds < (amount - amount_to_deposit):
+                        amount_to_deposit += self.menuFunds
                         self.handler.setMenuFunds(0)
                     # If it can cover, deduct the difference and ship the full amount as usual.
                     else:
-                        self.handler.addMenuFunds((amount - self.amount_to_deposit))
-                        self.amount_to_deposit = amount
+                        self.handler.addMenuFunds(-(amount - amount_to_deposit))
+                        amount_to_deposit = amount
                 # If game Funds are sufficient, deduct that amount and ship it off to the server.
                 else:
-                    self.amount_to_deposit = amount
-                    self.handler.addGameFunds(-self.amount_to_deposit)
-
-            if self.amount_to_deposit <= 0:
-                logger.info("Insufficient Funds to deposit.")
-                return
-            await self.send_deposit_msg(self.amount_to_deposit, CURRENCY_FUNDS_ID)
-        elif type == CURRENCY_BULLET_MONEY_ID:
+                    amount_to_deposit = amount
+                    self.handler.addGameFunds(-amount_to_deposit)
+        elif currency_type == CURRENCY_BULLET_MONEY_ID:
             # Check if the game is in the menu.
             # If it is, skip.
-            if not self.handler.isGameInStage() and not self.enable_card_selection_checking:
-                logger.info("There is no Bullet Money to deposit! Enter a stage first.")
+            if not self.checkIfGameInStage():
+                logger.info("There is no Bullet Money to deposit. Enter a stage first.")
                 return
             # If not, check for Bullet Money.
             else:
                 currentBulletMoney = self.handler.getBulletMoney()
                 if currentBulletMoney < amount:
-                    self.amount_to_deposit = currentBulletMoney
-                else: self.amount_to_deposit = amount
+                    amount_to_deposit = currentBulletMoney
+                else: amount_to_deposit = amount
 
-                self.handler.addBulletMoney(-self.amount_to_deposit)
+                self.handler.addBulletMoney(-amount_to_deposit)
+        else:
+            logger.info("Invalid currency type!")
+            return
 
-            if self.amount_to_deposit <= 0:
-                logger.info("Insufficient Bullet Money to deposit.")
+        if amount_to_deposit <= 0:
+            currency_name = CURRENCY_NAME_FUNDS
+            if currency_type == CURRENCY_BULLET_MONEY_ID:
+                currency_name = CURRENCY_NAME_BULLET_MONEY
+
+            logger.info(f"Not enough {currency_name} to deposit.")
+            return
+        await self.send_deposit_msg(amount_to_deposit, currency_type)
+
+    # 1. Check the amount against what the player already has and the maximum they can have.
+    # 2. Subtract down to a number they will get without overflowing the maximum money counter.
+    # 3. Send a request to withdraw energy from the server (attach currency type in tags and compare later).
+    # 4. Convert the withdrawn energy into the received amount (may differ due to the exchange rates).
+    # 5. Add that amount into the game accordingly.
+    async def withdraw_currency(self, amount: int, currency_type: int):
+        current_currency_amount: int = 0
+
+        # Grab the current amount of currency on hand.
+        # Check for currency type here to read the correct amount.
+        if currency_type == CURRENCY_FUNDS_ID:
+            if not self.checkIfGameInStage():
+                current_currency_amount = self.handler.getGameFunds()
+            else:
+                current_currency_amount = self.handler.getMenuFunds()
+        elif currency_type == CURRENCY_BULLET_MONEY_ID:
+            if not self.checkIfGameInStage():
+                logger.info("Cannot withdraw Bullet Money. Enter a stage first.")
                 return
-            await self.send_deposit_msg(self.amount_to_deposit, CURRENCY_BULLET_MONEY_ID)
 
-    async def withdraw_currency(self, amount: int, type: int):
+            current_currency_amount = self.handler.getBulletMoney()
+        else:
+            logger.info("Invalid currency type!")
+            return
 
-        pass
+        #
 
     async def send_deposit_msg(self, final_amount: int, currency_type: int):
-        if currency_type == CURRENCY_FUNDS_ID:
-            logger.info(f"Deposited {final_amount} Funds to the EnergyLink pool.")
-        elif currency_type == CURRENCY_BULLET_MONEY_ID:
-            logger.info(f"Deposited {final_amount} Bullet Money to the EnergyLink pool.")
+        currency_name: str = "Funds"
+        if currency_type == CURRENCY_BULLET_MONEY_ID:
+            currency_name = "Bullet Money"
+
+        logger.info(f"Deposited {final_amount} {currency_name} to the EnergyLink pool.")
+
         await self.send_msgs([
             {
                 "cmd": "Set",
@@ -1563,6 +1616,9 @@ async def game_watcher(ctx: TouhouHBMContext):
 
                 if ctx.options["energy_link"]:
                     ctx.energy_link = ctx.options["energy_link"]
+
+                if ctx.options["energy_link_bullet_money"]:
+                    ctx.energylink_bulletmoney_enabled = ctx.options["energy_link_bullet_money"]
 
                 ctx.loadingDataSetup = False
                 continue
