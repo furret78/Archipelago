@@ -172,7 +172,7 @@ class GameController:
     def addMenuFunds(self, value):
         self.addrMenuFunds = self.getAddressFromPointerWithBase(ADDR_MENU_FUNDS_PTR)
         oldFunds = self.pm.read_int(self.addrMenuFunds)
-        newFunds = clamp(oldFunds + value, 0, 999999)
+        newFunds = clamp(oldFunds + value, 0, MAX_FUNDS)
         self.pm.write_int(self.addrMenuFunds, newFunds)
 
     # Loadout Ability Card Slots functions

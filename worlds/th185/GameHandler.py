@@ -1,5 +1,6 @@
 import sys
 
+from . import MAX_BULLET_MONEY
 from .GameController import GameController
 from .Items import ITEM_TABLE_ID_TO_STAGE_NAME, ITEM_TABLE_ID_TO_CARD_ID
 from .Tools import clamp
@@ -90,13 +91,8 @@ class GameHandler:
     def isBlackMarketOpen(self) -> bool:
         return self.gameController.check_if_black_market()
 
-    def getCurrentGameFunds(self) -> int:
-        self.game_funds = self.gameController.getGameFunds()
-        return self.game_funds
-
-    def getCurrentMenuFunds(self) -> int:
-        self.menu_funds = self.gameController.getMenuFunds()
-        return self.menu_funds
+    def getGameFunds(self) -> int:
+        return self.gameController.getGameFunds()
 
     def setMenuFunds(self, value: int):
         """
@@ -106,7 +102,7 @@ class GameHandler:
         self.menu_funds = value
         self.gameController.setMenuFunds(value)
 
-    def getCurrentBulletMoney(self) -> int:
+    def getBulletMoney(self) -> int:
         return self.gameController.getBulletMoney()
 
     def getShopCardData(self, card_string_id: str) -> int:
@@ -168,7 +164,7 @@ class GameHandler:
         self.gameController.addBulletMoney(value)
 
     def addEquipCost(self, value: int):
-        newEquipCost = clamp(self.getEquipCost() + value, 100, 2764472319)
+        newEquipCost = clamp(self.getEquipCost() + value, 100, MAX_BULLET_MONEY)
         self.gameController.setEquipCost(newEquipCost)
 
     # Other functions

@@ -1,7 +1,6 @@
 import shutil
 import os
 
-
 from .variables.meta_data import *
 
 
@@ -49,3 +48,23 @@ def copy_paste_to_path(source_file, destination_directory):
 
 def get_item_index_save_name(seed_name, team_number, slot_number) -> str:
     return LAST_INDEX_FILE_NAME + str(seed_name) + str(team_number) + str(slot_number) + JSON_EXTENSION
+
+
+def convert_currency_to_joules(amount: int, currency_type: int = 0) -> int:
+    if currency_type == CURRENCY_FUNDS_ID or currency_type is None:
+        return amount * RATES_FUNDS_TO_JOULES
+    elif currency_type == CURRENCY_BULLET_MONEY_ID:
+        return amount * RATES_BULLET_MONEY_TO_JOULES
+    else:
+        return 0
+
+def convert_joules_to_currency(amount: int, currency_type: int = 0) -> int:
+    if currency_type == CURRENCY_FUNDS_ID or currency_type is None:
+        return amount // RATES_FUNDS_TO_JOULES
+    elif currency_type == CURRENCY_BULLET_MONEY_ID:
+        return amount // RATES_BULLET_MONEY_TO_JOULES
+    else:
+        return 0
+
+def get_energy_withdraw_tag(team_number, slot_number, player_name):
+    return "team" + str(team_number) + "slot" + str(slot_number) + str(player_name)

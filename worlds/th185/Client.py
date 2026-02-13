@@ -20,7 +20,7 @@ from NetUtils import NetworkItem
 from .GameHandler import *
 from .Items import GAME_ONLY_ITEM_ID
 from .Locations import *
-from .Tools import get_item_index_save_name
+from .Tools import get_item_index_save_name, convert_currency_to_joules
 
 
 # Handles the game itself. The watcher that runs loops is down below.
@@ -206,6 +206,8 @@ class TouhouHBMContext(CommonContext):
         # EnergyLink-related fields
         # self.menuFunds get repurposed here as it is not linked to DataStorage anymore.
         self.energylink_enabled: bool = False
+        self.amount_to_deposit: int = 0
+        self.amount_to_withdraw: int = 0
 
         # Item reception stuff. This gets resets within the same function they are used.
         self.received_funds: int = 0
@@ -262,7 +264,9 @@ class TouhouHBMContext(CommonContext):
         self.deathlink_trigger = DEATH_LINK_TRIGGER_LIFE
         self.last_death_link = 0
 
-        self.energylink_enabled: bool = False
+        self.energylink_enabled = False
+        self.amount_to_deposit = 0
+        self.amount_to_withdraw = 0
 
         self.received_funds = 0
         self.received_bullet_money = 0
@@ -821,7 +825,8 @@ class TouhouHBMContext(CommonContext):
             self.handler.addGameFunds(received_funds)
         else:
             self.handler.addMenuFunds(received_funds)
-            await self.save_menu_funds_to_server()
+            if not self.energylink_enabled:
+                await self.save_menu_funds_to_server()
 
         self.received_funds = 0
 
@@ -1093,7 +1098,7 @@ class TouhouHBMContext(CommonContext):
                         and location_table[cardLocationName] not in self.previous_location_checked):
                     new_locations.append(location_table[cardLocationName])
 
-            if player_has_purchased_card_bool: await self.save_menu_funds_to_server()
+            if player_has_purchased_card_bool and not self.energylink_enabled: await self.save_menu_funds_to_server()
 
             self.previous_location_checked = self.previous_location_checked + new_locations
             await self.send_msgs([{"cmd": 'LocationChecks', "locations": new_locations}])
@@ -1392,6 +1397,100 @@ class TouhouHBMContext(CommonContext):
 
     def death_link_check_invincibility(self) -> bool:
         return not self.options["death_link_invincibility"] or (self.options["death_link_invincibility"] and not self.handler.checkInvincibility())
+
+    #
+    # Energy Link
+    #
+    # This will first take a look at the amount in the game.
+    # Compare the amount to subtract to the amount that's in store.
+    # If what the player has is less than the desired amount,
+    # subtract that number instead.
+    # Otherwise, subtract according to the desired amount.
+    # If at 0, reactions differ depending on whether the game is in a stage or not.
+    async def deposit_currency(self, amount: int, type: int):
+        self.amount_to_deposit = 0
+
+        if type == CURRENCY_FUNDS_ID or type is None:
+            self.menuFunds = self.handler.getMenuFunds()
+
+            # Check if the game is in the menu.
+            if not self.handler.isGameInStage() and not self.enable_card_selection_checking:
+                if self.menuFunds < amount:
+                    self.amount_to_deposit = self.menuFunds
+                else: self.amount_to_deposit = amount
+
+                self.handler.addMenuFunds(-self.amount_to_deposit)
+            # Otherwise, the game is in a stage.
+            # Deduct from the current Funds in the stage first.
+            else:
+                gameFunds = self.handler.getGameFunds()
+                # If game Funds are insufficient, dip into the menu Funds.
+                if gameFunds < amount:
+                    self.amount_to_deposit = gameFunds
+                    self.handler.addGameFunds(-self.amount_to_deposit)
+                    # Dipping into the menu Funds here.
+                    # Check if it can cover the remaining difference.
+                    # If it cannot, add all of it to the deposit and set it to 0.
+                    if self.menuFunds < (amount - self.amount_to_deposit):
+                        self.amount_to_deposit += self.menuFunds
+                        self.handler.setMenuFunds(0)
+                    # If it can cover, deduct the difference and ship the full amount as usual.
+                    else:
+                        self.handler.addMenuFunds((amount - self.amount_to_deposit))
+                        self.amount_to_deposit = amount
+                # If game Funds are sufficient, deduct that amount and ship it off to the server.
+                else:
+                    self.amount_to_deposit = amount
+                    self.handler.addGameFunds(-self.amount_to_deposit)
+
+            if self.amount_to_deposit <= 0:
+                logger.info("Insufficient Funds to deposit.")
+                return
+            await self.send_deposit_msg(self.amount_to_deposit, CURRENCY_FUNDS_ID)
+        elif type == CURRENCY_BULLET_MONEY_ID:
+            # Check if the game is in the menu.
+            # If it is, skip.
+            if not self.handler.isGameInStage() and not self.enable_card_selection_checking:
+                logger.info("There is no Bullet Money to deposit! Enter a stage first.")
+                return
+            # If not, check for Bullet Money.
+            else:
+                currentBulletMoney = self.handler.getBulletMoney()
+                if currentBulletMoney < amount:
+                    self.amount_to_deposit = currentBulletMoney
+                else: self.amount_to_deposit = amount
+
+                self.handler.addBulletMoney(-self.amount_to_deposit)
+
+            if self.amount_to_deposit <= 0:
+                logger.info("Insufficient Bullet Money to deposit.")
+                return
+            await self.send_deposit_msg(self.amount_to_deposit, CURRENCY_BULLET_MONEY_ID)
+
+    async def withdraw_currency(self, amount: int, type: int):
+
+        pass
+
+    async def send_deposit_msg(self, final_amount: int, currency_type: int):
+        if currency_type == CURRENCY_FUNDS_ID:
+            logger.info(f"Deposited {final_amount} Funds to the EnergyLink pool.")
+        elif currency_type == CURRENCY_BULLET_MONEY_ID:
+            logger.info(f"Deposited {final_amount} Bullet Money to the EnergyLink pool.")
+        await self.send_msgs([
+            {
+                "cmd": "Set",
+                "key": f"EnergyLink{self.team}",
+                "default": 0,
+                "slot": self.slot,
+                "operations": [
+                    {"operation": "add", "value": convert_currency_to_joules(final_amount, currency_type)}
+                ]
+            }
+        ])
+
+    async def send_withdraw_msg(self, amount: int, type: int):
+
+        pass
 
 
 async def game_watcher(ctx: TouhouHBMContext):
