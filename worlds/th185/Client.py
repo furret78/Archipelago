@@ -119,15 +119,16 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
         """
         copy_and_replace(self.ctx.scorefile_path)
 
-    def _cmd_energy_pool(self, interaction_type: str, amount: int = 0, currency_type: str = None):
+    def _cmd_energy_pool(self, interaction_type: str = None, amount: int = 0, currency_type: str = None):
         """
-        Command for executing interactions with the EnergyLink pool.
-        Does not work if EnergyLink is not enabled.
+        Command for executing interactions with the Energy Link pool.
+        Leave all blank arguments to check if Energy Link is enabled.
+        Does not work if Energy Link is not enabled.
         Available interaction types: Deposit ("d") and withdraw ("w").
         Available currency types: Funds ("f") and Bullet Money ("b").
         """
         if not self.energylink_enabled:
-            logger.info("EnergyLink is not enabled for this slot.")
+            logger.info("Energy Link is not enabled for this slot.")
             return
 
         final_currency_type: int = get_currency_type_from_str(currency_type, self.ctx)
@@ -142,7 +143,7 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
             asyncio.create_task(self.ctx.withdraw_currency(amount, final_currency_type))
             return
         else:
-            logger.info("Invalid EnergyLink interaction type. No operations were executed.")
+            logger.info("Invalid Energy Link interaction type. No operations were executed.")
 
 
 class TouhouHBMContext(CommonContext):
@@ -1606,7 +1607,7 @@ class TouhouHBMContext(CommonContext):
 
         # Check if anything was actually withdrawn.
         if self.actual_withdrawn_amount <= 0:
-            logger.info("Nothing was withdrawn from the EnergyLink pool.")
+            logger.info("Nothing was withdrawn from the Energy Link pool.")
             return
 
         # SetReply received. Compare the actual deducted amount (positive integer).
@@ -1657,16 +1658,16 @@ class TouhouHBMContext(CommonContext):
         if remaining_currency > 0:
             await self.send_deposit_msg(remaining_currency, self.withdraw_currency_type, True)
 
-        logger.info(f"Withdrawn {self.actual_withdrawn_amount} {withdrawn_currency_name} from the EnergyLink pool.")
+        logger.info(f"Withdrawn {self.actual_withdrawn_amount} {withdrawn_currency_name} from the Energy Link pool.")
 
     async def send_deposit_msg(self, final_amount: int, currency_type: int, was_return: bool = False):
         currency_name: str = CURRENCY_NAME_FUNDS
         if currency_type == CURRENCY_BULLET_MONEY_ID:
             currency_name = CURRENCY_NAME_BULLET_MONEY
         if not was_return:
-            logger.info(f"Deposited {final_amount} {currency_name} to the EnergyLink pool.")
+            logger.info(f"Deposited {final_amount} {currency_name} to the Energy Link pool.")
         else:
-            logger.info(f"Returned {final_amount} {currency_name} to the EnergyLink pool.")
+            logger.info(f"Returned {final_amount} {currency_name} to the Energy Link pool.")
 
         await self.send_msgs([
             {
@@ -1684,7 +1685,7 @@ class TouhouHBMContext(CommonContext):
         if currency_type == CURRENCY_BULLET_MONEY_ID:
             currency_name = "Bullet Money"
 
-        logger.info(f"Attempting to withdraw {final_amount} {currency_name} from the EnergyLink pool...")
+        logger.info(f"Attempting to withdraw {final_amount} {currency_name} from the Energy Link pool...")
 
         # No need to use slot number and team number here.
         # Team number can be checked via the EnergyLink pool key.
