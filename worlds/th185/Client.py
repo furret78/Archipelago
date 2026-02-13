@@ -1045,6 +1045,8 @@ class TouhouHBMContext(CommonContext):
         Game loop. Doesn't really do much.
         """
         try:
+            if not self.handler.isGameInStage(): return
+
             if self.enable_card_shop_scanning: self.enable_card_shop_scanning = False
             if not self.enable_card_selection_checking:
                 await self.transfer_from_menu_to_stage()
