@@ -610,13 +610,13 @@ class TouhouHBMContext(CommonContext):
         """
 
         def checkMinimumStory() -> bool:
-            return get_boss_location_name_str(STAGE6_ID, BOSS_TAKANE_NAME, True) in self.previous_location_checked
+            return location_table[get_boss_location_name_str(STAGE6_ID, BOSS_TAKANE_NAME, True)] in self.previous_location_checked
 
         def checkFullStory() -> bool:
-            if get_boss_location_name_str(STAGE4_ID, BOSS_NITORI_NAME,
-                                          True) not in self.previous_location_checked: return False
-            if get_boss_location_name_str(STAGE_CHIMATA_ID, BOSS_CHIMATA_NAME,
-                                          True) not in self.previous_location_checked: return False
+            if location_table[get_boss_location_name_str(STAGE4_ID, BOSS_NITORI_NAME,
+                                          True)] not in self.previous_location_checked: return False
+            if location_table[get_boss_location_name_str(STAGE_CHIMATA_ID, BOSS_CHIMATA_NAME,
+                                          True)] not in self.previous_location_checked: return False
             if not checkMinimumStory(): return False
 
             return True
@@ -624,15 +624,16 @@ class TouhouHBMContext(CommonContext):
         def checkAllCards() -> bool:
             if not self.handler.dex_card_unlocked: return False
             for name in ABILITY_CARD_LIST:
-                if not self.handler.getDexCardDataHandler(name): return False
+                if not location_table[get_card_location_name_str(name, True)] not in self.previous_location_checked: return False
+
             return True
 
         def checkAllBosses() -> bool:
-            if not self.handler.bosses_beaten: return False
+            for stage_name in STAGE_LIST:
+                if stage_name == CHALLENGE_NAME: continue
+                for boss_name in ALL_BOSSES_LIST[STAGE_NAME_TO_ID[stage_name]]:
+                    if location_table[get_boss_location_name_str(STAGE_NAME_TO_ID[stage_name], boss_name, True)] not in self.previous_location_checked: return False
 
-            for stage_id_key in self.handler.bosses_beaten:
-                for boss_data_key in self.handler.bosses_beaten[stage_id_key]:
-                    if not self.handler.bosses_beaten[stage_id_key][boss_data_key]: return False
             return True
 
         def checkFullClear() -> bool:
@@ -651,8 +652,8 @@ class TouhouHBMContext(CommonContext):
                 return checkAllBosses()
             case 4:
                 return checkFullClear()
-
-        return False
+            case _:
+                return False
 
     #
     # Item Reception and helper functions.
@@ -1269,7 +1270,6 @@ class TouhouHBMContext(CommonContext):
             self.previous_location_checked = self.previous_location_checked + new_locations
             await self.send_msgs([{"cmd": 'LocationChecks', "locations": new_locations}])
 
-        # Finally, check for victory.
         if self.checkVictory() and not self.finished_game:
             self.finished_game = True
             await self.send_msgs([{"cmd": 'StatusUpdate', "status": 30}])
