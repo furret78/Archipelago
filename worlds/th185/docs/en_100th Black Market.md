@@ -43,9 +43,9 @@ All cards except two of Nazrin's "Money Comes and Goes On Its Own" cards are shu
 - Shot Attack Strength
 - Temporary Invincibility
 ### Traps (Toggleable via Trap Chance)
-- Funds Reduction
-- Bullet Money Reduction
-- Equipment Cost Limit Reduction
+- Reduced Funds
+- Reduced Bullet Money
+- Reduced Equipment Cost Limit
 - Various Magic Circle stat changes
 - Hyper Movement Speed
 - Instant Invincibility Cancel
@@ -59,5 +59,5 @@ The items are **visually unchanged**. After collecting an item, a message will s
 When you receive an item, the client will inform you of what you received. Changes will occur as appropriate in the game.
 
 ## Credits
-- Nepley, for their work on the AP implementations for Embodiment of Scarlet Devil, Perfect Cherry Blossom, and Imperishable Night. Their work has been borrowed as a framework for implementing AP into 100th Black Market. They have also helped with disabling the game's anticheat in order for AP to properly function.
-- Doremy/Iesua Inane of Mirage Creators, for playtesting.
+- **Nepley**: AP implementations for Embodiment of Scarlet Devil, Perfect Cherry Blossom, and Imperishable Night borrowed as a framework for implementing AP into 100th Black Market. Anticheat disabling as well.
+- **Doremy/Iesua Inane** of Mirage Creators: Playtesting.

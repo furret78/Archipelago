@@ -6,9 +6,6 @@
 - Consider saving the scorefile path last inputted by the user somehow.
 - Linux support for the client.
 
-- Randomize Death Link cause of death messages.
-- Fix broken Energy Link for Bullet Money.
-
 - Code refactoring for more clarity.
 - Refactoring Rules.py to accommodate Rule Builder.
 

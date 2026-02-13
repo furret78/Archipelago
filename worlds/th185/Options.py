@@ -45,6 +45,7 @@ class IncludeGameplayFiller(DefaultOnToggle):
 class DeathLinkTrigger(Choice):
     """
     Determines when a Death Link would be sent. Only takes effect if Death Link is enabled.
+    Can be temporarily changed during gameplay.
 
     0. Upon losing a life. This means Life Explosion Elixir will also trigger Death Link.
     1. Upon failing a stage attempt. All lives must be lost before this triggers.

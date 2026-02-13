@@ -1,5 +1,6 @@
 import os
 import pkgutil
+import random
 import traceback
 import typing
 from typing import Optional
@@ -19,9 +20,9 @@ from NetUtils import NetworkItem
 from .GameHandler import *
 from .Items import GAME_ONLY_ITEM_ID
 from .Locations import *
+from .variables.meta_data import *
 from .Tools import get_item_index_save_name, convert_currency_to_joules, get_energy_withdraw_tag, \
     convert_joules_to_currency
-
 
 # Handles the game itself. The watcher that runs loops is down below.
 
@@ -54,6 +55,7 @@ def get_currency_type_from_str(currency_type_string: str, game_context) -> int:
             return -1
         return CURRENCY_BULLET_MONEY_ID
     else:
+        logger.info(INVALID_CURRENCY_STRING)
         return -1
 
 
@@ -72,7 +74,7 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
         Retrieves the number of Funds in the menu.
         """
         if not self.ctx.handler or not self.ctx.handler.gameController:
-            logger.error("The game is not running!")
+            logger.error(GAME_NOT_RUNNING_MSG)
             return
 
         funds_count = self.ctx.handler.gameController.getMenuFunds()
@@ -83,10 +85,97 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
         Command to forcibly unlock the option to equip no cards in the loadout.
         """
         if not self.ctx.handler or not self.ctx.handler.gameController:
-            logger.error("The game is not running!")
+            logger.error(GAME_NOT_RUNNING_MSG)
             return
 
         self.ctx.handler.gameController.setNoCardData()
+
+    def _cmd_energylink(self, interaction_type: str = None, amount = None, currency_type: str = None):
+        """
+        Command for executing interactions with the Energy Link pool.
+        Leave all blank arguments to check if Energy Link is enabled.
+        :param interaction_type: Deposit ("d"), withdraw ("w").
+        :param amount: Amount of currency to perform the interaction on.
+        :param currency_type: Funds ("f"), Bullet Money ("b").
+        """
+        if not self.ctx.is_connected:
+            logger.info(SERVER_NOT_CONNECTED_MSG)
+            return
+
+        if not self.ctx.energylink_enabled:
+            logger.info("Energy Link isn't enabled for this slot.")
+            return
+        elif interaction_type is None and amount is None and currency_type is None:
+            logger.info("Energy Link available.")
+            return
+
+        if interaction_type is None:
+            logger.info("Invalid Energy Link interaction type.")
+            return
+        if amount is None:
+            logger.info("Amount to perform operation hasn't been specified yet!")
+            return
+        elif int(amount) <= 0:
+            logger.info("Amount must be a positive integer!")
+            return
+
+        final_currency_type: int = get_currency_type_from_str(currency_type, self.ctx)
+        if final_currency_type == -1:
+            return
+
+        if interaction_type in INTERACT_DEPOSIT_ARGS_LIST:
+            asyncio.create_task(self.ctx.deposit_currency(int(amount), final_currency_type))
+            return
+        elif interaction_type in INTERACT_WITHDRAW_ARGS_LIST:
+            asyncio.create_task(self.ctx.withdraw_currency(int(amount), final_currency_type))
+            return
+        else:
+            logger.info("Invalid Energy Link interaction type.")
+
+    def _cmd_deathlink(self):
+        """
+        Show Death Link status for this game.
+        """
+        if not self.ctx.is_connected:
+            logger.info(SERVER_NOT_CONNECTED_MSG)
+            return
+
+        logger.info(f"Death Link status: {self.ctx.deathlink_enabled}")
+        if not self.ctx.deathlink_enabled: return
+        if self.ctx.deathlink_trigger == DEATH_LINK_TRIGGER_LIFE:
+            logger.info(DEATH_LINK_INFO_LIFE)
+        elif self.ctx.deathlink_trigger == DEATH_LINK_TRIGGER_STAGE:
+            logger.info(DEATH_LINK_INFO_STAGE)
+
+    def _cmd_deathlink_trigger(self, trigger: str = None):
+        """
+        Get or set when a Death Link is triggered. Leave blank to check status.
+        :param trigger: Upon Life Loss ("life"), Upon Stage Fail ("stage").
+        """
+        if not self.ctx.is_connected:
+            logger.info(SERVER_NOT_CONNECTED_MSG)
+            return
+        if not self.ctx.deathlink_enabled:
+            logger.info(DEATH_LINK_NOT_ENABLED)
+            return
+
+        if trigger is None:
+            if self.ctx.deathlink_trigger == DEATH_LINK_TRIGGER_LIFE:
+                logger.info(DEATH_LINK_INFO_LIFE)
+            elif self.ctx.deathlink_trigger == DEATH_LINK_TRIGGER_STAGE:
+                logger.info(DEATH_LINK_INFO_STAGE)
+            else:
+                logger.info("Death Link condition unknown.")
+            return
+        else:
+            if trigger == "life":
+                self.ctx.deathlink_trigger = DEATH_LINK_TRIGGER_LIFE
+                logger.info(DEATH_LINK_INFO_CHANGED + DEATH_LINK_INFO_LIFE)
+            elif trigger == "stage":
+                self.ctx.deathlink_trigger = DEATH_LINK_TRIGGER_STAGE
+                logger.info(DEATH_LINK_INFO_CHANGED + DEATH_LINK_INFO_STAGE)
+            else:
+                logger.info("Invalid Death Link trigger arguments.")
 
     def _cmd_show_save_directory(self):
         """
@@ -117,48 +206,11 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
         Recommended to manually back up save data before doing this.
         The game's save data is often located at %appdata%/ShanghaiAlice/th185.
         """
+        if self.ctx.handler or self.ctx.handler.gameController:
+            logger.error("The game has already started! Close it before running this command again.")
+            return
+
         copy_and_replace(self.ctx.scorefile_path)
-
-    def _cmd_energylink(self, interaction_type: str = None, amount = None, currency_type: str = None):
-        """
-        Command for executing interactions with the Energy Link pool.
-        Leave all blank arguments to check if Energy Link is enabled.
-        Does not work if Energy Link is not enabled.
-        Available interaction types: Deposit ("d") and withdraw ("w").
-        Available currency types: Funds ("f") and Bullet Money ("b").
-        """
-        if not self.ctx.energylink_enabled:
-            logger.info("Energy Link is not enabled for this slot.")
-            return
-        elif interaction_type is None and amount is None and currency_type is None:
-            logger.info("Energy Link is enabled for this slot!")
-            return
-
-        if interaction_type is None:
-            logger.info("Invalid Energy Link interaction type.")
-            return
-        if amount is None:
-            logger.info("Amount to perform operation hasn't been specified yet!")
-            return
-        elif int(amount) <= 0:
-            logger.info("Amount must be a positive integer!")
-            return
-
-        final_currency_type: int = get_currency_type_from_str(currency_type, self.ctx)
-        if final_currency_type == -1:
-            logger.info(INVALID_CURRENCY_STRING)
-            return
-
-        if interaction_type in INTERACT_DEPOSIT_ARGS_LIST:
-            logger.info("Attempting to deposit...")
-            asyncio.create_task(self.ctx.deposit_currency(int(amount), final_currency_type))
-            return
-        elif interaction_type in INTERACT_WITHDRAW_ARGS_LIST:
-            logger.info("Attempting to withdraw...")
-            asyncio.create_task(self.ctx.withdraw_currency(int(amount), final_currency_type))
-            return
-        else:
-            logger.info("Invalid Energy Link interaction type.")
 
 
 class TouhouHBMContext(CommonContext):
@@ -483,12 +535,15 @@ class TouhouHBMContext(CommonContext):
                 if args["key"] == f"EnergyLink{self.team}" and args["slot"] == self.slot:
                     received_tag = args.get("tag", "")
                     currency_type: int
+                    currency_name: str = CURRENCY_NAME_FUNDS
 
                     # Check if this SetReply concerns Funds or Bullet Money.
                     if received_tag == get_energy_withdraw_tag(self.seed_name, CURRENCY_FUNDS_ID):
                         currency_type = CURRENCY_FUNDS_ID
+                        currency_name = CURRENCY_NAME_FUNDS
                     elif received_tag == get_energy_withdraw_tag(self.seed_name, CURRENCY_BULLET_MONEY_ID):
                         currency_type = CURRENCY_BULLET_MONEY_ID
+                        currency_name = CURRENCY_NAME_BULLET_MONEY
                     # If it's none of the above, the package is probably mangled.
                     else:
                         currency_type = -1
@@ -497,10 +552,11 @@ class TouhouHBMContext(CommonContext):
                     if currency_type != -1:
                         actual_withdrawn_amount = convert_joules_to_currency(args["original_value"] - args["value"], currency_type)
                         withdraw_currency_type = currency_type
+                    else: return
 
                     # If the converted amount rounds down to 0, immediately return the energy back to the server.
                     if actual_withdrawn_amount <= 0:
-                        logger.info("Received energy from Energy Link pool is not enough to exchange for currency. Returned to the pool.")
+                        logger.info(f"Not enough energy for {currency_name}. Returned to the pool.")
                         asyncio.create_task(self.send_direct_deposit_msg(args["original_value"] - args["value"]))
                     else:
                         asyncio.create_task(self.process_received_currency(actual_withdrawn_amount, withdraw_currency_type))
@@ -1422,11 +1478,19 @@ class TouhouHBMContext(CommonContext):
         # If Death Link is not enabled, don't send anything.
         if not self.deathlink_enabled: return
 
-        cause_of_death = ""
+        # Needs to come with player name if not blank.
+        cause_of_death: str = ""
 
-        # TODO: Randomize death messages.
+        match random.randint(0, 2):
+            case 0: cause_of_death = DEATH_LINK_LIFE_MSG1
+            case 1: cause_of_death = DEATH_LINK_LIFE_MSG2
+            case _: cause_of_death = DEATH_LINK_GENERIC_MSG
+
         if self.deathlink_trigger == DEATH_LINK_TRIGGER_STAGE:
-            cause_of_death = DEATH_LINK_STAGE_MSG
+            match random.randint(0, 2):
+                case 0: cause_of_death = DEATH_LINK_STAGE_MSG1
+                case 1: cause_of_death = DEATH_LINK_STAGE_MSG2
+                case _: cause_of_death = DEATH_LINK_GENERIC_MSG
 
         await self.send_death(cause_of_death)
 
@@ -1544,7 +1608,6 @@ class TouhouHBMContext(CommonContext):
             # If not, check for Bullet Money.
             else:
                 currentBulletMoney = self.handler.getBulletMoney()
-                logger.info(f"Bullet Money is {currentBulletMoney}")
                 if currentBulletMoney < amount:
                     amount_to_deposit = currentBulletMoney
                 else: amount_to_deposit = amount
@@ -1700,8 +1763,6 @@ class TouhouHBMContext(CommonContext):
         if currency_type == CURRENCY_BULLET_MONEY_ID:
             currency_name = "Bullet Money"
 
-        logger.info(f"Attempting to withdraw {final_amount} {currency_name} from the Energy Link pool...")
-
         # No need to use slot number and team number here.
         # Team number can be checked via the EnergyLink pool key.
         # Slot number will be sent in the SetReply package.
@@ -1749,7 +1810,7 @@ async def game_watcher(ctx: TouhouHBMContext):
 
         # Trying to make first connection to the game
         if ctx.handler is None and not ctx.inError:
-            logger.info(f"Awaiting connection to {SHORT_NAME}...")
+            logger.info(f"Trying to find {SHORT_NAME} game process...")
             asyncio.create_task(ctx.connect_to_game())
             while ctx.handler is None and not ctx.exit_event.is_set():
                 await asyncio.sleep(1)
@@ -1758,7 +1819,7 @@ async def game_watcher(ctx: TouhouHBMContext):
         if ctx.inError or (
                 ctx.handler.gameController is None and not ctx.exit_event.is_set()) and ctx.retrievedCustomData:
             if ctx.inError:
-                logger.info(f"Connection was lost. Trying to reconnect...")
+                logger.info(f"Connection was lost. Attempting reconnection...")
             ctx.handler.gameController = None
             ctx.loadingDataSetup = True
 
@@ -1778,7 +1839,7 @@ async def game_watcher(ctx: TouhouHBMContext):
                 continue
 
             if ctx.loadingDataSetup:
-                logger.info(f"Found {SHORT_NAME} process! Loading previous save data and initiating game loops...")
+                logger.info(f"Found {SHORT_NAME} process! Now loading...")
                 asyncio.create_task(ctx.load_save_data())
 
                 if ctx.options["death_link"]:
@@ -1790,6 +1851,8 @@ async def game_watcher(ctx: TouhouHBMContext):
 
                 if ctx.options["energy_link"]:
                     ctx.energylink_enabled = True
+                    if ctx.ui:
+                        ctx.ui.enable_energy_link()
 
                 if "energy_link_bullet_money" in ctx.options:
                     ctx.energylink_bulletmoney_enabled = ctx.options["energy_link_bullet_money"]
@@ -1805,10 +1868,8 @@ async def game_watcher(ctx: TouhouHBMContext):
             if ctx.deathlink_enabled:
                 loops.append(asyncio.create_task(ctx.deathlink_loop()))
 
-            # Potential Death Link implementation here.
-
             # Infinitely loop if there is no error.
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.5)
             # If there is, exit to restart the connection.
             # Stop all loops if possible at this phase.
             if ctx.exit_event.is_set():

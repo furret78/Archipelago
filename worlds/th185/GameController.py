@@ -97,15 +97,15 @@ class GameController:
 
     # Bullet Money (in-game) functions
     def getBulletMoney(self) -> int:
-        return self.pm.read_ulonglong(self.addrBulletMoney)
+        return self.pm.read_uint(self.addrBulletMoney)
 
     def setBulletMoney(self, value):
-        self.pm.write_ulonglong(self.addrBulletMoney, value)
+        self.pm.write_uint(self.addrBulletMoney, value)
 
     def addBulletMoney(self, value):
         oldBulletMoney = self.pm.read_int(self.addrBulletMoney)
         newBulletMoney = clamp(oldBulletMoney + value, 0, MAX_BULLET_MONEY)
-        self.pm.write_ulonglong(self.addrBulletMoney, newBulletMoney)
+        self.pm.write_uint(self.addrBulletMoney, newBulletMoney)
 
     # More gameplay only changes
     # Invincibility
