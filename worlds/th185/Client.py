@@ -1481,18 +1481,18 @@ class TouhouHBMContext(CommonContext):
         # Needs to come with player name if not blank.
         cause_of_death: str = ""
 
-        match random.randint(0, 2):
-            case 0: cause_of_death = DEATH_LINK_LIFE_MSG1
-            case 1: cause_of_death = DEATH_LINK_LIFE_MSG2
-            case _: cause_of_death = DEATH_LINK_GENERIC_MSG
-
         if self.deathlink_trigger == DEATH_LINK_TRIGGER_STAGE:
             match random.randint(0, 2):
                 case 0: cause_of_death = DEATH_LINK_STAGE_MSG1
                 case 1: cause_of_death = DEATH_LINK_STAGE_MSG2
                 case _: cause_of_death = DEATH_LINK_GENERIC_MSG
+        else:
+            match random.randint(0, 2):
+                case 0: cause_of_death = DEATH_LINK_LIFE_MSG1
+                case 1: cause_of_death = DEATH_LINK_LIFE_MSG2
+                case _: cause_of_death = DEATH_LINK_GENERIC_MSG
 
-        await self.send_death(cause_of_death)
+        await self.send_death(self.player_names[self.slot] + cause_of_death)
 
     async def deathlink_loop(self):
         # If going back to the menu, the first transition will turn off
