@@ -27,13 +27,15 @@ DEATH_LINK_STAGE_MSG = "was kicked out of the Black Market."
 
 # Energy Link
 MAX_FUNDS = 999999
-MAX_BULLET_MONEY = 999999999
+MAX_BULLET_MONEY = 4294967295
 RATES_FUNDS_TO_JOULES = 5*(10**8)
 RATES_BULLET_MONEY_TO_JOULES = 4*(10**7)
 CURRENCY_FUNDS_ID = 0
 CURRENCY_BULLET_MONEY_ID = 1
-CURRENCY_FUNDS_ARGS_LIST: list[str] = ["f", "F", "funds", "Funds", "fund", "funds"]
+CURRENCY_FUNDS_ARGS_LIST: list[str] = ["f", "F", "funds", "Funds", "fund", "Fund"]
 CURRENCY_BULLET_MONEY_ARGS_LIST: list[str] = ["b", "B", "bullet", "Bullet", "bullet money", "Bullet Money", "bullet_money", "Bullet_Money"]
+INTERACT_DEPOSIT_ARGS_LIST: list[str] = ["d", "D", "deposit", "Deposit"]
+INTERACT_WITHDRAW_ARGS_LIST: list[str] = ["w", "W", "withdraw", "Withdraw"]
 CURRENCY_NAME_FUNDS = "Funds"
 CURRENCY_NAME_BULLET_MONEY = "Bullet Money"
 INVALID_CURRENCY_STRING = "Invalid currency type!"

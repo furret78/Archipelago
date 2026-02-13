@@ -97,7 +97,7 @@ class GameController:
 
     # Bullet Money (in-game) functions
     def getBulletMoney(self) -> int:
-        return self.pm.read_int(self.addrBulletMoney)
+        return self.pm.read_double(self.addrBulletMoney)
 
     def setBulletMoney(self, value):
         self.pm.write_int(self.addrBulletMoney, value)

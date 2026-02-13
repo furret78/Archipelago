@@ -19,7 +19,8 @@ from NetUtils import NetworkItem
 from .GameHandler import *
 from .Items import GAME_ONLY_ITEM_ID
 from .Locations import *
-from .Tools import get_item_index_save_name, convert_currency_to_joules
+from .Tools import get_item_index_save_name, convert_currency_to_joules, get_energy_withdraw_tag, \
+    convert_joules_to_currency
 
 
 # Handles the game itself. The watcher that runs loops is down below.
@@ -43,6 +44,17 @@ def copy_and_replace(directory: str):
         os.remove(backup_file_path)
 
     logger.info(f"Successfully replaced save data at: {full_file_path}")
+
+def get_currency_type_from_str(currency_type_string: str, game_context) -> int:
+    if currency_type_string in CURRENCY_FUNDS_ARGS_LIST:
+        return CURRENCY_FUNDS_ID
+    elif currency_type_string in CURRENCY_BULLET_MONEY_ARGS_LIST:
+        if not game_context.energylink_bulletmoney_enabled:
+            logger.info("Bullet Money exchanges are not enabled for this slot.")
+            return -1
+        return CURRENCY_BULLET_MONEY_ID
+    else:
+        return -1
 
 
 class TouhouHBMClientProcessor(ClientCommandProcessor):
@@ -107,31 +119,30 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
         """
         copy_and_replace(self.ctx.scorefile_path)
 
-    def _cmd_deposit(self, amount: int = 0, currency_type: str = None):
+    def _cmd_energy_pool(self, interaction_type: str, amount: int = 0, currency_type: str = None):
         """
+        Command for executing interactions with the EnergyLink pool.
         Does not work if EnergyLink is not enabled.
-        Deposits a set amount of currency (integer) into the EnergyLink pool.
-        Conversion rate differs between Funds ("f") and Bullet Money ("b").
+        Available interaction types: Deposit ("d") and withdraw ("w").
+        Available currency types: Funds ("f") and Bullet Money ("b").
         """
         if not self.energylink_enabled:
             logger.info("EnergyLink is not enabled for this slot.")
             return
 
-        final_currency_type: int = 0
-
-        if currency_type in CURRENCY_FUNDS_ARGS_LIST:
-            final_currency_type = CURRENCY_FUNDS_ID
-        elif currency_type in CURRENCY_BULLET_MONEY_ARGS_LIST and self.ctx.energylink_bulletmoney_enabled:
-            final_currency_type = CURRENCY_BULLET_MONEY_ID
-        else:
+        final_currency_type: int = get_currency_type_from_str(currency_type, self.ctx)
+        if final_currency_type == -1:
             logger.info(INVALID_CURRENCY_STRING)
             return
 
-        self.ctx.deposit_currency(amount, final_currency_type)
-
-    def _cmd_withdraw(self, amount: int = 0, currency_type: str = None):
-
-        pass
+        if interaction_type in INTERACT_DEPOSIT_ARGS_LIST:
+            asyncio.create_task(self.ctx.deposit_currency(amount, final_currency_type))
+            return
+        elif interaction_type in INTERACT_WITHDRAW_ARGS_LIST:
+            asyncio.create_task(self.ctx.withdraw_currency(amount, final_currency_type))
+            return
+        else:
+            logger.info("Invalid EnergyLink interaction type. No operations were executed.")
 
 
 class TouhouHBMContext(CommonContext):
@@ -454,7 +465,30 @@ class TouhouHBMContext(CommonContext):
                 self.on_deathlink(args["data"])
 
         if cmd == "SetReply":
-            # TODO: EnergyLink
+            # Check if EnergyLink pool matches current team and slot.
+            if args["key"] == f"EnergyLink{self.team}" and args["slot"] == self.slot:
+                received_tag = args.get("tag", "")
+                currency_type: int
+
+                # Check if this SetReply concerns Funds or Bullet Money.
+                if received_tag == get_energy_withdraw_tag(self.seed_name, CURRENCY_FUNDS_ID):
+                    currency_type = CURRENCY_FUNDS_ID
+                elif received_tag == get_energy_withdraw_tag(self.seed_name, CURRENCY_BULLET_MONEY_ID):
+                    currency_type = CURRENCY_BULLET_MONEY_ID
+                # If it's none of the above, the package is probably mangled.
+                else:
+                    currency_type = -1
+                    logger.info("SetReply package from the server is broken.")
+
+                if currency_type != -1:
+                    self.actual_withdrawn_amount = convert_joules_to_currency(args["original_value"] - args["value"], currency_type)
+                    self.withdraw_currency_type = currency_type
+            # If it doesn't match, assume that the Set package did not go through.
+            else:
+                self.actual_withdrawn_amount = 0
+                self.withdraw_currency_type = CURRENCY_FUNDS_ID
+                logger.info("SetReply package from the server does not match slot number or team number.")
+
             self.replyFromServerReceived = True
 
     def client_received_initial_server_data(self):
@@ -865,10 +899,30 @@ class TouhouHBMContext(CommonContext):
     #
     # Functions for saving custom data to server.
     #
+    # If EnergyLink is enabled, don't save anything related to Funds.
     async def save_menu_stats_to_server(self):
         self.menuFunds = self.handler.getMenuFunds()
         self.loadout_slots = clamp(self.handler.getCardSlots(), 1, 34)
         self.equip_cost = self.handler.getEquipCost()
+
+        if self.energylink_enabled:
+            await self.send_msgs(
+                [
+                    {
+                        "cmd": "Set",
+                        "key": self.custom_data_keys_list[1],
+                        "default": 1,
+                        "operations": [{"operation": 'replace', "value": self.loadout_slots}]
+                    },
+                    {
+                        "cmd": "Set",
+                        "key": self.custom_data_keys_list[2],
+                        "default": 100,
+                        "operations": [{"operation": 'replace', "value": self.equip_cost}]
+                    }
+                ]
+            )
+            return
 
         await self.send_msgs(
             [
@@ -894,6 +948,8 @@ class TouhouHBMContext(CommonContext):
         )
 
     async def save_menu_funds_to_server(self):
+        if self.energylink_enabled: return
+
         self.menuFunds = self.handler.getMenuFunds()
 
         await self.send_msgs(
@@ -964,13 +1020,14 @@ class TouhouHBMContext(CommonContext):
         """
         This function waits until it has received a SetReply from the server.
         Ideally should only be used when asking for a SetReply for the Permanent Card Shop unlocks.
+        Returns True if it is still waiting.
         """
         if self.isWaitingReplyFromServer and self.replyFromServerReceived:
             self.isWaitingReplyFromServer = False
             self.replyFromServerReceived = False
-            return True
-        else:
             return False
+
+        return True
 
     async def main_loop(self):
         """
@@ -1143,7 +1200,6 @@ class TouhouHBMContext(CommonContext):
     async def get_custom_data_from_server(self):
         self.retrievedCustomData = True
         await self.send_msgs([{"cmd": "Get", "keys": self.custom_data_keys_list}])
-        await self.send_msgs([{"cmd": "SetNotify", "keys": self.custom_data_keys_list}])
 
     async def load_save_data(self):
         """
@@ -1483,7 +1539,7 @@ class TouhouHBMContext(CommonContext):
 
                 self.handler.addBulletMoney(-amount_to_deposit)
         else:
-            logger.info("Invalid currency type!")
+            logger.info(INVALID_CURRENCY_STRING)
             return
 
         if amount_to_deposit <= 0:
@@ -1502,48 +1558,150 @@ class TouhouHBMContext(CommonContext):
     # 5. Add that amount into the game accordingly.
     async def withdraw_currency(self, amount: int, currency_type: int):
         current_currency_amount: int = 0
+        amount_to_withdraw: int = 0
 
         # Grab the current amount of currency on hand.
         # Check for currency type here to read the correct amount.
+        # If the retrieved amount is at max, immediately cancel the entire operation.
         if currency_type == CURRENCY_FUNDS_ID:
             if not self.checkIfGameInStage():
                 current_currency_amount = self.handler.getGameFunds()
             else:
                 current_currency_amount = self.handler.getMenuFunds()
+
+            if current_currency_amount >= MAX_FUNDS:
+                logger.info("Cannot withdraw any more Funds. Maximum amount reached.")
+                return
         elif currency_type == CURRENCY_BULLET_MONEY_ID:
             if not self.checkIfGameInStage():
                 logger.info("Cannot withdraw Bullet Money. Enter a stage first.")
                 return
 
             current_currency_amount = self.handler.getBulletMoney()
+
+            if current_currency_amount >= MAX_BULLET_MONEY:
+                logger.info("Cannot withdraw any more Bullet Money. Maximum amount reached.")
         else:
-            logger.info("Invalid currency type!")
+            logger.info(INVALID_CURRENCY_STRING)
             return
 
+        # Check against what the player already has. Check for currency type here as well.
+        # Invalid currency types have already been filtered out above, so no need to do it here.
         #
+        # Take the maximum and subtract from the current amount to get the difference.
+        # Clamp the withdrawable amount to that range.
+        difference_amount: int = 0
+        if currency_type == CURRENCY_FUNDS_ID:
+            difference_amount = MAX_FUNDS - current_currency_amount
+        elif currency_type == CURRENCY_BULLET_MONEY_ID:
+            difference_amount = MAX_BULLET_MONEY - current_currency_amount
 
-    async def send_deposit_msg(self, final_amount: int, currency_type: int):
-        currency_name: str = "Funds"
+        amount_to_withdraw = clamp(amount, 0, difference_amount)
+
+        # Wait for a SetReply from the server before continuing this operation.
+        self.isWaitingReplyFromServer = True
+        await self.send_withdraw_msg(amount_to_withdraw, currency_type)
+        while self.wait_for_setreply_from_server():
+            await asyncio.sleep(0.5)
+
+        # Check if anything was actually withdrawn.
+        if self.actual_withdrawn_amount <= 0:
+            logger.info("Nothing was withdrawn from the EnergyLink pool.")
+            return
+
+        # SetReply received. Compare the actual deducted amount (positive integer).
+        # The received amount should have already been converted from joules.
+        # If the received amount is 0, don't do anything.
+        # Run another in-game value check to make sure the withdrawn amount can be given.
+        withdrawn_currency_name: str = CURRENCY_NAME_FUNDS
+
+        if self.withdraw_currency_type == CURRENCY_FUNDS_ID:
+            if self.checkIfGameInStage():
+                current_currency_amount = self.handler.getGameFunds()
+            else:
+                current_currency_amount = self.handler.getMenuFunds()
+        elif self.withdraw_currency_type == CURRENCY_BULLET_MONEY_ID:
+            withdrawn_currency_name = CURRENCY_NAME_BULLET_MONEY
+            if self.checkIfGameInStage():
+                current_currency_amount = self.handler.getBulletMoney()
+            else:
+                logger.info("Cannot give Bullet Money. Enter a stage first.")
+                await self.send_deposit_msg(self.actual_withdrawn_amount, self.withdraw_currency_type, True)
+                return
+
+        # Subtract the maximum from the current in-game amount.
+        # Compare that to the received amount.
+        # Clamp the received amount to only the difference.
+        # Return the rest to the server afterwards.
+        if self.withdraw_currency_type == CURRENCY_FUNDS_ID:
+            difference_amount = MAX_FUNDS - current_currency_amount
+        elif self.withdraw_currency_type == CURRENCY_BULLET_MONEY_ID:
+            difference_amount = MAX_BULLET_MONEY - current_currency_amount
+
+        amount_to_withdraw = clamp(self.actual_withdrawn_amount, 0, difference_amount)
+        remaining_currency = self.actual_withdrawn_amount - amount_to_withdraw
+
+        if self.withdraw_currency_type == CURRENCY_FUNDS_ID:
+            if self.checkIfGameInStage():
+                self.handler.addGameFunds(amount_to_withdraw)
+            else:
+                self.handler.addMenuFunds(amount_to_withdraw)
+        elif self.withdraw_currency_type == CURRENCY_BULLET_MONEY_ID:
+            if self.checkIfGameInStage():
+                self.handler.addBulletMoney(amount_to_withdraw)
+            else:
+                logger.info("Cannot give Bullet Money. Enter a stage first.")
+                await self.send_deposit_msg(self.actual_withdrawn_amount, self.withdraw_currency_type, True)
+                return
+
+        if remaining_currency > 0:
+            await self.send_deposit_msg(remaining_currency, self.withdraw_currency_type, True)
+
+        logger.info(f"Withdrawn {self.actual_withdrawn_amount} {withdrawn_currency_name} from the EnergyLink pool.")
+
+    async def send_deposit_msg(self, final_amount: int, currency_type: int, was_return: bool = False):
+        currency_name: str = CURRENCY_NAME_FUNDS
         if currency_type == CURRENCY_BULLET_MONEY_ID:
-            currency_name = "Bullet Money"
-
-        logger.info(f"Deposited {final_amount} {currency_name} to the EnergyLink pool.")
+            currency_name = CURRENCY_NAME_BULLET_MONEY
+        if not was_return:
+            logger.info(f"Deposited {final_amount} {currency_name} to the EnergyLink pool.")
+        else:
+            logger.info(f"Returned {final_amount} {currency_name} to the EnergyLink pool.")
 
         await self.send_msgs([
             {
                 "cmd": "Set",
                 "key": f"EnergyLink{self.team}",
                 "default": 0,
-                "slot": self.slot,
                 "operations": [
                     {"operation": "add", "value": convert_currency_to_joules(final_amount, currency_type)}
                 ]
             }
         ])
 
-    async def send_withdraw_msg(self, amount: int, type: int):
+    async def send_withdraw_msg(self, final_amount: int, currency_type: int):
+        currency_name: str = "Funds"
+        if currency_type == CURRENCY_BULLET_MONEY_ID:
+            currency_name = "Bullet Money"
 
-        pass
+        logger.info(f"Attempting to withdraw {final_amount} {currency_name} from the EnergyLink pool...")
+
+        # No need to use slot number and team number here.
+        # Team number can be checked via the EnergyLink pool key.
+        # Slot number will be sent in the SetReply package.
+        await self.send_msgs([
+            {
+                "cmd": "Set",
+                "key": f"EnergyLink{self.team}",
+                "tag": get_energy_withdraw_tag(self.seed_name, currency_type),
+                "default": 0,
+                "want_reply": True,
+                "operations": [
+                    {"operation": "add", "value": 0 - convert_currency_to_joules(final_amount, currency_type)},
+                    {"operation": "max", "value": 0}
+                ]
+            }
+        ])
 
 
 async def game_watcher(ctx: TouhouHBMContext):

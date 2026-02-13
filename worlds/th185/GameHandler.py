@@ -146,21 +146,25 @@ class GameHandler:
 
     # Received Item functions
     def addLife(self, value: int = 1):
+        if value == 0: return
         currentLives = self.gameController.getLives()
         #if currentLives == 11: self.spare_lives += value
         newLives = clamp(currentLives + value, 0, 11)
         self.gameController.setLives(newLives)
 
     def addGameFunds(self, value: int):
+        if value == 0: return
         self.gameController.addGameFunds(value)
 
     def addMenuFunds(self, value: int):
+        if value == 0: return
         self.gameController.addMenuFunds(value)
 
     def getMenuFunds(self) -> int:
         return self.gameController.getMenuFunds()
 
     def addBulletMoney(self, value: int):
+        if value == 0: return
         self.gameController.addBulletMoney(value)
 
     def addEquipCost(self, value: int):

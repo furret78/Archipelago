@@ -66,10 +66,10 @@ def convert_joules_to_currency(amount: int, currency_type: int = 0) -> int:
     else:
         return 0
 
-def get_energy_withdraw_tag(team_number, slot_number, player_name, currency_type):
-    final_currency_type = "Funds"
+def get_energy_withdraw_tag(seed_name, currency_type: int):
+    final_currency_type = "fs"
 
     if currency_type == CURRENCY_BULLET_MONEY_ID:
-        final_currency_type = "BulletMoney"
+        final_currency_type = "bm"
 
-    return "team" + str(team_number) + "slot" + str(slot_number) + str(player_name) + final_currency_type
+    return str(seed_name) + "-" + final_currency_type
