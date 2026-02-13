@@ -472,6 +472,7 @@ class TouhouHBMContext(CommonContext):
                 self.on_deathlink(args["data"])
 
         if cmd == "SetReply":
+            if not self.energylink_enabled: return
             # Check if EnergyLink pool matches current team and slot.
             actual_withdrawn_amount = 0
             withdraw_currency_type = CURRENCY_FUNDS_ID
@@ -699,9 +700,10 @@ class TouhouHBMContext(CommonContext):
         asyncio.create_task(self.handle_game_only_items())
 
     def try_unlock_card_in_shop(self, card_name: str):
-        if self.handler.isGameInStage(): return
-        if self.enable_card_selection_checking: return
-        if not self.enable_card_shop_scanning: return
+        if (self.handler.isGameInStage()
+            or self.enable_card_selection_checking
+            or not self.enable_card_shop_scanning):
+            return
 
         self.handler.permashop_card_new = self.permashop_cards_new
         self.handler.setCardShopRecordHandler(card_name, True)
@@ -1064,6 +1066,7 @@ class TouhouHBMContext(CommonContext):
                 self.no_card_unlocked = True
 
             if self.handler.isGameInStage(): return
+
             if self.enable_card_selection_checking: self.enable_card_selection_checking = False
             if not self.enable_card_shop_scanning:
                 await self.transfer_from_stage_to_menu()
@@ -1196,7 +1199,12 @@ class TouhouHBMContext(CommonContext):
 
     async def get_custom_data_from_server(self):
         self.retrievedCustomData = True
+        if self.energylink_enabled:
+            await self.send_msgs([{"cmd": "Get", "keys": self.custom_data_keys_list[1:]}])
+            await self.send_msgs([{"cmd": "SetNotify", "keys": self.custom_data_keys_list[1:]}])
+            return
         await self.send_msgs([{"cmd": "Get", "keys": self.custom_data_keys_list}])
+        await self.send_msgs([{"cmd": "SetNotify", "keys": self.custom_data_keys_list}])
 
     async def load_save_data(self):
         """
@@ -1314,6 +1322,7 @@ class TouhouHBMContext(CommonContext):
 
         # Save Funds, Card Slots, and Equip Cost.
         await self.save_menu_stats_to_server()
+
 
     #
     # Last Received Item Index handling.
