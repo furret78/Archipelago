@@ -624,7 +624,7 @@ class TouhouHBMContext(CommonContext):
         def checkAllCards() -> bool:
             if not self.handler.dex_card_unlocked: return False
             for name in ABILITY_CARD_LIST:
-                if not location_table[get_card_location_name_str(name, True)] not in self.previous_location_checked: return False
+                if location_table[get_card_location_name_str(name, True)] not in self.previous_location_checked: return False
 
             return True
 
