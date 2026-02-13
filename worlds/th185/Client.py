@@ -58,6 +58,13 @@ def get_currency_type_from_str(currency_type_string: str, game_context) -> int:
         logger.info(INVALID_CURRENCY_STRING)
         return -1
 
+def get_random_death_message(deathlink_trigger) -> str:
+    if deathlink_trigger is None or deathlink_trigger == DEATH_LINK_TRIGGER_LIFE:
+        return random.choice(DEATH_LINK_LIFE_MSGS + DEATH_LINK_GENERIC_MSGS)
+    elif deathlink_trigger == DEATH_LINK_TRIGGER_STAGE:
+        return random.choice(DEATH_LINK_LIFE_MSGS)
+    return random.choice(DEATH_LINK_GENERIC_MSGS)
+
 
 class TouhouHBMClientProcessor(ClientCommandProcessor):
     def __init__(self, ctx):
@@ -1477,22 +1484,7 @@ class TouhouHBMContext(CommonContext):
         """
         # If Death Link is not enabled, don't send anything.
         if not self.deathlink_enabled: return
-
-        # Needs to come with player name if not blank.
-        cause_of_death: str = ""
-
-        if self.deathlink_trigger == DEATH_LINK_TRIGGER_STAGE:
-            match random.randint(0, 2):
-                case 0: cause_of_death = DEATH_LINK_STAGE_MSG1
-                case 1: cause_of_death = DEATH_LINK_STAGE_MSG2
-                case _: cause_of_death = DEATH_LINK_GENERIC_MSG
-        else:
-            match random.randint(0, 2):
-                case 0: cause_of_death = DEATH_LINK_LIFE_MSG1
-                case 1: cause_of_death = DEATH_LINK_LIFE_MSG2
-                case _: cause_of_death = DEATH_LINK_GENERIC_MSG
-
-        await self.send_death(self.player_names[self.slot] + cause_of_death)
+        await self.send_death(self.player_names[self.slot] + get_random_death_message(self.deathlink_trigger))
 
     async def deathlink_loop(self):
         # If going back to the menu, the first transition will turn off

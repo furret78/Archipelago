@@ -60,4 +60,4 @@ When you receive an item, the client will inform you of what you received. Chang
 
 ## Credits
 - **Nepley**: AP implementations for Embodiment of Scarlet Devil, Perfect Cherry Blossom, and Imperishable Night borrowed as a framework for 100th Black Market AP. Anticheat disabling as well.
-- **Doremy/Iesua Inane** of Mirage Creators: Playtesting.
+- **Doremy/Iesua Inane** of Mirage Creators: Playtesting, writing several Death Link messages.
