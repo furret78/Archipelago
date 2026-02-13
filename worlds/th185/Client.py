@@ -137,7 +137,10 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
         if interaction_type is None:
             logger.info("Invalid Energy Link interaction type.")
             return
-        if int(amount) <= 0:
+        if amount is None:
+            logger.info("Amount to perform operation hasn't been specified yet!")
+            return
+        elif int(amount) <= 0:
             logger.info("Amount must be a positive integer!")
             return
 
@@ -472,35 +475,35 @@ class TouhouHBMContext(CommonContext):
                 self.on_deathlink(args["data"])
 
         if cmd == "SetReply":
-            if not self.energylink_enabled: return
-            # Check if EnergyLink pool matches current team and slot.
-            actual_withdrawn_amount = 0
-            withdraw_currency_type = CURRENCY_FUNDS_ID
-
-            if args["key"] == f"EnergyLink{self.team}" and args["slot"] == self.slot:
-                received_tag = args.get("tag", "")
-                currency_type: int
-
-                # Check if this SetReply concerns Funds or Bullet Money.
-                if received_tag == get_energy_withdraw_tag(self.seed_name, CURRENCY_FUNDS_ID):
-                    currency_type = CURRENCY_FUNDS_ID
-                elif received_tag == get_energy_withdraw_tag(self.seed_name, CURRENCY_BULLET_MONEY_ID):
-                    currency_type = CURRENCY_BULLET_MONEY_ID
-                # If it's none of the above, the package is probably mangled.
-                else:
-                    currency_type = -1
-                    logger.info("SetReply package from the server is broken.")
-
-                if currency_type != -1:
-                    actual_withdrawn_amount = convert_joules_to_currency(args["original_value"] - args["value"], currency_type)
-                    withdraw_currency_type = currency_type
-            # If it doesn't match, assume that the Set package did not go through.
-            else:
+            if self.energylink_enabled:
+                # Check if EnergyLink pool matches current team and slot.
                 actual_withdrawn_amount = 0
                 withdraw_currency_type = CURRENCY_FUNDS_ID
-                logger.info("SetReply package from the server does not match slot number or team number.")
 
-            asyncio.create_task(self.process_received_currency(actual_withdrawn_amount, withdraw_currency_type))
+                if args["key"] == f"EnergyLink{self.team}" and args["slot"] == self.slot:
+                    received_tag = args.get("tag", "")
+                    currency_type: int
+
+                    # Check if this SetReply concerns Funds or Bullet Money.
+                    if received_tag == get_energy_withdraw_tag(self.seed_name, CURRENCY_FUNDS_ID):
+                        currency_type = CURRENCY_FUNDS_ID
+                    elif received_tag == get_energy_withdraw_tag(self.seed_name, CURRENCY_BULLET_MONEY_ID):
+                        currency_type = CURRENCY_BULLET_MONEY_ID
+                    # If it's none of the above, the package is probably mangled.
+                    else:
+                        currency_type = -1
+                        logger.info("SetReply package from the server is broken.")
+
+                    if currency_type != -1:
+                        actual_withdrawn_amount = convert_joules_to_currency(args["original_value"] - args["value"], currency_type)
+                        withdraw_currency_type = currency_type
+
+                    # If the converted amount rounds down to 0, immediately return the energy back to the server.
+                    if actual_withdrawn_amount <= 0:
+                        logger.info("Received energy from Energy Link pool is not enough to exchange for currency. Returned to the pool.")
+                        asyncio.create_task(self.send_direct_deposit_msg(args["original_value"] - args["value"]))
+                    else:
+                        asyncio.create_task(self.process_received_currency(actual_withdrawn_amount, withdraw_currency_type))
 
     def client_received_initial_server_data(self):
         """
@@ -1678,13 +1681,16 @@ class TouhouHBMContext(CommonContext):
         else:
             logger.info(f"Returned {final_amount} {currency_name} to the Energy Link pool.")
 
+        await self.send_direct_deposit_msg(convert_currency_to_joules(final_amount, currency_type))
+
+    async def send_direct_deposit_msg(self, final_amount: int):
         await self.send_msgs([
             {
                 "cmd": "Set",
                 "key": f"EnergyLink{self.team}",
                 "default": 0,
                 "operations": [
-                    {"operation": "add", "value": convert_currency_to_joules(final_amount, currency_type)}
+                    {"operation": "add", "value": final_amount}
                 ]
             }
         ])

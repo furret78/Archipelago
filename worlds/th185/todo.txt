@@ -7,7 +7,7 @@
 - Linux support for the client.
 
 - Randomize Death Link cause of death messages.
-- Implement Energy Link functions.
+- Fix broken Energy Link for Bullet Money.
 
 - Code refactoring for more clarity.
 - Refactoring Rules.py to accommodate Rule Builder.
