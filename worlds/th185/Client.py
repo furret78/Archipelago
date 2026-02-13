@@ -551,6 +551,14 @@ class TouhouHBMContext(CommonContext):
                     elif received_tag == get_energy_withdraw_tag(self.seed_name, CURRENCY_BULLET_MONEY_ID):
                         currency_type = CURRENCY_BULLET_MONEY_ID
                         currency_name = CURRENCY_NAME_BULLET_MONEY
+
+                        # Check here if the player is not in a stage.
+                        # If not, return the energy immediately.
+                        if not self.checkIfGameInStage():
+                            logger.info(BULLET_MONEY_CANNOT_WITHDRAW)
+                            asyncio.create_task(self.send_direct_deposit_msg(args["original_value"] - args["value"]))
+                            return
+
                     # If it's none of the above, the package is probably mangled.
                     else:
                         currency_type = -1
@@ -1641,7 +1649,7 @@ class TouhouHBMContext(CommonContext):
                 return
         elif currency_type == CURRENCY_BULLET_MONEY_ID:
             if not self.checkIfGameInStage():
-                logger.info("Cannot withdraw Bullet Money. Enter a stage first.")
+                logger.info(BULLET_MONEY_CANNOT_WITHDRAW)
                 return
 
             current_currency_amount = self.handler.getBulletMoney()
@@ -1693,7 +1701,7 @@ class TouhouHBMContext(CommonContext):
             if self.checkIfGameInStage():
                 current_currency_amount = self.handler.getBulletMoney()
             else:
-                logger.info("Cannot give Bullet Money. Enter a stage first.")
+                logger.info(BULLET_MONEY_CANNOT_WITHDRAW)
                 await self.send_deposit_msg(received_amount, currency_type, True)
                 return
 
@@ -1718,7 +1726,7 @@ class TouhouHBMContext(CommonContext):
             if self.checkIfGameInStage():
                 self.handler.addBulletMoney(amount_to_withdraw)
             else:
-                logger.info("Cannot give Bullet Money. Enter a stage first.")
+                logger.info(BULLET_MONEY_CANNOT_WITHDRAW)
                 await self.send_deposit_msg(received_amount, currency_type, True)
                 return
 
