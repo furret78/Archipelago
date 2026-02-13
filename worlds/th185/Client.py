@@ -575,6 +575,7 @@ class TouhouHBMContext(CommonContext):
                         asyncio.create_task(self.send_direct_deposit_msg(args["original_value"] - args["value"]))
                     else:
                         asyncio.create_task(self.process_received_currency(actual_withdrawn_amount, withdraw_currency_type))
+                        self.current_energy_link_value = args["value"]
 
     def client_received_initial_server_data(self):
         """
