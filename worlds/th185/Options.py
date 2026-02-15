@@ -36,7 +36,7 @@ class LowSkillLogic(DefaultOnToggle):
 class IncludeGameplayFiller(DefaultOnToggle):
     """
     Whether filler items that are not Funds or Bullet Money will appear during generation.
-    Does not affect Traps.
+    Also affects Traps.
     """
 
     display_name = "Include Non-Money Filler"

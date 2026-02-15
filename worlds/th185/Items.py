@@ -50,14 +50,16 @@ def get_random_filler_item_name(world) -> str:
 
         filler_item_list.append(name)
 
-    trap_item_list = []
-
-    for name in get_items_by_category(CATEGORY_TRAP).keys():
-        trap_item_list.append(name)
-
     final_item_name: str = world.random.choice(filler_item_list).__str__()
+
+    # Check if it should be a trap instead.
+    trap_item_list = []
+    for name in get_items_by_category(CATEGORY_TRAP).keys():
+        if not world.options.include_gameplay_filler and item_table[name].code in NONMONEY_FILLER_ID: continue
+        trap_item_list.append(name)
     if world.random.randint(0, 99) < world.options.trap_chance:
         final_item_name = world.random.choice(trap_item_list).__str__()
+
     return final_item_name
 
 
@@ -427,5 +429,5 @@ ITEM_TABLE_ID_TO_CARD_ID: Dict[int, str] = {
 GAME_ONLY_ITEM_ID = [1, 4, 5, 7, 8, 12, 13, 50, 40, 41, 42, 71, 14, 15, 16, 17, 18, 19, 20, 21, 22,
                      23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 70, 71, 72, 73, 50, 51, 52, 53,
                      300, 301, 400]
-NONMONEY_FILLER_ID = [1, 8, 300, 400, 40, 41, 42, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-                     23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 70, 71, 72, 73, 300, 301, 400]
+NONMONEY_FILLER_ID = [1, 8, 40, 41, 42, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+                     23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 40, 41, 42, 70, 71, 72, 73, 300, 301, 400]

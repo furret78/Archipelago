@@ -45,20 +45,21 @@ def set_all_entrance_rules(world) -> None:
 def set_all_location_rules(world) -> None:
     # Helper CollectionStates specifically for conditions that just require stage access.
 
-    # For Tutorial exclusive cards.
+    # Tutorial stage has 5 exclusive cards.
     def has_tutorial_access_item(state: CollectionState) -> bool:
         return state.has(TUTORIAL_NAME_FULL, world.player)
 
-    # For Challenge Market.
     def has_challenge_access_item(state: CollectionState) -> bool:
-        # Challenge Market is disabled in logic.
-        if world.options.disable_challenge_logic:
-            return False
-        # Challenge Market is NOT disabled in logic.
+        """
+        Checks for Challenge Market access.
+        If generation has turned off Challenge Market in logic (disable_challenge_logic == true),
+        this will always return False.
+        """
+        if world.options.disable_challenge_logic: return False
         else:
-            # Challenge Market is also lategame content. Remember that.
+            # Challenge Market is also lategame.
             if world.options.low_skill_logic:
-                return state.has(CHALLENGE_NAME_FULL, world.player) and state.has_all(LOW_SKILL_CARD_LIST, world.player)
+                return state.has(CHALLENGE_NAME_FULL, world.player) and low_skill_rules(state)
             else:
                 return state.has(CHALLENGE_NAME_FULL, world.player)
 
