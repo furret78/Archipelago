@@ -25,6 +25,16 @@ def check_for_softlock(world) -> None:
         raise FillError(f"No valid stages found in Start Inventory from Pool for player {world.multiworld.player_name[world.player]} (Touhou 18.5). Go back and add some!")
 
 
+def get_card_shop_item_names() -> list[str]:
+    # Go through both lists and fetch the card names.
+    # Nazrin's cards never show up in shop.
+    shop_card_item_names = []
+    for card_string_id in ABILITY_CARD_LIST:
+        if card_string_id == NAZRIN_CARD_1 or card_string_id == NAZRIN_CARD_2: continue
+        shop_card_item_names.append(CARD_ID_TO_NAME[card_string_id])
+    return shop_card_item_names
+
+
 def set_all_entrance_rules(world) -> None:
     origin_to_region_dict = {
         TUTORIAL_NAME_FULL: world.get_entrance(ORIGIN_TO_TUTORIAL_NAME),
@@ -76,8 +86,12 @@ def set_all_location_rules(world) -> None:
     # For more open reward pools. Of course, these all imply Challenge Market clauses as well.
     # Common. Shows up in every stage except Tutorial.
     def has_common_access_item(state: CollectionState) -> bool:
-        return (has_very_early_game_access_item(state)
-                or state.has_any((STAGE5_NAME_FULL, ENDSTAGE_NAME_FULL), world.player))
+        non_challenge_stages = STAGE_NAME_LIST
+        if TUTORIAL_NAME_FULL in non_challenge_stages:
+            non_challenge_stages.remove(TUTORIAL_NAME_FULL)
+        if CHALLENGE_NAME_FULL in non_challenge_stages:
+            non_challenge_stages.remove(CHALLENGE_NAME_FULL)
+        return state.has_any(non_challenge_stages, world.player) or has_challenge_access_item(state)
 
     # Very early game (Stage 1+). Does not show up in Stage 5 or End of Market.
     def has_very_early_game_access_item(state: CollectionState) -> bool:
@@ -108,28 +122,31 @@ def set_all_location_rules(world) -> None:
     # Special access rules.
     def has_nitori_access(state: CollectionState) -> bool:
         if world.options.low_skill_logic:
-            return state.has_all((STAGE4_NAME_FULL, BLANK_CARD_NAME), world.player) and low_skill_rules(state)
+            return (state.has_all((STAGE4_NAME_FULL, BLANK_CARD_NAME), world.player) and low_skill_rules(state)) or has_challenge_access_item(state)
         else:
             return state.has_all((STAGE4_NAME_FULL, BLANK_CARD_NAME), world.player)
 
     def has_takane_access(state: CollectionState) -> bool:
         if world.options.low_skill_logic:
-            return state.has_all((STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME), world.player) and low_skill_rules(state)
+            return (state.has_all((STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME), world.player) and low_skill_rules(state)) or has_challenge_access_item(state)
         else:
             return state.has_all((STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME), world.player)
 
-    def has_teacup_access(state: CollectionState) -> bool:
-        return state.has_all((ENDSTAGE_NAME_FULL, BLANK_CARD_NAME), world.player) or has_challenge_access_item(state)
-
     def has_sekibanki_access(state: CollectionState) -> bool:
-        return has_stage_access_item(state, STAGE2_NAME) or has_stage_access_item(state, ENDSTAGE_NAME) or has_challenge_access_item(state)
+        return state.has_any((STAGE2_NAME_FULL, ENDSTAGE_NAME_FULL), world.player) or has_challenge_access_item(state)
 
     # Lily White's and Doremy's cards are a little more open.
     def has_lily_white_access(state: CollectionState) -> bool:
-        return has_very_early_game_access_item(state) or has_stage_access_item(state, STAGE5_NAME) or has_challenge_access_item(state)
+        if world.options.low_skill_logic:
+            return has_very_early_game_access_item(state) or (has_stage_access_item(state, STAGE5_NAME) and low_skill_rules(state)) or has_challenge_access_item(state)
+        else:
+            return has_very_early_game_access_item(state) or has_stage_access_item(state, STAGE5_NAME) or has_challenge_access_item(state)
 
     def has_doremy_access(state: CollectionState) -> bool:
-        return has_early_game_access_item(state) or has_stage_access_item(state, STAGE5_NAME) or has_challenge_access_item(state)
+        if world.options.low_skill_logic:
+            return has_early_game_access_item(state) or (has_stage_access_item(state, STAGE5_NAME) and low_skill_rules(state)) or has_challenge_access_item(state)
+        else:
+            return has_early_game_access_item(state) or has_stage_access_item(state, STAGE5_NAME) or has_challenge_access_item(state)
 
     def has_nazrin2_access(state: CollectionState) -> bool:
         black_market_stages = STAGE_NAME_LIST
@@ -145,6 +162,24 @@ def set_all_location_rules(world) -> None:
     # (Hopefully)
     def has_grind_access(state: CollectionState, card_id: str) -> bool:
         return state.has(CARD_ID_TO_NAME[card_id], world.player) and has_any_stage_access_item(state)
+
+    def add_generic_access_card_rule(card_name_id: str, access_level: int):
+        generic_location_card_name: str = get_card_location_name_str(card_name_id, False)
+        generic_location_card = world.get_location(generic_location_card_name)
+
+        match access_level:
+            case 0:  # Common access.
+                add_rule(generic_location_card, lambda state: has_common_access_item(state))
+            case 1:  # Stage 1+
+                add_rule(generic_location_card, lambda state: has_very_early_game_access_item(state))
+            case 2:  # Stage 2+
+                add_rule(generic_location_card, lambda state: has_early_game_access_item(state))
+            case 3:  # Stage 3+
+                add_rule(generic_location_card, lambda state: has_midgame_access_item(state))
+            case 4:  # Lategame
+                add_rule(generic_location_card, lambda state: has_lategame_access_item(state))
+            case _:
+                pass
 
     #
     # Location rules for bosses here.
@@ -190,75 +225,72 @@ def set_all_location_rules(world) -> None:
     # Tutorial has 5 cards only obtainable there.
     # Challenge Market has every single card in the game except for the 5 in Tutorial.
     # Boss exclusive cards first.
-    for stage_name in STAGE_LIST:
-        if stage_name not in STAGE_EXCLUSIVE_CARD_LIST.keys(): continue
-        for card in STAGE_EXCLUSIVE_CARD_LIST[stage_name]:
-            name_card_reward: str = get_card_location_name_str(card, False)
-            location_card_reward = world.get_location(name_card_reward)
+    for card_string_id in ABILITY_CARD_LIST:
+        # Skip over Nazrin's cards and the Mallet card.
+        if card_string_id in ABILITY_CARD_CANNOT_EQUIP: continue
+        if card_string_id == MALLET_CARD: continue
+        # Card exclusivity check.
+        was_exclusive_card: bool = False
 
-            # Special unlock rules.
-            # Tutorial stage has 5 exclusive cards not seen in Challenge Market.
-            if stage_name == TUTORIAL_NAME:
-                add_rule(location_card_reward, lambda state: has_tutorial_access_item(state))
-                continue
-            # Capitalist's Dilemma requires Blank Card and 4th Market unlock.
-            if card == NITORI_STORY_CARD:
-                add_rule(location_card_reward, lambda state: has_nitori_access(state) or has_challenge_access_item(state))
-                continue
-            # Hundredth Black Market requires Capitalist's Dilemma and 6th Market unlock.
-            if card == TAKANE_STORY_CARD:
-                add_rule(location_card_reward, lambda state: has_takane_access(state) or has_challenge_access_item(state))
-                continue
-            # Teacup cards require Blank Card and End of Market unlock.
-            if card == TEACUP_REIMU_CARD or card == TEACUP_MARISA_CARD:
-                add_rule(location_card_reward, lambda state: has_teacup_access(state))
-                continue
-            # Freewheeling Severed Head somehow shows up in End of Market.
-            if card == SEKIBANKI_CARD:
-                add_rule(location_card_reward, lambda state: has_sekibanki_access(state))
-                continue
+        for stage_name, card_set in STAGE_EXCLUSIVE_CARD_LIST.items():
+            for card_id in card_set:
+                if card_string_id != card_id: continue
+                name_card_reward: str = get_card_location_name_str(card_string_id, False)
+                location_card_reward = world.get_location(name_card_reward)
 
-            # Generic boss conditions otherwise.
-            add_rule(location_card_reward, lambda state: has_stage_access_item(state, stage_name))
+                # Tutorial stage has 5 exclusive cards not seen in Challenge Market.
+                if stage_name == TUTORIAL_NAME:
+                    add_rule(location_card_reward, lambda state: has_tutorial_access_item(state))
+                    was_exclusive_card = True
+                    continue
+                # Capitalist's Dilemma requires Blank Card and 4th Market unlock.
+                if card_string_id == NITORI_STORY_CARD:
+                    add_rule(location_card_reward,
+                             lambda state: has_nitori_access(state) or has_challenge_access_item(state))
+                # Hundredth Black Market requires Capitalist's Dilemma and 6th Market unlock.
+                elif card_string_id == TAKANE_STORY_CARD:
+                    add_rule(location_card_reward,
+                             lambda state: has_takane_access(state) or has_challenge_access_item(state))
+                # Freewheeling Severed Head somehow shows up in End of Market.
+                elif card_string_id == SEKIBANKI_CARD:
+                    add_rule(location_card_reward, lambda state: has_sekibanki_access(state))
+                # Generic conditions otherwise.
+                else:
+                    add_rule(location_card_reward, lambda state: has_stage_access_item(state, stage_name))
 
-    def add_generic_access_card_rule(card_name_id: str, access_level: int):
-        generic_location_card_name: str = get_card_location_name_str(card_name_id, False)
-        generic_location_card = world.get_location(generic_location_card_name)
+                was_exclusive_card = True
 
-        match access_level:
-            case 0:  # Common access.
-                add_rule(generic_location_card, lambda state: has_common_access_item(state))
-            case 1:  # Stage 1+
-                add_rule(generic_location_card, lambda state: has_very_early_game_access_item(state))
-            case 2:  # Stage 2+
-                add_rule(generic_location_card, lambda state: has_early_game_access_item(state))
-            case 3:  # Stage 3+
-                add_rule(generic_location_card, lambda state: has_midgame_access_item(state))
-            case 4:  # Lategame
-                add_rule(generic_location_card, lambda state: has_lategame_access_item(state))
-            case _:
-                pass
+        if was_exclusive_card: continue
 
-    # Segregated into stages.
-    for card_string_id in STAGE_COMMON_CARD_LIST:
-        add_generic_access_card_rule(card_string_id, 0)
-    for card_string_id in STAGE1_CARD_LIST:
-        add_generic_access_card_rule(card_string_id, 1)
-    for card_string_id in STAGE2_CARD_LIST:
-        add_generic_access_card_rule(card_string_id, 2)
-    for card_string_id in STAGE3_CARD_LIST:
-        add_generic_access_card_rule(card_string_id, 3)
-    for card_string_id in LATEGAME_CARD_LIST:
-        add_generic_access_card_rule(card_string_id, 4)
+        # If it gets here, that means the card in question is not exclusive.
+        # Check for Item Season and Sheep You Want to Count first.
+        if card_string_id == LILY_WHITE_CARD:
+            lily_location_name: str = get_card_location_name_str(LILY_WHITE_CARD, False)
+            lily_location = world.get_location(lily_location_name)
+            add_rule(lily_location, lambda state: has_lily_white_access(state))
+            continue
+        if card_string_id == DOREMY_CARD:
+            doremy_location_name: str = get_card_location_name_str(DOREMY_CARD, False)
+            doremy_location = world.get_location(doremy_location_name)
+            add_rule(doremy_location, lambda state: has_doremy_access(state))
+            continue
 
-    # Section for Lily White's and Doremy's cards.
-    lily_location_name: str = get_card_location_name_str(LILY_WHITE_CARD, False)
-    lily_location = world.get_location(lily_location_name)
-    add_rule(lily_location, lambda state: has_lily_white_access(state))
-
-    doremy_location_name: str = get_card_location_name_str(DOREMY_CARD, False)
-    doremy_location = world.get_location(doremy_location_name)
-    add_rule(doremy_location, lambda state: has_doremy_access(state))
+        # If it's not those two, then it belongs in a card tier.
+        if card_string_id in STAGE_COMMON_CARD_LIST:
+            add_generic_access_card_rule(card_string_id, 0)
+            continue
+        if card_string_id in STAGE1_CARD_LIST:
+            add_generic_access_card_rule(card_string_id, 1)
+            continue
+        if card_string_id in STAGE2_CARD_LIST:
+            add_generic_access_card_rule(card_string_id, 2)
+            continue
+        if card_string_id in STAGE3_CARD_LIST:
+            add_generic_access_card_rule(card_string_id, 3)
+            continue
+        if card_string_id in LATEGAME_CARD_LIST:
+            add_generic_access_card_rule(card_string_id, 4)
+            continue
 
     #
     # Location rules for Ability Card dex entries here.
@@ -271,8 +303,7 @@ def set_all_location_rules(world) -> None:
     # The rest are only available if their respective item is available in the shop.
     for card_string_id in ABILITY_CARD_LIST:
         # Skip Nazrin's cards.
-        if card_string_id == NAZRIN_CARD_1 or card_string_id == NAZRIN_CARD_2:
-            continue
+        if card_string_id in ABILITY_CARD_CANNOT_EQUIP: continue
 
         card_dex_location = world.get_location(get_card_location_name_str(card_string_id, True))
         add_rule(card_dex_location, lambda state: has_grind_access(state, card_string_id))
@@ -280,21 +311,25 @@ def set_all_location_rules(world) -> None:
 
 def set_goal_condition(world) -> None:
     def minimum_story_clear(state: CollectionState) -> bool:
-        return state.has_all((NITORI_STORY_CARD_NAME, STAGE6_NAME_FULL), world.player)
+        if world.options.low_skill_logic:
+            return state.has_all((NITORI_STORY_CARD_NAME, STAGE6_NAME_FULL), world.player) and state.has_all(LOW_SKILL_CARD_LIST, world.player)
+        else:
+            return state.has_all((NITORI_STORY_CARD_NAME, STAGE6_NAME_FULL), world.player)
 
     def full_story_clear(state: CollectionState) -> bool:
-        return state.has_all(
-            (NITORI_STORY_CARD_NAME, BLANK_CARD_NAME,
-             STAGE4_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL),
-            world.player
-        )
-
-    shop_card_item_list = get_card_shop_item_names()
-
-    def all_cards_clear(state: CollectionState) -> bool:
-        return state.has_all(shop_card_item_list, world.player)
+        if world.options.low_skill_logic:
+            return state.has_all(
+                (NITORI_STORY_CARD_NAME, BLANK_CARD_NAME, STAGE4_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL),
+                world.player) and state.has_all(LOW_SKILL_CARD_LIST, world.player)
+        else:
+            return state.has_all(
+            (NITORI_STORY_CARD_NAME, BLANK_CARD_NAME, STAGE4_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL),
+            world.player)
 
     # Since this checks for items, and full stage names are used as items, use that.
+    def all_cards_clear(state: CollectionState) -> bool:
+        return state.has_all(get_card_shop_item_names(), world.player)
+
     # To defeat all bosses, you need all stages to be available except the Challenge Market.
     # Both instances of Mike Goutokuji are counted.
     boss_condition_list = STAGE_NAME_LIST
@@ -304,18 +339,15 @@ def set_goal_condition(world) -> None:
         return state.has_all(boss_condition_list, world.player)
 
     def full_clear_rule(state: CollectionState) -> bool:
-        return state.has_all(shop_card_item_list + boss_condition_list, world.player)
-
-    # The actual Completion Condition field
-    world.multiworld.completion_condition[world.player] = lambda state: minimum_story_clear(state)
+        return state.has_all((get_card_shop_item_names() + boss_condition_list), world.player)
 
     match world.options.completion_type:
         # Minimum Story Clear
         case 0:
-            world.multiworld.completion_condition[world.player] = lambda state: full_story_clear(state)
+            world.multiworld.completion_condition[world.player] = lambda state: minimum_story_clear(state)
         # Full Story Clear
         case 1:
-            world.multiworld.completion_condition[world.player] = lambda state: minimum_story_clear(state)
+            world.multiworld.completion_condition[world.player] = lambda state: full_story_clear(state)
         # All Cards
         case 2:
             world.multiworld.completion_condition[world.player] = lambda state: all_cards_clear(state)
@@ -325,13 +357,6 @@ def set_goal_condition(world) -> None:
         # Full Clear
         case 4:
             world.multiworld.completion_condition[world.player] = lambda state: full_clear_rule(state)
-
-
-def get_card_shop_item_names() -> list[str]:
-    # Go through both lists and fetch the card names.
-    # Nazrin's cards never show up in shop.
-    shop_card_item_names = []
-    for card_string_id in ABILITY_CARD_LIST:
-        if card_string_id == NAZRIN_CARD_1 or card_string_id == NAZRIN_CARD_2: continue
-        shop_card_item_names.append(CARD_ID_TO_NAME[card_string_id])
-    return shop_card_item_names
+        # Minimum Story Clear
+        case _:
+            world.multiworld.completion_condition[world.player] = lambda state: minimum_story_clear(state)

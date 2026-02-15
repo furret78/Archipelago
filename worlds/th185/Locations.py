@@ -211,17 +211,17 @@ def create_regular_locations(world):
                     world.player,
                     locationEncounter,
                     world.location_name_to_id[locationEncounter],
-                    region_dict[stages]
+                    region_dict[game_stage]
                 )
                 boss_defeat_location = TouhouHBMLocation(
                     world.player,
                     locationDefeat,
                     world.location_name_to_id[locationDefeat],
-                    region_dict[stages]
+                    region_dict[game_stage]
                 )
 
-                region_dict[stages].locations.append(boss_encounter_location)
-                region_dict[stages].locations.append(boss_defeat_location)
+                region_dict[game_stage].locations.append(boss_encounter_location)
+                region_dict[game_stage].locations.append(boss_defeat_location)
         else:
             boss_challenge_list = get_boss_names_challenge_list()
             for challenge_boss in boss_challenge_list:
@@ -259,7 +259,7 @@ def create_regular_locations(world):
             world.player,
             cardLocationName,
             world.location_name_to_id[cardLocationName],
-            region_dict[CARD_SHOP_NAME]
+            region_dict[CARD_DEX_NAME]
         )
 
-        region_dict[CARD_SHOP_NAME].locations.append(card_dex_location)
+        region_dict[CARD_DEX_NAME].locations.append(card_dex_location)
