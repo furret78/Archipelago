@@ -76,6 +76,12 @@ class TouhouHBMWorld(World):
     def set_rules(self) -> None:
         Rules.set_all_rules(self)
 
+        from Utils import visualize_regions
+        state = self.multiworld.get_all_state(False)
+        state.update_reachable_regions(self.player)
+        visualize_regions(self.get_region("Menu"), "E:/DevelopmentStuff/Archipelago/worlds/hbm185.puml",
+                          show_entrance_names=True, regions_to_highlight=state.reachable_regions[self.player])
+
     def create_items(self) -> None:
         Items.create_all_items(self)
 

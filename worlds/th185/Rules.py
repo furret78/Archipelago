@@ -1,11 +1,11 @@
 from BaseClasses import CollectionState
+from Utils import visualize_regions
 from worlds.generic.Rules import add_rule, set_rule
 from .Locations import get_boss_location_name_str, get_card_location_name_str
 from .variables.card_const import *
 
 
 def set_all_rules(world) -> None:
-    #check_for_softlock(world)
     set_all_entrance_rules(world)
     set_all_location_rules(world)
     set_goal_condition(world)
@@ -160,8 +160,8 @@ def set_all_location_rules(world) -> None:
     # Ensures that the player has a way to grind for Funds + the card in the Permanent Card Shop.
     # This will fail if this is a solo game and the player chooses to start with no Markets unlocked.
     # (Hopefully)
-    def has_grind_access(state: CollectionState, card_id: str) -> bool:
-        return state.has(CARD_ID_TO_NAME[card_id], world.player) and has_any_stage_access_item(state)
+    def has_grind_access(state: CollectionState, the_card_id: str) -> bool:
+        return state.has(CARD_ID_TO_NAME[the_card_id], world.player) and has_any_stage_access_item(state)
 
     def add_generic_access_card_rule(card_name_id: str, access_level: int):
         generic_location_card_name: str = get_card_location_name_str(card_name_id, False)
@@ -203,8 +203,8 @@ def set_all_location_rules(world) -> None:
                     continue
 
                 # If it's none of them
-                add_rule(location_encounter, lambda state: has_stage_access_item(state, stage_short_name))
-                add_rule(location_defeat, lambda state: has_stage_access_item(state, stage_short_name))
+                add_rule(location_encounter, lambda state, the_name = stage_short_name: has_stage_access_item(state, the_name))
+                add_rule(location_defeat, lambda state, the_name = stage_short_name: has_stage_access_item(state, the_name))
         # Challenge Market Encounter clause.
         else:
             internal_stage_id = 0
@@ -256,7 +256,7 @@ def set_all_location_rules(world) -> None:
                     add_rule(location_card_reward, lambda state: has_sekibanki_access(state))
                 # Generic conditions otherwise.
                 else:
-                    add_rule(location_card_reward, lambda state: has_stage_access_item(state, stage_name))
+                    add_rule(location_card_reward, lambda state, the_name = stage_name: has_stage_access_item(state, the_name))
 
                 was_exclusive_card = True
 
@@ -306,7 +306,7 @@ def set_all_location_rules(world) -> None:
         if card_string_id in ABILITY_CARD_CANNOT_EQUIP: continue
 
         card_dex_location = world.get_location(get_card_location_name_str(card_string_id, True))
-        add_rule(card_dex_location, lambda state: has_grind_access(state, card_string_id))
+        add_rule(card_dex_location, lambda state, the_card_name = card_string_id: has_grind_access(state, the_card_name))
 
 
 def set_goal_condition(world) -> None:

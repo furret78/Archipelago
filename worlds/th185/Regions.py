@@ -51,7 +51,7 @@ def connect_regions(world):
     for region_name in all_regions_dict.keys():
         if region_name not in ORIGIN_TO_REGION_DICT.keys(): continue
         if region_name in STAGE_LIST:
-            region_menu.connect(all_regions_dict[region_name], ORIGIN_TO_REGION_DICT[region_name], lambda state: state.has(STAGE_SHORT_TO_FULL_NAME[region_name], world.player))
+            region_menu.connect(all_regions_dict[region_name], ORIGIN_TO_REGION_DICT[region_name], lambda state, used_name = STAGE_SHORT_TO_FULL_NAME[region_name]: state.has(used_name, world.player))
         else:
             region_menu.connect(all_regions_dict[region_name], ORIGIN_TO_REGION_DICT[region_name])
 
