@@ -49,7 +49,7 @@ def set_all_entrance_rules(world) -> None:
     }
 
     for stage_name in origin_to_region_dict.keys():
-        set_rule(origin_to_region_dict[stage_name], lambda state: state.has(stage_name, world.player))
+        set_rule(origin_to_region_dict[stage_name], lambda state, used_name = stage_name: state.has(used_name, world.player))
 
 
 def set_all_location_rules(world) -> None:
