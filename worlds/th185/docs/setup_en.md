@@ -9,7 +9,7 @@
 ## Starting Conditions
 
 - You will begin the game with no stages unlocked, no cards unlocked, no Funds, only 1 loadout card, and 100% equipment cost limit.
-- You may choose to have any stages unlocked by adding their respective item to **Start Inventory from Pool** (e.g. "1st Market - Secret Heaven Cliff", etc.).
+- You may choose to have any stages unlocked by adding their respective item to **Start Inventory from Pool** (e.g. "1st Market - Secret Heaven Cliff", etc.). Leaving this field blank will force a `FillError` during generation.
 - For beginners, it is recommended to give yourself "**Tutorial - First Black Market Deal**" via the above option.
 - The client will **automatically** save your progress and restore it according to server data. You will receive your unlocked stages, cards, Funds, card slots, and equipment cost upon a successful connection. **_Local save data/Steam save data is not needed for this reason._**
 
