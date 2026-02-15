@@ -64,8 +64,8 @@ def set_all_location_rules(world) -> None:
                 return state.has(CHALLENGE_NAME_FULL, world.player)
 
     # For specific stages (excludes Challenge Market by default).
-    def has_stage_access_item(state: CollectionState, stage_id: int) -> bool:
-        return state.has(STAGE_SHORT_TO_FULL_NAME[STAGE_ID_TO_SHORT_NAME[stage_id]], world.player)
+    def has_stage_access_item(state: CollectionState, stage_short_name: str) -> bool:
+        return state.has(STAGE_SHORT_TO_FULL_NAME[stage_short_name], world.player)
 
     def has_any_stage_access_item(state: CollectionState) -> bool:
         non_challenge_stages = STAGE_NAME_LIST
@@ -122,14 +122,14 @@ def set_all_location_rules(world) -> None:
         return state.has_all((ENDSTAGE_NAME_FULL, BLANK_CARD_NAME), world.player) or has_challenge_access_item(state)
 
     def has_sekibanki_access(state: CollectionState) -> bool:
-        return has_stage_access_item(state, STAGE2_ID) or has_stage_access_item(state, STAGE_CHIMATA_ID) or has_challenge_access_item(state)
+        return has_stage_access_item(state, STAGE2_NAME) or has_stage_access_item(state, ENDSTAGE_NAME) or has_challenge_access_item(state)
 
     # Lily White's and Doremy's cards are a little more open.
     def has_lily_white_access(state: CollectionState) -> bool:
-        return has_very_early_game_access_item(state) or has_stage_access_item(state, STAGE5_ID) or has_challenge_access_item(state)
+        return has_very_early_game_access_item(state) or has_stage_access_item(state, STAGE5_NAME) or has_challenge_access_item(state)
 
     def has_doremy_access(state: CollectionState) -> bool:
-        return has_early_game_access_item(state) or has_stage_access_item(state, STAGE5_ID) or has_challenge_access_item(state)
+        return has_early_game_access_item(state) or has_stage_access_item(state, STAGE5_NAME) or has_challenge_access_item(state)
 
     def has_nazrin2_access(state: CollectionState) -> bool:
         black_market_stages = STAGE_NAME_LIST
@@ -150,42 +150,39 @@ def set_all_location_rules(world) -> None:
     # Location rules for bosses here.
     #
     # Normal stages and story bosses.
-    internal_stage_id = 0
-    for boss_set in ALL_BOSSES_LIST:
-        for boss_name in boss_set:
-            location_encounter = world.get_location(get_boss_location_name_str(internal_stage_id, boss_name))
-            location_defeat = world.get_location(get_boss_location_name_str(internal_stage_id, boss_name))
+    for stage_short_name in STAGE_LIST:
+        stage_id_from_list = STAGE_NAME_TO_ID[stage_short_name]
+        if stage_short_name != CHALLENGE_NAME:
+            for boss_name in ALL_BOSSES_LIST[stage_id_from_list]:
+                location_encounter = world.get_location(get_boss_location_name_str(stage_id_from_list, boss_name))
+                location_defeat = world.get_location(get_boss_location_name_str(stage_id_from_list, boss_name))
 
-            # Special rules for Nitori and Takane.
-            if boss_name == BOSS_NITORI_NAME:
-                add_rule(location_encounter, lambda state: has_nitori_access(state))
-                add_rule(location_defeat, lambda state: has_nitori_access(state))
-                continue
-            if boss_name == BOSS_TAKANE_NAME:
-                add_rule(location_encounter, lambda state: has_takane_access(state))
-                add_rule(location_defeat, lambda state: has_takane_access(state))
-                continue
+                # Check if it's Nitori or Takane
+                if boss_name == BOSS_NITORI_NAME:
+                    add_rule(location_encounter, lambda state: has_nitori_access(state))
+                    add_rule(location_defeat, lambda state: has_nitori_access(state))
+                    continue
+                elif boss_name == BOSS_TAKANE_NAME:
+                    add_rule(location_encounter, lambda state: has_takane_access(state))
+                    add_rule(location_defeat, lambda state: has_takane_access(state))
+                    continue
 
-            # Normal rules for everyone else.
-            add_rule(location_encounter, lambda state: has_stage_access_item(state, internal_stage_id))
-            add_rule(location_defeat, lambda state: has_stage_access_item(state, internal_stage_id))
+                # If it's none of them
+                add_rule(location_encounter, lambda state: has_stage_access_item(state, stage_short_name))
+                add_rule(location_defeat, lambda state: has_stage_access_item(state, stage_short_name))
+        # Challenge Market Encounter clause.
+        else:
+            internal_stage_id = 0
+            for challenge_boss_set in ALL_BOSSES_LIST:
+                if TUTORIAL_ID < internal_stage_id < STAGE_CHIMATA_ID:
+                    for challenge_boss_name in challenge_boss_set:
+                        # If it's Nitori or Takane, do not set rules.
+                        if challenge_boss_name == BOSS_NITORI_NAME or challenge_boss_name == BOSS_TAKANE_NAME:
+                            continue
 
-        internal_stage_id += 1
-    # Challenge Market has all bosses except story bosses.
-    # Story bosses include Tutorial Mike, Chimata, Nitori, and Takane.
-    chosen_stage_set_id = 0
-    for boss_set in ALL_BOSSES_LIST:
-        # This checks if it's within the normal range of the Challenge Market boss list.
-        if TUTORIAL_ID < chosen_stage_set_id < STAGE_CHIMATA_ID:
-            for boss_name in boss_set:
-                # If this happens to be Nitori or Takane, discard and move on.
-                if boss_name == BOSS_NITORI_NAME or boss_name == BOSS_TAKANE_NAME: continue
-
-                location_encounter = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss_name)
-                add_rule(world.get_location(location_encounter),
-                         lambda state: state.has(CHALLENGE_NAME_FULL, world.player))
-
-        chosen_stage_set_id += 1
+                        location_encounter = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss_name)
+                        add_rule(world.get_location(location_encounter), lambda state: state.has(CHALLENGE_NAME_FULL, world.player))
+                internal_stage_id += 1
 
     #
     # Location rules for Ability Cards as stage rewards here.
@@ -194,7 +191,7 @@ def set_all_location_rules(world) -> None:
     # Challenge Market has every single card in the game except for the 5 in Tutorial.
     # Boss exclusive cards first.
     for stage_name in STAGE_LIST:
-        if stage_name not in STAGE_EXCLUSIVE_CARD_LIST: continue
+        if stage_name not in STAGE_EXCLUSIVE_CARD_LIST.keys(): continue
         for card in STAGE_EXCLUSIVE_CARD_LIST[stage_name]:
             name_card_reward: str = get_card_location_name_str(card, False)
             location_card_reward = world.get_location(name_card_reward)
@@ -222,7 +219,7 @@ def set_all_location_rules(world) -> None:
                 continue
 
             # Generic boss conditions otherwise.
-            add_rule(location_card_reward, lambda state: has_stage_access_item(state, STAGE_NAME_TO_ID[stage_name]))
+            add_rule(location_card_reward, lambda state: has_stage_access_item(state, stage_name))
 
     def add_generic_access_card_rule(card_name_id: str, access_level: int):
         generic_location_card_name: str = get_card_location_name_str(card_name_id, False)
