@@ -307,6 +307,7 @@ class TouhouHBMContext(CommonContext):
         self.died_to_deathlink: bool = False
         self.caused_deathlink: bool = False
         self.deathlink_trigger: int = DEATH_LINK_TRIGGER_LIFE
+        self.last_recorded_life: int = 0
 
         # EnergyLink-related fields
         # self.menuFunds get repurposed here as it is not linked to DataStorage anymore.
@@ -366,6 +367,7 @@ class TouhouHBMContext(CommonContext):
         self.died_to_deathlink = False
         self.caused_deathlink = False
         self.deathlink_trigger = DEATH_LINK_TRIGGER_LIFE
+        self.last_recorded_life = 0
         self.last_death_link = 0
 
         self.energylink_enabled = False
@@ -1499,6 +1501,10 @@ class TouhouHBMContext(CommonContext):
         # If Death Link isn't enabled, return.
         if not self.deathlink_enabled: return
         try:
+            player_state_normal_bool: bool = self.handler.checkForPlayerNormal()
+            player_state_dead_bool: bool = self.handler.checkForPlayerDeath()
+            ingame_life: int = self.handler.gameController.getLives()
+
             # This loop will only run when the game is currently in a stage.
             # Skip the loop otherwise.
 
@@ -1512,6 +1518,9 @@ class TouhouHBMContext(CommonContext):
                 self.pending_life_deduction = False
                 return
 
+            if player_state_normal_bool and self.last_recorded_life != ingame_life:
+                self.last_recorded_life = ingame_life
+
             # There is no need to check for deathbomb since the player has no bombs here anyways.
             # If the player received a Death Link from the server and they are not dead, try to kill the player.
             # Then, turn off the Death Link flag.
@@ -1523,18 +1532,18 @@ class TouhouHBMContext(CommonContext):
             # In case there is no pending Death Link but the player died due to it before,
             # monitor them until death/invincibility wears off.
             elif self.died_to_deathlink:
-                if self.handler.checkForPlayerNormal():
+                if player_state_normal_bool:
                     self.died_to_deathlink = False
             # If the player has not received a Death Link and did not die to Death Link before,
             # monitor them until their death kicks in.
             # If a death is registered, send a Death Link.
-            elif self.handler.checkForPlayerDeath():
+            elif player_state_dead_bool:
                 if not self.caused_deathlink:
                     if (self.deathlink_trigger == DEATH_LINK_TRIGGER_LIFE
-                        or (self.deathlink_trigger == DEATH_LINK_TRIGGER_STAGE and self.handler.gameController.getLives() <= 0)):
+                        or (self.deathlink_trigger == DEATH_LINK_TRIGGER_STAGE and self.last_recorded_life <= 0)):
                         self.caused_deathlink = True
                         await self.send_deathlink()
-            elif self.caused_deathlink and self.handler.checkForPlayerNormal():
+            elif self.caused_deathlink and player_state_normal_bool:
                 self.caused_deathlink = False
         except Exception as e:
             self.inError = True
