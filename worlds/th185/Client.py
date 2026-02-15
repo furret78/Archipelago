@@ -212,11 +212,8 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
         Replaces the game's scoreth185.dat file and deletes the scoreth185bak.dat file.
         Recommended to manually back up save data before doing this.
         The game's save data is often located at %appdata%/ShanghaiAlice/th185.
+        Recommended to run before launching the game itself.
         """
-        if self.ctx.handler or self.ctx.handler.gameController:
-            logger.error("The game has already started! Close it before running this command again.")
-            return
-
         copy_and_replace(self.ctx.scorefile_path)
 
 
