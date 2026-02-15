@@ -197,69 +197,70 @@ def get_location_names_with_ids(location_names: list[str]) -> dict[str, int | No
 
 
 def create_regular_locations(world):
-    region_dict = get_regions_dict(world)
+    all_regions_dict = get_regions_dict(world)
 
     # Stages Tutorial-Challenge
-    for game_stage in STAGE_LIST:
-        local_stage_id = STAGE_NAME_TO_ID[game_stage]
-        if game_stage != CHALLENGE_NAME:
-            for boss_name in ALL_BOSSES_LIST[local_stage_id]:
-                locationEncounter: str = get_boss_location_name_str(local_stage_id, boss_name)
-                locationDefeat: str = get_boss_location_name_str(local_stage_id, boss_name, True)
+    for region_name in all_regions_dict.keys():
+        # Boss Encounters and Defeats
+        if region_name in STAGE_LIST:
+            local_stage_id = STAGE_NAME_TO_ID[region_name]
+            if region_name != CHALLENGE_NAME:
+                for boss_name in ALL_BOSSES_LIST[local_stage_id]:
+                    locationEncounter: str = get_boss_location_name_str(local_stage_id, boss_name)
+                    locationDefeat: str = get_boss_location_name_str(local_stage_id, boss_name, True)
 
-                boss_encounter_location = TouhouHBMLocation(
+                    boss_encounter_location = TouhouHBMLocation(
+                        world.player,
+                        locationEncounter,
+                        world.location_name_to_id[locationEncounter],
+                        all_regions_dict[region_name]
+                    )
+                    boss_defeat_location = TouhouHBMLocation(
+                        world.player,
+                        locationDefeat,
+                        world.location_name_to_id[locationDefeat],
+                        all_regions_dict[region_name]
+                    )
+
+                    all_regions_dict[region_name].locations.append(boss_encounter_location)
+                    all_regions_dict[region_name].locations.append(boss_defeat_location)
+            else:
+                boss_challenge_list = get_boss_names_challenge_list()
+                for challenge_boss in boss_challenge_list:
+                    locationEncounter: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss)
+
+                    boss_encounter_location = TouhouHBMLocation(
+                        world.player,
+                        locationEncounter,
+                        world.location_name_to_id[locationEncounter],
+                        all_regions_dict[CHALLENGE_NAME]
+                    )
+
+                    all_regions_dict[CHALLENGE_NAME].locations.append(boss_encounter_location)
+        # Ability Card as Market Card Rewards
+        elif region_name == ENDSTAGE_CHOOSE_NAME:
+            for stage_card in ABILITY_CARD_LIST:
+                if stage_card in ABILITY_CARD_CANNOT_EQUIP or stage_card == MALLET_CARD: continue
+                card_shop_location_name: str = get_card_location_name_str(stage_card, False)
+
+                card_shop_location = TouhouHBMLocation(
                     world.player,
-                    locationEncounter,
-                    world.location_name_to_id[locationEncounter],
-                    region_dict[game_stage]
+                    card_shop_location_name,
+                    world.location_name_to_id[card_shop_location_name],
+                    all_regions_dict[region_name]
                 )
-                boss_defeat_location = TouhouHBMLocation(
+
+                all_regions_dict[region_name].locations.append(card_shop_location)
+        # Ability Cards as Card Dex Unlocks
+        elif region_name == CARD_DEX_NAME:
+            for dex_card in ABILITY_CARD_LIST:
+                card_dex_location_name: str = get_card_location_name_str(dex_card, True)
+
+                card_dex_location = TouhouHBMLocation(
                     world.player,
-                    locationDefeat,
-                    world.location_name_to_id[locationDefeat],
-                    region_dict[game_stage]
+                    card_dex_location_name,
+                    world.location_name_to_id[card_dex_location_name],
+                    all_regions_dict[region_name]
                 )
 
-                region_dict[game_stage].locations.append(boss_encounter_location)
-                region_dict[game_stage].locations.append(boss_defeat_location)
-        else:
-            boss_challenge_list = get_boss_names_challenge_list()
-            for challenge_boss in boss_challenge_list:
-                locationEncounter: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss)
-
-                boss_encounter_location = TouhouHBMLocation(
-                    world.player,
-                    locationEncounter,
-                    world.location_name_to_id[locationEncounter],
-                    region_dict[CHALLENGE_NAME]
-                )
-
-                region_dict[CHALLENGE_NAME].locations.append(boss_encounter_location)
-
-    # Market Card Reward
-    for stage_card in ABILITY_CARD_LIST:
-        if stage_card in ABILITY_CARD_CANNOT_EQUIP or stage_card == MALLET_CARD: continue
-        # End-level Card Selection.
-        cardLocationName: str = get_card_location_name_str(stage_card, False)
-
-        card_dex_location = TouhouHBMLocation(
-            world.player,
-            cardLocationName,
-            world.location_name_to_id[cardLocationName],
-            region_dict[ENDSTAGE_CHOOSE_NAME]
-        )
-
-        region_dict[ENDSTAGE_CHOOSE_NAME].locations.append(card_dex_location)
-
-    # Ability Card Dex
-    for dex_card in ABILITY_CARD_LIST:
-        cardLocationName: str = get_card_location_name_str(dex_card, True)
-
-        card_dex_location = TouhouHBMLocation(
-            world.player,
-            cardLocationName,
-            world.location_name_to_id[cardLocationName],
-            region_dict[CARD_DEX_NAME]
-        )
-
-        region_dict[CARD_DEX_NAME].locations.append(card_dex_location)
+                all_regions_dict[region_name].locations.append(card_dex_location)

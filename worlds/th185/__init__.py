@@ -1,5 +1,7 @@
+from unittest import case
+
 from .WebWorld import TouhouHBMWebWorld
-from .variables.boss_and_stage import STAGE2_NAME_FULL
+from .variables.boss_and_stage import *
 from ..LauncherComponents import Component, components, launch_subprocess, Type, icon_paths
 from collections.abc import Mapping
 from typing import Any
@@ -51,6 +53,22 @@ class TouhouHBMWorld(World):
     item_name_groups = Items.get_item_groups()
     location_name_groups = Locations.location_groups
 
+    def generate_early(self) -> None:
+        item_name_to_push: str = TUTORIAL_NAME_FULL
+
+        match self.options.starting_market.value:
+            case 1: item_name_to_push = STAGE1_NAME_FULL
+            case 2: item_name_to_push = STAGE2_NAME_FULL
+            case 3: item_name_to_push = STAGE3_NAME_FULL
+            case 4: item_name_to_push = STAGE4_NAME_FULL
+            case 5: item_name_to_push = STAGE5_NAME_FULL
+            case 6: item_name_to_push = STAGE6_NAME_FULL
+            case 7: item_name_to_push = ENDSTAGE_NAME_FULL
+            case 8: item_name_to_push = CHALLENGE_NAME_FULL
+            case _: item_name_to_push = TUTORIAL_NAME_FULL
+
+        self.push_precollected(self.create_item(item_name_to_push))
+
     def create_regions(self):
         Regions.create_and_connect_regions(self)
         Locations.create_all_locations(self)
@@ -71,6 +89,7 @@ class TouhouHBMWorld(World):
     def fill_slot_data(self) -> Mapping[str, Any]:
         data = {
             # Options
+            "starting_market": self.options.starting_market.value,
             "disable_challenge_logic": self.options.disable_challenge_logic.value,
             "trap_chance": self.options.trap_chance.value,
             "low_skill_logic": self.options.low_skill_logic.value,

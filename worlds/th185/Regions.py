@@ -1,4 +1,3 @@
-from typing import TYPE_CHECKING
 from BaseClasses import Entrance, Region
 from .variables.boss_and_stage import *
 
@@ -30,53 +29,34 @@ def get_regions_dict(world) -> dict[str, Region]:
         world.origin_region_name: world.get_region(world.origin_region_name)
     }
 
-    game_region_id = 0
     for game_region in REGION_LIST:
         region_dict[game_region] = world.get_region(game_region)
-        game_region_id += 1
 
     return region_dict
-
-
-def get_regions_list(world) -> list[Region]:
-    """
-    Retrieves all of the game's regions as a list, including the menu.
-    See REGION_LIST in boss_and_stage.py for the rest of the details.
-    """
-    region_list = []
-    region_dict = get_regions_dict(world)
-
-    for game_region in region_dict.keys():
-        region_list.append(region_dict[game_region])
-
-    return region_list
 
 
 def connect_regions(world):
     region_menu = world.get_region(world.origin_region_name)
     region_endstage = world.get_region(ENDSTAGE_CHOOSE_NAME)
 
-    # This helper function returns a list,
-    # but it has the Market End Card Selection at the end.
-    # Don't count that one in.
-    region_exit_list = get_regions_list(world)
-    region_exit_list.remove(region_exit_list[-1])
+    all_regions_dict = get_regions_dict(world)
+
+    # 0 is Origin/Menu.
+    # 1-8 is Tutorial-Challenge.
+    # 9 is Card Dex
+    # 10 is Market Card Reward
+    # These use the short names as in REGION_LIST.
 
     # From the menu to the rest of the game.
-    region_exit_id = 0
-    for exit_point in ORIGIN_TO_REGION_LIST:
-        region_menu.connect(region_exit_list[region_exit_id], exit_point)
-        region_exit_id += 1
+    for region_name in all_regions_dict.keys():
+        if region_name not in ORIGIN_TO_REGION_DICT.keys(): continue
+        if region_name in STAGE_LIST:
+            region_menu.connect(all_regions_dict[region_name], ORIGIN_TO_REGION_DICT[region_name], lambda state: state.has(STAGE_SHORT_TO_FULL_NAME[region_name], world.player))
+        else:
+            region_menu.connect(all_regions_dict[region_name], ORIGIN_TO_REGION_DICT[region_name])
 
     # From the Markets to the card selection at the end.
-    # Since not every card shows up here, each location will need a rule about requiring stage unlock minimums.
-    region_stage_exit_id = 0
-    for region_exit_id in STAGE_TO_CARD_REWARD_DICT.keys():
-        # Challenge Market is special in that it offers EVERY Ability Card the game has to offer.
-        # The challenge is surviving 12 waves to even get there.
-        # There is an option to not connect the Challenge Market to the Market Card Reward region.
-        if region_exit_id == CHALLENGE_NAME and world.options.disable_challenge_logic:
-            continue
-
-        region_exit_list[region_stage_exit_id].connect(region_endstage, STAGE_TO_CARD_REWARD_DICT[region_exit_id])
-        region_stage_exit_id += 1
+    for region_name in all_regions_dict.keys():
+        if region_name not in STAGE_TO_CARD_REWARD_DICT.keys(): continue
+        if world.options.disable_challenge_logic and region_name == CHALLENGE_NAME: continue
+        all_regions_dict[region_name].connect(region_endstage, STAGE_TO_CARD_REWARD_DICT[region_name])

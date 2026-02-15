@@ -5,7 +5,7 @@ from .variables.card_const import *
 
 
 def set_all_rules(world) -> None:
-    check_for_softlock(world)
+    #check_for_softlock(world)
     set_all_entrance_rules(world)
     set_all_location_rules(world)
     set_goal_condition(world)

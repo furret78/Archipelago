@@ -1,6 +1,26 @@
 from Options import *
 
 
+class StartingMarket(Choice):
+    """
+    Choose which stage to have unlocked at the start of the game.
+    """
+
+    display_name = "Starting Market"
+
+    option_Tutorial = 0
+    option_First_Market = 1
+    option_Second_Market = 2
+    option_Third_Market = 3
+    option_Fourth_Market = 4
+    option_Fifth_Market = 5
+    option_Sixth_Market = 6
+    option_End_of_Market = 7
+    option_Challenge_Market = 8
+
+    default = option_Tutorial
+
+
 class DisableChallengeLogic(DefaultOnToggle):
     """
     Prevents the game from taking Challenge Market into account when placing items in Market Card Reward locations.
@@ -110,6 +130,7 @@ class CompletionType(Choice):
 
 @dataclass()
 class TouhouHBMDataclass(PerGameCommonOptions):
+    starting_market: StartingMarket
     disable_challenge_logic: DisableChallengeLogic
     trap_chance: TrapChance
     low_skill_logic: LowSkillLogic
@@ -126,16 +147,17 @@ class TouhouHBMDataclass(PerGameCommonOptions):
 option_groups = [
     OptionGroup(
         "Game Options",
-        [TrapChance, DeathLinkTrigger, InvincAgainstDeathLink, EnergyLink, EnergyLinkBulletMoney, CompletionType]
+        [DeathLinkTrigger, InvincAgainstDeathLink, EnergyLink, EnergyLinkBulletMoney]
     ),
     OptionGroup(
         "Generation Options",
-        [DisableChallengeLogic, LowSkillLogic, IncludeGameplayFiller]
+        [StartingMarket, DisableChallengeLogic, LowSkillLogic, TrapChance, IncludeGameplayFiller, CompletionType]
     )
 ]
 
 option_presets = {
     "easy": {
+        "starting_market": 0,
         "disable_challenge_logic": True,
         "trap_chance": 0,
         "low_skill_logic": True,
@@ -148,6 +170,7 @@ option_presets = {
         "completion_type": 0 # Full Main Story
     },
     "normal": {
+        "starting_market": 1,
         "disable_challenge_logic": True,
         "trap_chance": 5,
         "low_skill_logic": True,
@@ -160,6 +183,7 @@ option_presets = {
         "completion_type": 0 # Full Main Story
     },
     "hard": {
+        "starting_market": 3,
         "disable_challenge_logic": True,
         "trap_chance": 10,
         "low_skill_logic": False,
@@ -172,6 +196,7 @@ option_presets = {
         "completion_type": 1 # Minimum Main Story
     },
     "lunatic": {
+        "starting_market": 5,
         "disable_challenge_logic": False,
         "trap_chance": 20,
         "low_skill_logic": False,
@@ -184,6 +209,7 @@ option_presets = {
         "completion_type": 3 # All Bosses Defeated
     },
     "overdrive": {
+        "starting_market": 8,
         "disable_challenge_logic": False,
         "trap_chance": 50,
         "low_skill_logic": False,
