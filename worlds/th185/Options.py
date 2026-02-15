@@ -1,4 +1,6 @@
 from Options import *
+from .variables.boss_and_stage import TUTORIAL_NAME_FULL, STAGE1_NAME_FULL, STAGE2_NAME_FULL, STAGE3_NAME_FULL, STAGE4_NAME_FULL, \
+    STAGE5_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL, CHALLENGE_NAME_FULL
 
 
 class StartingMarket(Choice):
@@ -9,22 +11,45 @@ class StartingMarket(Choice):
     display_name = "Starting Market"
 
     option_Tutorial = 0
-    option_First_Market = 1
-    option_Second_Market = 2
-    option_Third_Market = 3
-    option_Fourth_Market = 4
-    option_Fifth_Market = 5
-    option_Sixth_Market = 6
-    option_End_of_Market = 7
-    option_Challenge_Market = 8
+    option_Stage1 = 1
+    option_Stage2 = 2
+    option_Stage3 = 3
+    option_Stage4 = 4
+    option_Stage5 = 5
+    option_Stage6 = 6
+    option_Stage7 = 7
+    option_Challenge = 8
 
     default = option_Tutorial
+
+    @classmethod
+    def get_option_name(cls, value: T) -> str:
+        if value == cls.option_Tutorial:
+            return TUTORIAL_NAME_FULL
+        elif value == cls.option_Stage1:
+            return STAGE1_NAME_FULL
+        elif value == cls.option_Stage2:
+            return STAGE2_NAME_FULL
+        elif value == cls.option_Stage3:
+            return STAGE3_NAME_FULL
+        elif value == cls.option_Stage4:
+            return STAGE4_NAME_FULL
+        elif value == cls.option_Stage5:
+            return STAGE5_NAME_FULL
+        elif value == cls.option_Stage6:
+            return STAGE6_NAME_FULL
+        elif value == cls.option_Stage7:
+            return ENDSTAGE_NAME_FULL
+        elif value == cls.option_Challenge:
+            return CHALLENGE_NAME_FULL
+        return super().get_option_name(value)
 
 
 class DisableChallengeLogic(DefaultOnToggle):
     """
-    Prevents the game from taking Challenge Market into account when placing items in Market Card Reward locations.
-    Disable to allow Challenge Market in logic.
+    Challenge Market will not count for Market Card Reward locations.
+    Does not exclude boss encounters in Challenge Market.
+    Disable this option to turn off the above handicap.
     """
 
     display_name = "Disable Challenge Market in Logic"
@@ -77,6 +102,14 @@ class DeathLinkTrigger(Choice):
     option_Upon_Stage_Fail = 1
 
     default = option_Upon_Life_Loss
+
+    @classmethod
+    def get_option_name(cls, value: T) -> str:
+        if value == cls.option_Upon_Life_Loss:
+            return "Upon losing a life"
+        if value == cls.option_Upon_Stage_Fail:
+            return "Upon failing a stage attempt"
+        return super().get_option_name(value)
 
 class InvincAgainstDeathLink(DefaultOnToggle):
     """

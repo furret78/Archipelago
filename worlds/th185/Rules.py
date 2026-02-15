@@ -336,7 +336,10 @@ def set_goal_condition(world) -> None:
     if CHALLENGE_NAME_FULL in boss_condition_list: boss_condition_list.remove(CHALLENGE_NAME_FULL)
 
     def all_bosses_clear(state: CollectionState) -> bool:
-        return state.has_all(boss_condition_list, world.player)
+        if world.options.low_skill_logic:
+            return state.has_all((boss_condition_list + LOW_SKILL_CARD_LIST + [NITORI_STORY_CARD_NAME, BLANK_CARD_NAME]), world.player)
+        else:
+            return state.has_all((boss_condition_list + [NITORI_STORY_CARD_NAME, BLANK_CARD_NAME]), world.player)
 
     def full_clear_rule(state: CollectionState) -> bool:
         return state.has_all((get_card_shop_item_names() + boss_condition_list), world.player)
