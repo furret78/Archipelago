@@ -95,8 +95,10 @@ def create_all_items(world):
     item_pool: list[Item] = []
 
     # Stage unlocks get added first.
+    starting_stage_full_name = STAGE_SHORT_TO_FULL_NAME[STAGE_ID_TO_SHORT_NAME[world.options.starting_market]]
     stage_unlock_item_dict = get_items_by_category(CATEGORY_STAGE)
     for name in stage_unlock_item_dict.keys():
+        if name == starting_stage_full_name: continue
         item_pool.append(world.create_item(name))
 
     # Ability Cards get added next.
