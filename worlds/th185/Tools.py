@@ -1,6 +1,7 @@
 import shutil
 import os
 
+from . import STAGE_NAME_LIST, STAGE_NAME_TO_ID, STAGE_FULL_TO_SHORT_NAME
 from .variables.meta_data import *
 
 
@@ -73,3 +74,26 @@ def get_energy_withdraw_tag(seed_name, currency_type: int):
         final_currency_type = "bm"
 
     return str(seed_name) + "-" + final_currency_type
+
+def get_progress_item_count(starting_market: int) -> int:
+    """
+    Returns how many progress items should be pushed based on the Starting Market.
+    By default, 0 progress items = 0 stages unlocked.
+
+    Tutorial - 1
+    1st Market - 2
+    2nd Market - 3
+    3rd Market - 4
+    4th Market - 5
+    5th Market - 6
+    6th Market - 7
+    End of Market - 8
+    Challenge Market - 9
+    """
+    return clamp(starting_market + 1, 1, 9)
+
+def get_progress_item_requirement(stage_name: str, use_full_name: bool = False) -> int:
+    if use_full_name:
+        return clamp(STAGE_NAME_TO_ID[STAGE_FULL_TO_SHORT_NAME[stage_name]] + 1, 1, 9)
+    else:
+        return clamp(STAGE_NAME_TO_ID[stage_name] + 1, 1, 9)

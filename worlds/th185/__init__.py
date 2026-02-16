@@ -1,5 +1,6 @@
 from unittest import case
 
+from .Tools import get_progress_item_count
 from .WebWorld import TouhouHBMWebWorld
 from .variables.boss_and_stage import *
 from ..LauncherComponents import Component, components, launch_subprocess, Type, icon_paths
@@ -54,6 +55,16 @@ class TouhouHBMWorld(World):
     location_name_groups = Locations.location_groups
 
     def generate_early(self) -> None:
+        if self.options.progressive_stages:
+            progress_items_to_push: int = get_progress_item_count(self.options.starting_market.value)
+
+            progress_items_given = 0
+            while progress_items_given < progress_items_to_push:
+                self.push_precollected(self.create_item(PROGRESS_ITEM_NAME_FULL))
+                progress_items_given += 1
+
+            return
+
         item_name_to_push: str = TUTORIAL_NAME_FULL
 
         match self.options.starting_market.value:
@@ -90,6 +101,7 @@ class TouhouHBMWorld(World):
         data = {
             # Options
             "starting_market": self.options.starting_market.value,
+            "progressive_stages": self.options.progressive_stages.value,
             "disable_challenge_logic": self.options.disable_challenge_logic.value,
             "trap_chance": self.options.trap_chance.value,
             "low_skill_logic": self.options.low_skill_logic.value,

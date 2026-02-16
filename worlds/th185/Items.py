@@ -1,6 +1,7 @@
 from typing import Dict, NamedTuple, Optional
 
 from BaseClasses import Item, ItemClassification
+from . import get_progress_item_count
 from .variables.card_const import *
 from .variables.boss_and_stage import *
 from .variables.meta_data import DISPLAY_NAME
@@ -10,6 +11,7 @@ CATEGORY_FILLER = "Filler"
 CATEGORY_STAGE = "Stages"
 CATEGORY_TRAP = "Traps"
 CATEGORY_CARD = "Ability Cards"
+CATEGORY_PROGRESS = "Stage Progress"
 
 
 class TouhouHBMItem(Item):
@@ -95,11 +97,21 @@ def create_all_items(world):
     item_pool: list[Item] = []
 
     # Stage unlocks get added first.
-    starting_stage_full_name = STAGE_SHORT_TO_FULL_NAME[STAGE_ID_TO_SHORT_NAME[world.options.starting_market]]
-    stage_unlock_item_dict = get_items_by_category(CATEGORY_STAGE)
-    for name in stage_unlock_item_dict.keys():
-        if name == starting_stage_full_name: continue
-        item_pool.append(world.create_item(name))
+    # First, check if the player wants Progressive Stages.
+    if not world.options.progressive_stages:
+        starting_stage_full_name = STAGE_SHORT_TO_FULL_NAME[STAGE_ID_TO_SHORT_NAME[world.options.starting_market]]
+        stage_unlock_item_dict = get_items_by_category(CATEGORY_STAGE)
+        for name in stage_unlock_item_dict.keys():
+            if name == starting_stage_full_name: continue
+            item_pool.append(world.create_item(name))
+    # If stages should be progressive, only add as many progressive stage items as needed.
+    else:
+        progress_items_to_submit: int = 9 - get_progress_item_count(world.options.starting_market)
+        if progress_items_to_submit > 0:
+            progress_item_number = 0
+            while progress_item_number < progress_items_to_submit:
+                item_pool.append(world.create_item(PROGRESS_ITEM_NAME_FULL))
+                progress_item_number += 1
 
     # Ability Cards get added next.
     # There are checks to make sure it doesn't submit the Starting Card (if there are any).
@@ -152,7 +164,7 @@ def create_all_items(world):
 def get_item_groups() -> dict[str, set[str]]:
     item_groups: Dict[str, set[str]] = {}
 
-    item_group_list = [CATEGORY_CARD, CATEGORY_STAGE, CATEGORY_TRAP, CATEGORY_ITEM, CATEGORY_FILLER]
+    item_group_list = [CATEGORY_CARD, CATEGORY_STAGE, CATEGORY_PROGRESS, CATEGORY_TRAP, CATEGORY_ITEM, CATEGORY_FILLER]
 
     for category in item_group_list:
         category_dict = get_items_by_category(category)
@@ -327,7 +339,9 @@ item_table: Dict[str, TouhouHBMItemData] = {
     SAKI_POWER_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 279, ItemClassification.progression),
     SUIKA_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 280, ItemClassification.progression),
     TEACUP_REIMU_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 281, ItemClassification.progression),
-    TEACUP_MARISA_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 282, ItemClassification.progression)
+    TEACUP_MARISA_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 282, ItemClassification.progression),
+
+    PROGRESS_ITEM_NAME_FULL: TouhouHBMItemData(CATEGORY_PROGRESS, 290, ItemClassification.progression)
 }
 
 ITEM_TABLE_ID_TO_STAGE_NAME: Dict[int, str] = {

@@ -731,15 +731,21 @@ class TouhouHBMContext(CommonContext):
     def handle_save_data_items(self, network_item_list: list[NetworkItem]):
         ability_card_unlock_list = []
         stage_unlock_list = []
+        progressive_stage_count: int = 0
 
         for network_item in network_item_list:
             if network_item.item in ITEM_TABLE_ID_TO_STAGE_NAME:
                 stage_unlock_list.append(ITEM_TABLE_ID_TO_STAGE_NAME[network_item.item])
             elif network_item.item in ITEM_TABLE_ID_TO_CARD_ID:
                 ability_card_unlock_list.append(ITEM_TABLE_ID_TO_CARD_ID[network_item.item])
+            elif network_item.item == 290:
+                progressive_stage_count += 1
 
         self.handle_ability_cards(ability_card_unlock_list)
         self.handle_stages(stage_unlock_list)
+
+        if not self.options["progressive_stages"]: return
+        self.handle_progressive_stages(progressive_stage_count)
 
     def handle_ability_cards(self, filtered_list):
         if len(filtered_list) <= 0: return
@@ -751,12 +757,21 @@ class TouhouHBMContext(CommonContext):
 
     def handle_stages(self, filtered_list):
         if len(filtered_list) <= 0: return
-        for stage_short_name in filtered_list:
-            if stage_short_name not in self.unlocked_stages:
-                self.unlocked_stages.append(stage_short_name)
-                self.handler.stages_unlocked[stage_short_name] = True
+        for stage_name_in_list in filtered_list:
+            if stage_name_in_list not in self.unlocked_stages:
+                self.unlocked_stages.append(stage_name_in_list)
+                self.handler.stages_unlocked[stage_name_in_list] = True
 
         self.handler.updateStageList()
+
+    def handle_progressive_stages(self, progress_item_count: int):
+        if progress_item_count <= 0: return
+
+        for stage_name_in_list in STAGE_LIST:
+            if progress_item_count >= (STAGE_NAME_TO_ID[stage_name_in_list] + 1):
+                if stage_name_in_list not in self.unlocked_stages:
+                    self.unlocked_stages.append(stage_name_in_list)
+                    self.handler.stages_unlocked[stage_name_in_list] = True
 
     def handle_filler_items(self, filtered_list):
         if len(filtered_list) <= 0: return

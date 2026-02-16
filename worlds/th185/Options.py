@@ -6,6 +6,7 @@ from .variables.boss_and_stage import TUTORIAL_NAME_FULL, STAGE1_NAME_FULL, STAG
 class StartingMarket(Choice):
     """
     Choose which stage to have unlocked at the start of the game.
+    If Progressive Stages is enabled, unlock items for stages preceding the Starting Market will not appear.
     """
 
     display_name = "Starting Market"
@@ -43,6 +44,14 @@ class StartingMarket(Choice):
         elif value == cls.option_Challenge:
             return CHALLENGE_NAME_FULL
         return super().get_option_name(value)
+
+
+class ProgressiveStages(DefaultOnToggle):
+    """
+    Stages will be unlocked in order as the game progresses.
+    """
+
+    display_name = "Progressive Markets"
 
 
 class DisableChallengeLogic(DefaultOnToggle):
@@ -164,6 +173,7 @@ class CompletionType(Choice):
 @dataclass()
 class TouhouHBMDataclass(PerGameCommonOptions):
     starting_market: StartingMarket
+    progressive_stages: ProgressiveStages
     disable_challenge_logic: DisableChallengeLogic
     trap_chance: TrapChance
     low_skill_logic: LowSkillLogic
@@ -184,13 +194,14 @@ option_groups = [
     ),
     OptionGroup(
         "Generation Options",
-        [StartingMarket, DisableChallengeLogic, LowSkillLogic, TrapChance, IncludeGameplayFiller, CompletionType]
+        [StartingMarket, ProgressiveStages, DisableChallengeLogic, LowSkillLogic, TrapChance, IncludeGameplayFiller, CompletionType]
     )
 ]
 
 option_presets = {
     "easy": {
         "starting_market": 0,
+        "progressive_stages": True,
         "disable_challenge_logic": True,
         "trap_chance": 0,
         "low_skill_logic": True,
@@ -203,7 +214,8 @@ option_presets = {
         "completion_type": 0 # Full Main Story
     },
     "normal": {
-        "starting_market": 1,
+        "starting_market": 1, # 1st Market
+        "progressive_stages": True,
         "disable_challenge_logic": True,
         "trap_chance": 5,
         "low_skill_logic": True,
@@ -216,7 +228,8 @@ option_presets = {
         "completion_type": 0 # Full Main Story
     },
     "hard": {
-        "starting_market": 3,
+        "starting_market": 3, # 3rd Market
+        "progressive_stages": True,
         "disable_challenge_logic": True,
         "trap_chance": 10,
         "low_skill_logic": False,
@@ -229,7 +242,8 @@ option_presets = {
         "completion_type": 1 # Minimum Main Story
     },
     "lunatic": {
-        "starting_market": 5,
+        "starting_market": 5, # 5th Market
+        "progressive_stages": False,
         "disable_challenge_logic": False,
         "trap_chance": 20,
         "low_skill_logic": False,
@@ -242,7 +256,8 @@ option_presets = {
         "completion_type": 3 # All Bosses Defeated
     },
     "overdrive": {
-        "starting_market": 8,
+        "starting_market": 8, # Challenge Market
+        "progressive_stages": False,
         "disable_challenge_logic": False,
         "trap_chance": 50,
         "low_skill_logic": False,
