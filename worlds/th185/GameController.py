@@ -59,7 +59,8 @@ class GameController:
         Returns True if the game is open and not the window resolution selection dialogue box.
         """
         try:
-            card_slot = int.from_bytes(self.pm.read_bytes(self.getAddressFromPointerWithBase(ADDR_EQUIP_SLOT_COUNT), 4))
+            card_slot = self.pm.read_int(self.getAddressFromPointerWithBase(ADDR_EQUIP_SLOT_COUNT))
+            if card_slot <= 0: return False
         except Exception as e:
             return False
         # If this does not raise an exception, the game is running.
