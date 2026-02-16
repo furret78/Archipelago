@@ -40,10 +40,6 @@ Once this is done, you may open the game. The client will attempt to connect to 
 - Mods which _**directly**_ modify the game executable will break compatibility. As the client relies on consistent memory addresses to operate, directly editing the executable will derail the entire thing.
 - Mods run via the [Touhou Community Reliant Automatic Patcher (thcrap)](https://github.com/thpatch/thcrap) _may_ work, at least for language patches. This patcher is not bundled in with this AP implementation.
 
-## Documented Linux Issues
-
-- The client detects the game twice: The client is attempting to link to the game when it should not, particularly when the game is asking for a window resolution. Players running the game through Proton/Wine/Steam are recommended to uncheck the "Ask each startup time" or skip through the window resolution dialogue box as quickly as possible.
-
 ## Troubleshooting
 
 If any issues arise that **cannot be solved by going over this guide**, feel free to ask in the [thread](https://discord.com/channels/731205301247803413/1346288808512983040/1470840910500724736) for Touhou 18.5: 100th Black Market in #future-game-design in the official Archipelago Discord server.
