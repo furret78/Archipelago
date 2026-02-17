@@ -6,7 +6,10 @@ from .variables.boss_and_stage import TUTORIAL_NAME_FULL, STAGE1_NAME_FULL, STAG
 class StartingMarket(Choice):
     """
     Choose which stage to have unlocked at the start of the game.
-    If Progressive Stages is enabled, unlock items for stages preceding the Starting Market will not appear.
+
+    If Progressive Stages is enabled:
+    - Unlock items for stages preceding the Starting Market will not appear.
+    - Any stages preceding the Starting Market will be unlocked.
     """
 
     display_name = "Starting Market"
