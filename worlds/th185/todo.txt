@@ -21,4 +21,5 @@
 
 - Add Music Room locations
 - Add Achievement locations
+- Add rules for the above
 - Add generic stage clear locations for each stage?

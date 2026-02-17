@@ -7,7 +7,7 @@ class StartingMarket(Choice):
     """
     Choose which stage to have unlocked at the start of the game.
 
-    If Progressive Stages is enabled:
+    If Progressive Markets is enabled:
     - Unlock items for stages preceding the Starting Market will not appear.
     - Any stages preceding the Starting Market will be unlocked.
     """
@@ -151,7 +151,7 @@ class EnergyLinkBulletMoney(Toggle):
     display_name = "Energy Link Bullet Money Exchanges"
 
 
-class MusicRoomChecks(Choice):
+class MusicRoomChecks(Toggle):
     """
     Whether soundtrack unlocks in the Music Room also counts as checks.
     """
@@ -159,7 +159,7 @@ class MusicRoomChecks(Choice):
     display_name = "Enable Music Room Checks"
 
 
-class AchieveChecks(Choice):
+class AchieveChecks(Toggle):
     """
     Whether Achievements also counts as checks.
     """
@@ -248,7 +248,7 @@ option_presets = {
         "death_link_invincibility": True,
         "energy_link": False,
         "energy_link_bullet_money": False,
-        "music_room_checks": True,
+        "music_room_checks": False,
         "achievement_checks": False,
         "completion_type": 0 # Full Main Story
     },
@@ -281,7 +281,7 @@ option_presets = {
         "energy_link": False,
         "energy_link_bullet_money": False,
         "music_room_checks": True,
-        "achievement_checks": True,
+        "achievement_checks": False,
         "completion_type": 3 # All Bosses Defeated
     },
     "overdrive": {
