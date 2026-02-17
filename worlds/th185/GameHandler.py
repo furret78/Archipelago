@@ -301,6 +301,29 @@ class GameHandler:
     def setEquipCost(self, value: int):
         self.gameController.setEquipCost(value)
 
+    # Music Room and Achievements
+    def getMusicRecord(self, track_id: int) -> bool:
+        sanitized_track_id = clamp(track_id, 0, 9)
+        return self.gameController.getMusicRecordData(sanitized_track_id)
+
+    def setMusicRecord(self, track_id: int, value: bool):
+        sanitized_track_id = clamp(track_id, 0, 9)
+        final_bytes = bytes([0x00])
+        if value: final_bytes = bytes([0x01])
+
+        self.gameController.setMusicRecordData(sanitized_track_id, final_bytes)
+
+    def getAchievementStatus(self, achievement_id: int) -> bool:
+        sanitized_achieve_id = clamp(achievement_id, 0, 11)
+        return self.gameController.getAchieveData(sanitized_achieve_id)
+
+    def setAchievementStatus(self, achievement_id: int, value: bool):
+        sanitized_achieve_id = clamp(achievement_id, 0, 11)
+        final_bytes = bytes([0x00])
+        if value: final_bytes = bytes([0x01])
+
+        self.gameController.setAchieveData(sanitized_achieve_id, final_bytes)
+
     # Death Link functionalities
     # If True, the player died and has just teleported below the screen in order to recover.
     # Does not check if the player is not in a stage.

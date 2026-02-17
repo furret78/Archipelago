@@ -246,6 +246,24 @@ class GameController:
         addrFromCardDex = self.getAddressFromPointerWithBase(ADDR_CARD_TO_DEX[card_id])
         self.pm.write_bytes(addrFromCardDex, value, 1)
 
+    # Music Room functions
+    def getMusicRecordData(self, track_id: int) -> bool:
+        addrFromMusicRoom = self.getAddressFromPointerWithBase(ADDR_MUSIC_ROOM_OFFSET + track_id)
+        return self.pm.read_bool(addrFromMusicRoom)
+
+    def setMusicRecordData(self, track_id: int, value: bytes):
+        addrFromMusicRoom = self.getAddressFromPointerWithBase(ADDR_MUSIC_ROOM_OFFSET + track_id)
+        self.pm.write_bytes(addrFromMusicRoom, value, 1)
+
+    # Achievement functions
+    def getAchieveData(self, achievement_id: int) -> bool:
+        addrFromAchievement = self.getAddressFromPointerWithBase(ADDR_ACHIEVEMENT_OFFSET + achievement_id)
+        return self.pm.read_bool(addrFromAchievement)
+
+    def setAchieveData(self, achievement_id: int, value: bytes):
+        addrFromAchievement = self.getAddressFromPointerWithBase(ADDR_ACHIEVEMENT_OFFSET + achievement_id)
+        self.pm.write_bytes(addrFromAchievement, value, 1)
+
     # Things to do on boot-up before anything else.
     def initGamePrep(self):
         # Disable the anti-cheat.
