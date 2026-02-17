@@ -1,7 +1,7 @@
 import shutil
 import os
 
-from . import STAGE_NAME_LIST, STAGE_NAME_TO_ID, STAGE_FULL_TO_SHORT_NAME
+from .variables.boss_and_stage import STAGE_NAME_TO_ID, STAGE_FULL_TO_SHORT_NAME
 from .variables.meta_data import *
 
 

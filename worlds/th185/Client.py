@@ -18,7 +18,7 @@ from CommonClient import (
 )
 from NetUtils import NetworkItem
 from .GameHandler import *
-from .Items import GAME_ONLY_ITEM_ID
+from .Items import GAME_ONLY_ITEM_ID, item_table
 from .Locations import *
 from .variables.meta_data import *
 from .Tools import get_item_index_save_name, convert_currency_to_joules, get_energy_withdraw_tag, \
@@ -265,6 +265,7 @@ class TouhouHBMContext(CommonContext):
         # for any cards that are in there. Same with the list of unlocked stages.
         self.permashop_cards: list = []
         self.unlocked_stages: list = []
+        self.progressive_stage_list: list[int] = []
         # Dex dictionary does not exist. Use the list of acquired checks for that.
         # Owning a card and unlocking its dex entry is one and the same,
         # but it is separate for the player.
@@ -348,6 +349,7 @@ class TouhouHBMContext(CommonContext):
         self.permashop_cards_new = []
         self.permashop_cards = []
         self.unlocked_stages = []
+        self.progressive_stage_list = []
 
         self.enable_card_selection_checking = False
         self.enable_card_shop_scanning = True
@@ -731,21 +733,28 @@ class TouhouHBMContext(CommonContext):
     def handle_save_data_items(self, network_item_list: list[NetworkItem]):
         ability_card_unlock_list = []
         stage_unlock_list = []
-        progressive_stage_count: int = 0
+        progress_item_list = []
 
         for network_item in network_item_list:
             if network_item.item in ITEM_TABLE_ID_TO_STAGE_NAME:
                 stage_unlock_list.append(ITEM_TABLE_ID_TO_STAGE_NAME[network_item.item])
             elif network_item.item in ITEM_TABLE_ID_TO_CARD_ID:
                 ability_card_unlock_list.append(ITEM_TABLE_ID_TO_CARD_ID[network_item.item])
-            elif network_item.item == 290:
-                progressive_stage_count += 1
+            # Item ID for progressive stages.
+            # There is really no need to check for this option here since generation realistically will never
+            # give Progressive Markets in non-Progressive worlds.
+            # The only way to get Progressive Markets in non-Progressive worlds
+            # is via console.
+            elif self.options["progressive_stages"] and network_item.item == item_table[PROGRESS_ITEM_NAME_FULL].code:
+                progress_item_list.append(network_item.item)
 
         self.handle_ability_cards(ability_card_unlock_list)
         self.handle_stages(stage_unlock_list)
 
-        if not self.options["progressive_stages"]: return
-        self.handle_progressive_stages(progressive_stage_count)
+        if len(progress_item_list) > 0:
+            self.progressive_stage_list += progress_item_list
+
+        self.handle_progressive_stages(self.progressive_stage_list)
 
     def handle_ability_cards(self, filtered_list):
         if len(filtered_list) <= 0: return
@@ -764,7 +773,10 @@ class TouhouHBMContext(CommonContext):
 
         self.handler.updateStageList()
 
-    def handle_progressive_stages(self, progress_item_count: int):
+    def handle_progressive_stages(self, all_items_list):
+        if len(all_items_list) < 0: return
+
+        progress_item_count = all_items_list.count(item_table[PROGRESS_ITEM_NAME_FULL].code)
         if progress_item_count <= 0: return
 
         for stage_name_in_list in STAGE_LIST:
@@ -773,6 +785,8 @@ class TouhouHBMContext(CommonContext):
                     self.unlocked_stages.append(stage_name_in_list)
                     self.handler.stages_unlocked[stage_name_in_list] = True
 
+        self.handler.updateStageList()
+
     def handle_filler_items(self, filtered_list):
         if len(filtered_list) <= 0: return
 
@@ -780,6 +794,7 @@ class TouhouHBMContext(CommonContext):
             item_id = filler_item.item
             if item_id in ITEM_TABLE_ID_TO_STAGE_NAME: continue
             if item_id in ITEM_TABLE_ID_TO_CARD_ID: continue
+            if item_id == item_table[PROGRESS_ITEM_NAME_FULL].code: continue
             if item_id in GAME_ONLY_ITEM_ID:
                 self.gameItemQueue.append(item_id)
                 continue
@@ -1460,7 +1475,8 @@ class TouhouHBMContext(CommonContext):
         for network_item in item_list:
             item_id_list.append(network_item.item)
 
-        self.all_received_items = self.all_received_items + item_id_list
+        self.all_received_items += item_id_list
+
         await self.write_last_item_list()
 
     async def write_last_item_list(self):

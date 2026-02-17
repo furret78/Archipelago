@@ -37,12 +37,12 @@ def get_card_shop_item_names() -> list[str]:
 
 
 def set_all_entrance_rules(world) -> None:
-    def has_appropriate_stage_item(state: CollectionState, stage_name_full: str) -> bool:
+    def has_correct_stage_item(state: CollectionState, given_stage: str) -> bool:
         if world.options.progressive_stages:
-            progress_requirement_count = get_progress_item_requirement(stage_name_full, True)
+            progress_requirement_count = get_progress_item_requirement(given_stage, True)
             return state.has(PROGRESS_ITEM_NAME_FULL, world.player, progress_requirement_count)
         else:
-            return state.has(stage_name_full, world.player)
+            return state.has(given_stage, world.player)
 
     origin_to_region_dict = {
         TUTORIAL_NAME_FULL: world.get_entrance(ORIGIN_TO_TUTORIAL_NAME),
@@ -57,7 +57,7 @@ def set_all_entrance_rules(world) -> None:
     }
 
     for stage_name in origin_to_region_dict.keys():
-        set_rule(origin_to_region_dict[stage_name], lambda state, used_name = stage_name: has_appropriate_stage_item(state, used_name))
+        set_rule(origin_to_region_dict[stage_name], lambda state, used_name=stage_name: has_correct_stage_item(state, used_name))
 
 
 def set_all_location_rules(world) -> None:
@@ -70,7 +70,7 @@ def set_all_location_rules(world) -> None:
         else:
             return state.has(TUTORIAL_NAME_FULL, world.player)
 
-    def has_challenge_access_item(state: CollectionState) -> bool:
+    def has_challenge_access_item(state: CollectionState, is_boss: bool = False) -> bool:
         """
         Checks for Challenge Market access.
         If generation has turned off Challenge Market in logic (disable_challenge_logic == true),
@@ -82,7 +82,7 @@ def set_all_location_rules(world) -> None:
                 return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(CHALLENGE_NAME)) and low_skill_rules(state)
             else:
                 return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(CHALLENGE_NAME))
-        if world.options.disable_challenge_logic: return False
+        if world.options.disable_challenge_logic and not is_boss: return False
         else:
             # Challenge Market is also lategame.
             if world.options.low_skill_logic:
@@ -281,7 +281,7 @@ def set_all_location_rules(world) -> None:
                             continue
 
                         location_encounter = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss_name)
-                        add_rule(world.get_location(location_encounter), lambda state: has_challenge_access_item(state))
+                        add_rule(world.get_location(location_encounter), lambda state: has_challenge_access_item(state, True))
                 internal_stage_id += 1
 
     #
