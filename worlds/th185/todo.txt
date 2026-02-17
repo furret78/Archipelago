@@ -14,7 +14,8 @@
 - Make the ProcessError log look more pleasant in the client.
 - Hints?
 
-- Add trap item: Lily White Trap
+- Add trap: Lily White Trap
     - Requires figuring out how to run game functions from outside.
 - Add trap: -1 Life
-
+- Add filler: +500% Shot Attack Strength
+- Add trap loop and turn some traps (max speed trap, freeze trap, etc.) into temporary timed traps.
