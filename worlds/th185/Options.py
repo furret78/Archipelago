@@ -151,6 +151,22 @@ class EnergyLinkBulletMoney(Toggle):
     display_name = "Energy Link Bullet Money Exchanges"
 
 
+class MusicRoomChecks(Choice):
+    """
+    Whether soundtrack unlocks in the Music Room also counts as checks.
+    """
+
+    display_name = "Enable Music Room Checks"
+
+
+class AchieveChecks(Choice):
+    """
+    Whether Achievements also counts as checks.
+    """
+
+    display_name = "Enable Achievement Checks"
+
+
 class CompletionType(Choice):
     """
     A goal to reach.
@@ -186,6 +202,8 @@ class TouhouHBMDataclass(PerGameCommonOptions):
     death_link_invincibility: InvincAgainstDeathLink
     energy_link: EnergyLink
     energy_link_bullet_money: EnergyLinkBulletMoney
+    music_room_checks: MusicRoomChecks
+    achievement_checks: AchieveChecks
     completion_type: CompletionType
     start_inventory_from_pool: StartInventoryPool
 
@@ -197,7 +215,7 @@ option_groups = [
     ),
     OptionGroup(
         "Generation Options",
-        [StartingMarket, ProgressiveStages, DisableChallengeLogic, LowSkillLogic, TrapChance, IncludeGameplayFiller, CompletionType]
+        [StartingMarket, ProgressiveStages, MusicRoomChecks, AchieveChecks, DisableChallengeLogic, LowSkillLogic, TrapChance, IncludeGameplayFiller, CompletionType]
     )
 ]
 
@@ -214,6 +232,8 @@ option_presets = {
         "death_link_invincibility": True,
         "energy_link": False,
         "energy_link_bullet_money": False,
+        "music_room_checks": False,
+        "achievement_checks": False,
         "completion_type": 0 # Full Main Story
     },
     "normal": {
@@ -228,6 +248,8 @@ option_presets = {
         "death_link_invincibility": True,
         "energy_link": False,
         "energy_link_bullet_money": False,
+        "music_room_checks": True,
+        "achievement_checks": False,
         "completion_type": 0 # Full Main Story
     },
     "hard": {
@@ -242,6 +264,8 @@ option_presets = {
         "death_link_invincibility": False,
         "energy_link": False,
         "energy_link_bullet_money": False,
+        "music_room_checks": True,
+        "achievement_checks": False,
         "completion_type": 1 # Minimum Main Story
     },
     "lunatic": {
@@ -256,6 +280,8 @@ option_presets = {
         "death_link_invincibility": False,
         "energy_link": False,
         "energy_link_bullet_money": False,
+        "music_room_checks": True,
+        "achievement_checks": True,
         "completion_type": 3 # All Bosses Defeated
     },
     "overdrive": {
@@ -270,6 +296,8 @@ option_presets = {
         "death_link_invincibility": False,
         "energy_link": False,
         "energy_link_bullet_money": False,
+        "music_room_checks": True,
+        "achievement_checks": True,
         "completion_type": 4 # Full Clear
     }
 }
