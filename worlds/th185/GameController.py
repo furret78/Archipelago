@@ -247,8 +247,14 @@ class GameController:
         self.pm.write_bytes(addrFromCardDex, value, 1)
 
     # Things to do on boot-up before anything else.
-    def initAnticheatHack(self):
-        self.pm.write_bytes(self.pm.base_address+ADDR_ANTICHEAT_HACK, bytes([0x90, 0x90]), 2)
+    def initGamePrep(self):
+        # Disable the anti-cheat.
+        self.pm.write_bytes(self.pm.base_address + ADDR_ANTICHEAT_HACK, bytes([0x90, 0x90]), 2)
+        # Forcibly unlock the option to equip no cards at all.
+        self.setNoCardData()
+        # Disable the annoying stage unlock alerts.
+        self.pm.write_bytes(self.pm.base_address + ADDR_ALERT_POPUP_PTR, bytes([0x0F]), 1)
+
 
     def setNoCardData(self):
         addrFromCardDex = self.getAddressFromPointerWithBase(ADDR_DEX_NO_CARD)

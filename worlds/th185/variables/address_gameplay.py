@@ -11,7 +11,8 @@ ADDR_GAME_FUNDS_PTR = 0x000D106C
 ADDR_BULLET_MONEY_PTR = 0x000D1074
 ADDR_BULLET_MONEY_2_PTR = 0x000D1070
 ADDR_LIVES_PTR = 0x000D10BC
-ADDR_ANTICHEAT_HACK = 0x000744A6
+ADDR_ANTICHEAT_HACK = 0x000744A6 # NOP opcodes should be used.
+ADDR_ALERT_POPUP_PTR = 0x0004819E # Set this to 0F.
 ADDR_BLACK_MARKET_PTR = 0x000D7AC4 # If does not return 0, Black Market is open.
 
 # These are specifically for invincibility. Both fields must be changed at the same time
