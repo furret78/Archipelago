@@ -1,8 +1,7 @@
 from BaseClasses import CollectionState
 from Utils import visualize_regions
 from worlds.generic.Rules import add_rule, set_rule
-from .Locations import get_boss_location_name_str, get_card_location_name_str
-from .Tools import get_progress_item_requirement
+from .Tools import get_progress_item_requirement, get_boss_location_name_str, get_card_location_name_str
 from .variables.card_const import *
 
 

@@ -22,7 +22,7 @@ from .Items import GAME_ONLY_ITEM_ID, item_table
 from .Locations import *
 from .variables.meta_data import *
 from .Tools import get_item_index_save_name, convert_currency_to_joules, get_energy_withdraw_tag, \
-    convert_joules_to_currency
+    convert_joules_to_currency, get_boss_location_name_str, get_card_location_name_str
 
 # Handles the game itself. The watcher that runs loops is down below.
 

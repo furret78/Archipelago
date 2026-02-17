@@ -1,8 +1,10 @@
 import shutil
 import os
 
-from .variables.boss_and_stage import STAGE_NAME_TO_ID, STAGE_FULL_TO_SHORT_NAME
+from .variables.boss_and_stage import *
+from .variables.card_const import CARD_ID_TO_NAME
 from .variables.meta_data import *
+from .variables.music_and_achiev import *
 
 
 def getAddressFromPointer(pm, static_base, offsets=None):
@@ -97,3 +99,41 @@ def get_progress_item_requirement(stage_name: str, use_full_name: bool = False) 
         return clamp(STAGE_NAME_TO_ID[STAGE_FULL_TO_SHORT_NAME[stage_name]] + 1, 1, 9)
     else:
         return clamp(STAGE_NAME_TO_ID[stage_name] + 1, 1, 9)
+
+
+def get_boss_location_name_str(market_stage_id: int, boss_name: str, is_defeat: bool = False) -> str:
+    """
+    Gets the location name according to Stage ID and Boss name.
+    Has an Encounter and Defeat variant.
+    """
+    locationType: str = ENCOUNTER_TYPE_NAME
+    if is_defeat: locationType = DEFEAT_TYPE_NAME
+    return f"[{STAGE_LIST[market_stage_id]}] {boss_name} - {locationType}"
+
+
+def get_card_location_name_str(card_id: str, is_dex: bool = False) -> str:
+    """
+    Gets the location name according to Ability Card string ID.
+    Has a Shop Unlock and Dex Unlock variant.
+    """
+    regionName: str = ENDSTAGE_CHOOSE_NAME
+    if is_dex: regionName = CARD_DEX_NAME
+    return f"[{regionName}] {CARD_ID_TO_NAME[card_id]}"
+
+
+def get_music_location_name_str(track_id: int) -> str:
+    """
+    Gets the location name according to the Music Room dictionary.
+    Argument is clamped before assigning.
+    """
+    safe_id_used = clamp(track_id, 0, 9)
+    return f"[{MUSIC_ROOM_UNLOCK_STR}] {safe_id_used + 1}. {MUSIC_ROOM_NAME_DICT[safe_id_used]}"
+
+
+def get_achievement_location_name_str(achievement_id: int) -> str:
+    """
+    Gets the location name according to the Achievements dictionary.
+    Argument is clamped before assigning.
+    """
+    safe_id_used = clamp(achievement_id, 0, 11)
+    return f"{ACHIEVE_UNLOCK_STR}{safe_id_used + 1}: {ACHIEVE_NAME_DICT[safe_id_used]}"

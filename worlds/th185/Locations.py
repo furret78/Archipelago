@@ -1,9 +1,9 @@
 from typing import Dict
 
 from .Regions import get_regions_dict
-from .variables.boss_and_stage import *
 from .variables.card_const import *
 from .variables.meta_data import *
+from .Tools import get_boss_location_name_str, get_card_location_name_str
 from BaseClasses import Location
 
 
@@ -38,25 +38,6 @@ def get_boss_names_challenge_list() -> list[str]:
     # Return the final list.
     return result_boss_list
 
-
-def get_boss_location_name_str(market_stage_id: int, boss_name: str, is_defeat: bool = False) -> str:
-    """
-    Gets the location name according to Stage ID and Boss name.
-    Has an Encounter and Defeat variant.
-    """
-    locationType: str = ENCOUNTER_TYPE_NAME
-    if is_defeat: locationType = DEFEAT_TYPE_NAME
-    return f"[{STAGE_LIST[market_stage_id]}] {boss_name} - {locationType}"
-
-
-def get_card_location_name_str(card_id: str, is_dex: bool = False) -> str:
-    """
-    Gets the location name according to Ability Card string ID.
-    Has a Shop Unlock and Dex Unlock variant.
-    """
-    regionName: str = ENDSTAGE_CHOOSE_NAME
-    if is_dex: regionName = CARD_DEX_NAME
-    return f"[{regionName}] {CARD_ID_TO_NAME[card_id]}"
 
 location_groups: Dict[str, set[str]] = {}
 

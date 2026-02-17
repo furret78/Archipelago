@@ -80,8 +80,7 @@ class GameHandler:
 
     def initGame(self):
         if self.gameController is None: return
-        self.gameController.initAnticheatHack()
-        self.gameController.setNoCardData()
+        self.gameController.initGamePrep()
 
     # Get Handler functions
     def isGameInStage(self):

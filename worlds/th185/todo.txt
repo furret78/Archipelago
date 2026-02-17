@@ -8,14 +8,17 @@
 
 - Code refactoring for more clarity.
 - Refactoring Rules.py to accommodate Rule Builder.
+- Make the ProcessError log look more pleasant in the client.
 
 - Add Progressive Card Slot items.
 - Add Progressive Equip Cost items.
-- Make the ProcessError log look more pleasant in the client.
-- Hints?
 
 - Add trap: Lily White Trap
     - Requires figuring out how to run game functions from outside.
 - Add trap: -1 Life
 - Add filler: +500% Shot Attack Strength
 - Add trap loop and turn some traps (max speed trap, freeze trap, etc.) into temporary timed traps.
+
+- Add Music Room locations
+- Add Achievement locations
+- Add generic stage clear locations for each stage?
