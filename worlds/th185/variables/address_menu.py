@@ -16,6 +16,10 @@ ADDR_EQUIP_SLOT_COUNT = 0x000269D0 # max 34
 ADDR_EQUIP_COST = 0x000269E0
 ADDR_MENU_FUNDS_PTR = 0x000269D4
 
+# Music Room and Achievements
+ADDR_MUSIC_ROOM_OFFSET = 0x000262EE # Add 0-9 to this offset when retrieving data to get the correct track.
+ADDR_ACHIEVEMENT_OFFSET = 0x00026320 # Add 0-11.
+
 # Stage locks (00 means locked, anything else means unlocked)
 ADDR_STAGE_TUTORIAL_UNLOCK = 0x00026561
 ADDR_STAGE1_UNLOCK = 0x00026562

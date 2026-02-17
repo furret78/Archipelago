@@ -255,7 +255,6 @@ class GameController:
         # Disable the annoying stage unlock alerts.
         self.pm.write_bytes(self.pm.base_address + ADDR_ALERT_POPUP_PTR, bytes([0x0F]), 1)
 
-
     def setNoCardData(self):
         addrFromCardDex = self.getAddressFromPointerWithBase(ADDR_DEX_NO_CARD)
         self.pm.write_bytes(addrFromCardDex, bytes([0x01]), 1)
