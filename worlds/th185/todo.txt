@@ -22,4 +22,10 @@
 - Add Music Room locations
 - Add Achievement locations
 - Add rules for the above
-- Add generic stage clear locations for each stage?
+
+- Add generic clear locations for each stage
+- Add Choice option to allow choosing between:
+	+ Boss Locations and Stage Clear Locations
+	+ Only Boss Locations
+	+ Only Stage Clear Locations
+- Figure out saving boss defeats to local machine
