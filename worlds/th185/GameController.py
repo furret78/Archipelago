@@ -249,7 +249,7 @@ class GameController:
     # Music Room functions
     def getMusicRecordData(self, track_id: int) -> bool:
         addrFromMusicRoom = self.getAddressFromPointerWithBase(ADDR_MUSIC_ROOM_OFFSET + track_id)
-        return self.pm.read_bool(addrFromMusicRoom)
+        return self.pm.read_bytes(addrFromMusicRoom, 1) != bytes([0x00])
 
     def setMusicRecordData(self, track_id: int, value: bytes):
         addrFromMusicRoom = self.getAddressFromPointerWithBase(ADDR_MUSIC_ROOM_OFFSET + track_id)
@@ -258,7 +258,7 @@ class GameController:
     # Achievement functions
     def getAchieveData(self, achievement_id: int) -> bool:
         addrFromAchievement = self.getAddressFromPointerWithBase(ADDR_ACHIEVEMENT_OFFSET + achievement_id)
-        return self.pm.read_bool(addrFromAchievement)
+        return self.pm.read_bytes(addrFromAchievement, 1) != bytes([0x00])
 
     def setAchieveData(self, achievement_id: int, value: bytes):
         addrFromAchievement = self.getAddressFromPointerWithBase(ADDR_ACHIEVEMENT_OFFSET + achievement_id)
@@ -271,7 +271,7 @@ class GameController:
         # Forcibly unlock the option to equip no cards at all.
         self.setNoCardData()
         # Disable the annoying stage unlock alerts.
-        self.pm.write_bytes(self.pm.base_address + ADDR_ALERT_POPUP_PTR, bytes([0x0F]), 1)
+        self.pm.write_bytes(self.pm.base_address + ADDR_ALERT_POPUP_PTR, bytes([0x0A]), 1)
 
     def setNoCardData(self):
         addrFromCardDex = self.getAddressFromPointerWithBase(ADDR_DEX_NO_CARD)
