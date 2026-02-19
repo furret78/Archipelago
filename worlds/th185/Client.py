@@ -23,6 +23,8 @@ from .Locations import *
 from .variables.meta_data import *
 from .Tools import get_item_index_save_name, convert_currency_to_joules, get_energy_withdraw_tag, \
     convert_joules_to_currency, get_boss_location_name_str, get_card_location_name_str
+from .variables.music_and_achiev import MUSIC_ROOM_UNLOCK_STR, ACHIEVE_UNLOCK_STR
+
 
 # Handles the game itself. The watcher that runs loops is down below.
 
@@ -439,6 +441,10 @@ class TouhouHBMContext(CommonContext):
             self.handler.setMenuFunds(0)
             self.handler.setCardSlots(1)
             self.handler.setEquipCost(100)
+            for song_id, song_name in MUSIC_ROOM_NAME_DICT.items():
+                self.handler.setMusicRecord(song_id, False)
+            for trophy_id, trophy_name in ACHIEVE_NAME_DICT.items():
+                self.handler.setAchievementStatus(trophy_id, False)
 
         reset_menu_records()
 
@@ -1343,6 +1349,7 @@ class TouhouHBMContext(CommonContext):
         while self.handler is None or self.handler.gameController is None or not self.handler.gameController.check_if_in_game():
             await asyncio.sleep(0.5)
 
+        self.load_sava_data_records()
         self.load_save_data_bosses()
         self.load_save_data_dex()
         self.load_save_data_menu()
@@ -1396,6 +1403,22 @@ class TouhouHBMContext(CommonContext):
         self.handler.setEquipCost(self.equip_cost)
 
         self.menu_stats_initialized = True
+
+    def load_sava_data_records(self):
+        # Assume that the game is in 100% locked mode.
+        for location_id in self.previous_location_checked:
+            full_location_name = location_id_to_name[location_id]
+            # Check for the Music Room first.
+            if self.options["music_room_checks"] and MUSIC_ROOM_UNLOCK_STR in full_location_name:
+                for music_id, music_name in MUSIC_ROOM_NAME_DICT.items():
+                    if music_name not in full_location_name: continue
+                    self.handler.setMusicRecord(music_id, True)
+
+            # Then Achievements.
+            if self.options["achievement_checks"] and ACHIEVE_UNLOCK_STR in full_location_name:
+                for achievement_id, achievement_name in ACHIEVE_NAME_DICT.items():
+                    if achievement_name not in full_location_name: continue
+                    self.handler.setAchievementStatus(achievement_id, True)
 
     async def transfer_from_menu_to_stage(self):
         """
