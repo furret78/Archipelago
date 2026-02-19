@@ -1246,10 +1246,8 @@ class TouhouHBMContext(CommonContext):
 
             for card in shop_card_list:
                 cardLocationName: str = get_card_location_name_str(card, False)
-                if location_table[cardLocationName] not in self.all_location_ids:
-                    continue
-                if location_table[cardLocationName] in self.previous_location_checked:
-                    continue
+                if location_table[cardLocationName] not in self.all_location_ids: continue
+                if location_table[cardLocationName] in self.previous_location_checked: continue
 
                 # Card shop unlock location does exist if it made it past that.
                 if self.handler.getCardShopRecordGame(card) != 0:
@@ -1269,10 +1267,8 @@ class TouhouHBMContext(CommonContext):
         for card in ABILITY_CARD_LIST:
             cardLocationName: str = get_card_location_name_str(card, True)
             if cardLocationName not in location_table: continue
-            if location_table[cardLocationName] not in self.all_location_ids:
-                continue
-            if location_table[cardLocationName] in self.previous_location_checked:
-                continue
+            if location_table[cardLocationName] not in self.all_location_ids: continue
+            if location_table[cardLocationName] in self.previous_location_checked: continue
 
             # Card dex location does exist if it made it past that.
             if self.handler.getDexCardData(card):
@@ -1286,8 +1282,8 @@ class TouhouHBMContext(CommonContext):
             for soundtrack_id in MUSIC_ROOM_NAME_DICT.keys():
                 musicLocationName: str = get_music_location_name_str(soundtrack_id)
                 if musicLocationName not in location_table: continue
-                if musicLocationName not in self.all_location_ids: continue
-                if musicLocationName in self.previous_location_checked: continue
+                if location_table[musicLocationName] not in self.all_location_ids: continue
+                if location_table[musicLocationName] in self.previous_location_checked: continue
 
                 # Music Room location does exist if it made it past that.
                 if self.handler.getMusicRecord(soundtrack_id):
@@ -1299,8 +1295,8 @@ class TouhouHBMContext(CommonContext):
             for achievement_id in ACHIEVE_NAME_DICT.keys():
                 achieveLocationName: str = get_achievement_location_name_str(achievement_id)
                 if achieveLocationName not in location_table: continue
-                if achieveLocationName not in self.all_location_ids: continue
-                if achieveLocationName in self.previous_location_checked: continue
+                if location_table[achieveLocationName] not in self.all_location_ids: continue
+                if location_table[achieveLocationName] in self.previous_location_checked: continue
 
                 # Achievement location does exist.
                 if self.handler.getAchievementStatus(achievement_id):
