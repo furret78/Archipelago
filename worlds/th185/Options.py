@@ -175,7 +175,7 @@ class CompletionType(Choice):
     2. Defeat only the last Story boss - Takane Yamashiro.
     3. Register all Ability Card dex entries.
     4. Defeat all bosses - Challenge Market does not count.
-    5. Clear everything - Music Room and/or Achievement checks also count if those are enabled.
+    5. Clear everything.
     """
 
     display_name = "Completion Goal"
