@@ -1188,6 +1188,20 @@ class TouhouHBMContext(CommonContext):
         Check if any locations has been checked since this was last called.
         If there is, send a message and update the checked location list.
         """
+        def obligatory_location_table_check(given_location_name: str) -> bool:
+            """
+            Obligatory location table check function.
+            If this returns False, location does not exist or has already been checked.
+            If True, it does exist AND has not been checked yet.
+
+            :param given_location_name: The (string) name of the location to check.
+            """
+            if given_location_name not in location_table: return False
+            if location_table[given_location_name] not in self.all_location_ids: return False
+            if location_table[given_location_name] in self.previous_location_checked: return False
+
+            return True
+
         new_locations = []
 
         if self.loadingDataSetup: return
@@ -1201,16 +1215,14 @@ class TouhouHBMContext(CommonContext):
                     # Encounters
                     if self.handler.getBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name]):
                         locationName: str = get_boss_location_name_str(STAGE_NAME_TO_ID[stage_name], boss_name)
-                        if location_table[locationName] not in self.previous_location_checked and location_table[
-                            locationName] in self.all_location_ids:
+                        if obligatory_location_table_check(locationName):
                             self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
                                                               True)
                             new_locations.append(location_table[locationName])
                     # Defeat
                     if self.handler.getBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], 1):
                         locationName: str = get_boss_location_name_str(STAGE_NAME_TO_ID[stage_name], boss_name, True)
-                        if location_table[locationName] not in self.previous_location_checked and location_table[
-                            locationName] in self.all_location_ids:
+                        if obligatory_location_table_check(locationName):
                             self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
                                                               True, 1)
                             new_locations.append(location_table[locationName])
@@ -1226,9 +1238,7 @@ class TouhouHBMContext(CommonContext):
                         # There are only encounters. Check those.
                         if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name]):
                             locationName: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss_name)
-                            if locationName not in location_table: continue
-                            if location_table[locationName] not in self.previous_location_checked and location_table[
-                                locationName] in self.all_location_ids:
+                            if obligatory_location_table_check(locationName):
                                 self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
                                 new_locations.append(location_table[locationName])
 
@@ -1246,8 +1256,7 @@ class TouhouHBMContext(CommonContext):
 
             for card in shop_card_list:
                 cardLocationName: str = get_card_location_name_str(card, False)
-                if location_table[cardLocationName] not in self.all_location_ids: continue
-                if location_table[cardLocationName] in self.previous_location_checked: continue
+                if not obligatory_location_table_check(cardLocationName): continue
 
                 # Card shop unlock location does exist if it made it past that.
                 if self.handler.getCardShopRecordGame(card) != 0:
@@ -1258,17 +1267,14 @@ class TouhouHBMContext(CommonContext):
             if self.handler.isBlackMarketOpen():
                 self.handler.setDexCardData(NAZRIN_CARD_2, True)
                 cardLocationName: str = get_card_location_name_str(NAZRIN_CARD_2, True)
-                if (location_table[cardLocationName] in self.all_location_ids
-                        and location_table[cardLocationName] not in self.previous_location_checked):
+                if obligatory_location_table_check(cardLocationName):
                     new_locations.append(location_table[cardLocationName])
 
         # Dex
         player_has_purchased_card_bool = False
         for card in ABILITY_CARD_LIST:
             cardLocationName: str = get_card_location_name_str(card, True)
-            if cardLocationName not in location_table: continue
-            if location_table[cardLocationName] not in self.all_location_ids: continue
-            if location_table[cardLocationName] in self.previous_location_checked: continue
+            if not obligatory_location_table_check(cardLocationName): continue
 
             # Card dex location does exist if it made it past that.
             if self.handler.getDexCardData(card):
@@ -1281,9 +1287,7 @@ class TouhouHBMContext(CommonContext):
         if self.options["music_room_checks"]:
             for soundtrack_id in MUSIC_ROOM_NAME_DICT.keys():
                 musicLocationName: str = get_music_location_name_str(soundtrack_id)
-                if musicLocationName not in location_table: continue
-                if location_table[musicLocationName] not in self.all_location_ids: continue
-                if location_table[musicLocationName] in self.previous_location_checked: continue
+                if not obligatory_location_table_check(musicLocationName): continue
 
                 # Music Room location does exist if it made it past that.
                 if self.handler.getMusicRecord(soundtrack_id):
@@ -1294,9 +1298,7 @@ class TouhouHBMContext(CommonContext):
         if self.options["achievement_checks"]:
             for achievement_id in ACHIEVE_NAME_DICT.keys():
                 achieveLocationName: str = get_achievement_location_name_str(achievement_id)
-                if achieveLocationName not in location_table: continue
-                if location_table[achieveLocationName] not in self.all_location_ids: continue
-                if location_table[achieveLocationName] in self.previous_location_checked: continue
+                if not obligatory_location_table_check(achieveLocationName): continue
 
                 # Achievement location does exist.
                 if self.handler.getAchievementStatus(achievement_id):
@@ -1312,8 +1314,7 @@ class TouhouHBMContext(CommonContext):
             if player_has_found_card_in_stage:
                 self.handler.setDexCardData(NAZRIN_CARD_1, True)
                 cardLocationName: str = get_card_location_name_str(NAZRIN_CARD_1, True)
-                if (location_table[cardLocationName] in self.all_location_ids
-                        and location_table[cardLocationName] not in self.previous_location_checked):
+                if obligatory_location_table_check(cardLocationName):
                     new_locations.append(location_table[cardLocationName])
 
             if player_has_purchased_card_bool and not self.energylink_enabled: await self.save_menu_funds_to_server()
