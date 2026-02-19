@@ -1280,6 +1280,32 @@ class TouhouHBMContext(CommonContext):
                 new_locations.append(location_table[cardLocationName])
                 player_has_purchased_card_bool = True
 
+        # Finally, check for Music Room and Achievements.
+        # Music Room goes first.
+        if self.options["music_room_checks"]:
+            for soundtrack_id in MUSIC_ROOM_NAME_DICT.keys():
+                musicLocationName: str = get_music_location_name_str(soundtrack_id)
+                if musicLocationName not in location_table: continue
+                if musicLocationName not in self.all_location_ids: continue
+                if musicLocationName in self.previous_location_checked: continue
+
+                # Music Room location does exist if it made it past that.
+                if self.handler.getMusicRecord(soundtrack_id):
+                    # Track has been unlocked. This is a check.
+                    new_locations.append(location_table[musicLocationName])
+
+        # And then Achievements.
+        if self.options["achievement_checks"]:
+            for achievement_id in ACHIEVE_NAME_DICT.keys():
+                achieveLocationName: str = get_achievement_location_name_str(achievement_id)
+                if achieveLocationName not in location_table: continue
+                if achieveLocationName not in self.all_location_ids: continue
+                if achieveLocationName in self.previous_location_checked: continue
+
+                # Achievement location does exist.
+                if self.handler.getAchievementStatus(achievement_id):
+                    new_locations.append(location_table[achieveLocationName])
+
         # If there are new locations, send a message to the server
         # and add to the list of previously checked locations.
         if new_locations:
