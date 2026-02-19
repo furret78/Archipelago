@@ -536,9 +536,9 @@ def set_goal_condition(world) -> None:
         return state.has_all((get_card_shop_item_names() + boss_condition_list), world.player)
 
     match world.options.completion_type:
-        # Full Story Clear
+        # Minimum Story Clear
         case 1:
-            world.multiworld.completion_condition[world.player] = lambda state: full_story_clear(state)
+            world.multiworld.completion_condition[world.player] = lambda state: minimum_story_clear(state)
         # All Cards
         case 2:
             world.multiworld.completion_condition[world.player] = lambda state: all_cards_clear(state)
@@ -548,6 +548,6 @@ def set_goal_condition(world) -> None:
         # Full Clear
         case 4:
             world.multiworld.completion_condition[world.player] = lambda state: full_clear_rule(state)
-        # Minimum Story Clear/Default
+        # Full Story Clear/Default
         case _:
-            world.multiworld.completion_condition[world.player] = lambda state: minimum_story_clear(state)
+            world.multiworld.completion_condition[world.player] = lambda state: full_story_clear(state)
