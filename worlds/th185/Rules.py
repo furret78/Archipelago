@@ -99,7 +99,7 @@ def set_all_location_rules(world) -> None:
         else:
             return state.has(STAGE_SHORT_TO_FULL_NAME[short_stage_name], world.player)
 
-    def has_stage_list_access_item(state: CollectionState, stage_name_list: list[str]) -> bool:
+    def has_stage_list_access_item(state: CollectionState, stage_name_list: list[str], achieve_check: bool = False) -> bool:
         """
         Checks for whether the player would have any of the stages available.
         When checking for Progressive Market requirements, this will always take the first name on the list.
@@ -111,7 +111,8 @@ def set_all_location_rules(world) -> None:
         if world.options.progressive_stages:
             return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(stage_name_list[0], True))
         else:
-            return state.has_any(stage_name_list, world.player)
+            if achieve_check: return state.has_all(stage_name_list, world.player)
+            else: return state.has_any(stage_name_list, world.player)
 
     def has_any_stage_access_item(state: CollectionState) -> bool:
         if world.options.progressive_stages:
@@ -475,7 +476,7 @@ def set_all_location_rules(world) -> None:
                 case 9: # Clear Challenge Market.
                     add_rule(achievement_name_location, lambda state: has_challenge_access_item(state, True))
                 case 10: # All equipment slots. 4th Market is where this can be achieved minimally.
-                    add_rule(achievement_name_location, lambda state: has_stage_list_access_item(state, [TUTORIAL_NAME_FULL, STAGE1_NAME_FULL, STAGE2_NAME_FULL, STAGE3_NAME_FULL, STAGE4_NAME_FULL]))
+                    add_rule(achievement_name_location, lambda state: has_stage_list_access_item(state, [TUTORIAL_NAME_FULL, STAGE1_NAME_FULL, STAGE2_NAME_FULL, STAGE3_NAME_FULL, STAGE4_NAME_FULL], True))
                 case 11: # All cards collected. Item-dependent.
                     add_rule(achievement_name_location, lambda state: all_cards_access(state))
 
