@@ -170,7 +170,7 @@ class GameHandler:
         newEquipCost = clamp(self.getEquipCost() + value, 100, MAX_BULLET_MONEY)
         self.gameController.setEquipCost(newEquipCost)
 
-    # Other functions
+    # Stage functions
     def updateStageList(self):
         """
         Updates the unlock state of stages.
@@ -184,6 +184,16 @@ class GameHandler:
             if unlockStatus == 0x01 and self.stages_unlocked[stage] == False:
                 self.gameController.setStageStatus(STAGE_NAME_TO_ID[stage], 0x00)
 
+    def setLoadMenuIndex(self, starting_market: int):
+        self.gameController.setStageCursorIndex(clamp(starting_market + 1, 1, 9))
+
+    def getLastStageIndex(self) -> int:
+        """
+        If this returns 0, the player hasn't even started anything yet.
+        """
+        return self.gameController.getLastStageIndex()
+
+    # Other functions
     def getBossRecordHandler(self, stage_id: int, boss_id: int, type: int = 0):
         """
         Gets the stats of a boss in a specific stage from the handler.

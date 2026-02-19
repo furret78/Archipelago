@@ -19,8 +19,6 @@
 - Add filler: +500% Shot Attack Strength
 - Add trap loop and turn some traps (max speed trap, freeze trap, etc.) into temporary timed traps.
 
-- Add Music and Achievement location detection
-
 - Add generic clear locations for each stage
 - Add Choice option to allow choosing between:
 	+ Boss Locations and Stage Clear Locations

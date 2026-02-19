@@ -15,6 +15,18 @@ ADDR_ANTICHEAT_HACK = 0x000744A6 # NOP opcodes should be used.
 ADDR_ALERT_POPUP_PTR = 0x0004819E # Set this to 0A.
 ADDR_BLACK_MARKET_PTR = 0x000D7AC4 # If does not return 0, Black Market is open.
 
+# This is mainly for menu cursor stuff. Override in order from 1-7.
+# Address of the line that sets the cursor in the menu to Stage #.
+ADDR_STAGE_CURSOR_STATIC = 0x000CDCAC # Set this when first loading into the game.
+ADDR_CURSOR_SET_STAGE1 = 0x0004A3EE # 1
+ADDR_CURSOR_SET_STAGE2 = 0x0004A430 # 2
+ADDR_CURSOR_SET_STAGE3 = 0x0004A4B4 # 3
+ADDR_CURSOR_SET_STAGE4 = 0x0004A538 # 4
+ADDR_CURSOR_SET_STAGE5 = 0x0004A5BC # 5
+ADDR_CURSOR_SET_STAGE6 = 0x0004A651 # 6
+ADDR_CURSOR_SET_CHIMATA = 0x0004A6D5 # 7
+ADDR_CURSOR_SET_CHALLENGE = 0x0004A744 # 7
+
 # These are specifically for invincibility. Both fields must be changed at the same time
 ADDR_GAMEPLAY_BASE_PTR = 0X000D7C3C
 ADDR_INVINC_OFFSET_INT = 0X00048078 # Use 4-byte integers.

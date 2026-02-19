@@ -1349,6 +1349,8 @@ class TouhouHBMContext(CommonContext):
         while self.handler is None or self.handler.gameController is None or not self.handler.gameController.check_if_in_game():
             await asyncio.sleep(0.5)
 
+        self.handler.setLoadMenuIndex(self.options["starting_market"])
+
         self.load_sava_data_records()
         self.load_save_data_bosses()
         self.load_save_data_dex()

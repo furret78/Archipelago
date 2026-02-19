@@ -264,6 +264,10 @@ class GameController:
         addrFromAchievement = self.getAddressFromPointerWithBase(ADDR_ACHIEVEMENT_OFFSET + achievement_id)
         self.pm.write_bytes(addrFromAchievement, value, 1)
 
+    # Stage Select cursor functions
+    def setStageCursorIndex(self, stage_id: int) -> None:
+        self.pm.write_int(self.pm.base_address + ADDR_STAGE_CURSOR_STATIC, stage_id)
+
     # Things to do on boot-up before anything else.
     def initGamePrep(self):
         # Disable the anti-cheat.
@@ -272,6 +276,16 @@ class GameController:
         self.setNoCardData()
         # Disable the annoying stage unlock alerts.
         self.pm.write_bytes(self.pm.base_address + ADDR_ALERT_POPUP_PTR, bytes([0x0A]), 1)
+        # Disable cursor jumping to the next stage on the list whenever finishing a run.
+        # There's 8 lines to modify, from 1 to 7.
+        self.pm.write_bytes(self.pm.base_address + ADDR_CURSOR_SET_STAGE1, bytes([0x01]), 1)
+        self.pm.write_bytes(self.pm.base_address + ADDR_CURSOR_SET_STAGE2, bytes([0x02]), 1)
+        self.pm.write_bytes(self.pm.base_address + ADDR_CURSOR_SET_STAGE3, bytes([0x03]), 1)
+        self.pm.write_bytes(self.pm.base_address + ADDR_CURSOR_SET_STAGE4, bytes([0x04]), 1)
+        self.pm.write_bytes(self.pm.base_address + ADDR_CURSOR_SET_STAGE5, bytes([0x05]), 1)
+        self.pm.write_bytes(self.pm.base_address + ADDR_CURSOR_SET_STAGE6, bytes([0x06]), 1)
+        self.pm.write_bytes(self.pm.base_address + ADDR_CURSOR_SET_CHIMATA, bytes([0x07]), 1)
+        self.pm.write_bytes(self.pm.base_address + ADDR_CURSOR_SET_CHALLENGE, bytes([0x07]), 1)
 
     def setNoCardData(self):
         addrFromCardDex = self.getAddressFromPointerWithBase(ADDR_DEX_NO_CARD)
