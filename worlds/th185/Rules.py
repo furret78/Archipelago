@@ -463,12 +463,12 @@ def set_all_location_rules(world) -> None:
                     add_rule(achievement_name_location, lambda state: has_stage_access_item(state, STAGE2_NAME))
                 case 3: # etc.
                     add_rule(achievement_name_location, lambda state: has_stage_access_item(state, STAGE3_NAME))
-                case 4:
-                    add_rule(achievement_name_location, lambda state: has_stage_access_item(state, STAGE4_NAME))
+                case 4: # Needs Blank Card as well.
+                    add_rule(achievement_name_location, lambda state: has_nitori_access(state))
                 case 5:
                     add_rule(achievement_name_location, lambda state: has_stage_access_item(state, STAGE5_NAME))
-                case 6:
-                    add_rule(achievement_name_location, lambda state: has_stage_access_item(state, STAGE6_NAME))
+                case 6: # Needs Capitalist's Dilemma as well.
+                    add_rule(achievement_name_location, lambda state: has_takane_access(state))
                 case 7: # Defeat Chimata.
                     add_rule(achievement_name_location, lambda state: has_stage_access_item(state, ENDSTAGE_NAME))
                 case 8: # Defeat all bosses. Basically Full Story Clear with all stages.
