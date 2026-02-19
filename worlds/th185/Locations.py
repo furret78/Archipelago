@@ -3,8 +3,10 @@ from typing import Dict
 from .Regions import get_regions_dict
 from .variables.card_const import *
 from .variables.meta_data import *
-from .Tools import get_boss_location_name_str, get_card_location_name_str
+from .Tools import get_boss_location_name_str, get_card_location_name_str, get_music_location_name_str, \
+    get_achievement_location_name_str
 from BaseClasses import Location
+from .variables.music_and_achiev import MUSIC_ROOM_NAME_DICT, ACHIEVE_NAME_DICT
 
 
 class TouhouHBMLocation(Location):
@@ -172,6 +174,20 @@ for cards in ABILITY_CARD_LIST:
     location_cards_id_to_card_string_id[location_id_offset] = cards
     location_id_offset += 1
 
+# Music Room locations.
+for track_id in MUSIC_ROOM_NAME_DICT.keys():
+    musicLocationNameString: str = get_music_location_name_str(track_id)
+    location_table[musicLocationNameString] = location_id_offset
+    location_id_to_name[location_id_offset] = musicLocationNameString
+    location_id_offset += 1
+
+# Achievement locations.
+for achieve_id in ACHIEVE_NAME_DICT.keys():
+    achieveLocationNameString: str = get_achievement_location_name_str(achieve_id)
+    location_table[achieveLocationNameString] = location_id_offset
+    location_id_to_name[location_id_offset] = achieveLocationNameString
+    location_id_offset += 1
+
 
 def get_location_names_with_ids(location_names: list[str]) -> dict[str, int | None]:
     return {location_name: location_table[location_name] for location_name in location_names}
@@ -245,3 +261,33 @@ def create_regular_locations(world):
                 )
 
                 all_regions_dict[region_name].locations.append(card_dex_location)
+        # Music Room and Achievements.
+        # Both share the origin region.
+        elif region_name == world.origin_region_name:
+            # Music Room comes first.
+            if world.options.music_room_checks:
+                for track_index in MUSIC_ROOM_NAME_DICT.keys():
+                    music_location_name: str = get_music_location_name_str(track_index)
+
+                    music_location = TouhouHBMLocation(
+                        world.player,
+                        music_location_name,
+                        world.location_name_to_id[music_location_name],
+                        all_regions_dict[region_name]
+                    )
+
+                    all_regions_dict[region_name].locations.append(music_location)
+
+            # Achievements come after.
+            if world.options.achievement_checks:
+                for achieve_index in ACHIEVE_NAME_DICT.keys():
+                    achievement_location_name: str = get_achievement_location_name_str(achieve_index)
+
+                    achievement_location = TouhouHBMLocation(
+                        world.player,
+                        achievement_location_name,
+                        world.location_name_to_id[achievement_location_name],
+                        all_regions_dict[region_name]
+                    )
+
+                    all_regions_dict[region_name].locations.append(achievement_location)
