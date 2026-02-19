@@ -170,12 +170,6 @@ class AchieveChecks(Toggle):
 class CompletionType(Choice):
     """
     A goal to reach.
-
-    0. Full Main Story - Chimata Tenkyuu, Nitori Kawashiro, and Takane Yamashiro defeated.
-    1. Minimum Main Story - Takane Yamashiro defeated.
-    2. All Cards Owned - Full Ability Card dex unlocked.
-    3. All Bosses Defeated - All bosses defeated (except in Challenge Market).
-    4. Full Clear - All of the above.
     """
 
     display_name = "Completion Goal"
@@ -187,6 +181,20 @@ class CompletionType(Choice):
     option_Full_Clear = 4
 
     default = option_Full_Main_Story
+
+    @classmethod
+    def get_option_name(cls, value: T) -> str:
+        if value == cls.option_Full_Main_Story:
+            return "Defeat all 3 story bosses"
+        elif value == cls.option_Minimum_Main_Story:
+            return "Defeat only the last Story boss"
+        elif value == cls.option_All_Cards_Owned:
+            return "Register all Ability Card dex entries"
+        elif value == cls.option_All_Bosses_Defeated:
+            return "Defeat all bosses"
+        elif value == cls.option_Full_Clear:
+            return "Clear everything"
+        return super().get_option_name(value)
 
 
 @dataclass()
