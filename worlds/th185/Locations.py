@@ -6,7 +6,7 @@ from .variables.meta_data import *
 from .Tools import get_boss_location_name_str, get_card_location_name_str, get_music_location_name_str, \
     get_achievement_location_name_str
 from BaseClasses import Location
-from .variables.music_and_achiev import MUSIC_ROOM_NAME_DICT, ACHIEVE_NAME_DICT
+from .variables.music_and_achiev import MUSIC_ROOM_NAME_DICT, ACHIEVE_NAME_DICT, MUSIC_ROOM_UNLOCK_STR
 
 
 class TouhouHBMLocation(Location):
@@ -167,26 +167,35 @@ for stage_short_name in STAGE_LIST:
 
 # Card Dex locations.
 # In location name group terms, these are "Everywhere". No need to do anything about them.
+dex_card_set = set()
 for cards in ABILITY_CARD_LIST:
     cardLocationNameString: str = get_card_location_name_str(cards, True)
     location_table[cardLocationNameString] = location_id_offset
     location_id_to_name[location_id_offset] = cardLocationNameString
     location_cards_id_to_card_string_id[location_id_offset] = cards
     location_id_offset += 1
+    dex_card_set.add(cardLocationNameString)
+location_groups[CARD_DEX_NAME].update(dex_card_set)
 
 # Music Room locations.
+music_room_set = set()
 for track_id in MUSIC_ROOM_NAME_DICT.keys():
     musicLocationNameString: str = get_music_location_name_str(track_id)
     location_table[musicLocationNameString] = location_id_offset
     location_id_to_name[location_id_offset] = musicLocationNameString
     location_id_offset += 1
+    music_room_set.add(musicLocationNameString)
+location_groups[MUSIC_ROOM_UNLOCK_STR].update(music_room_set)
 
 # Achievement locations.
+achievement_set = set()
 for achieve_id in ACHIEVE_NAME_DICT.keys():
     achieveLocationNameString: str = get_achievement_location_name_str(achieve_id)
     location_table[achieveLocationNameString] = location_id_offset
     location_id_to_name[location_id_offset] = achieveLocationNameString
     location_id_offset += 1
+    achievement_set.add(achieveLocationNameString)
+location_groups["Achievements"].update(achievement_set)
 
 
 def get_location_names_with_ids(location_names: list[str]) -> dict[str, int | None]:
