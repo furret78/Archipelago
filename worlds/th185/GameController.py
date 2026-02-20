@@ -272,10 +272,9 @@ class GameController:
     def initGamePrep(self):
         # Disable the anti-cheat.
         self.pm.write_bytes(self.pm.base_address + ADDR_ANTICHEAT_HACK, bytes([0x90, 0x90]), 2)
-        # Forcibly unlock the option to equip no cards at all.
-        self.setNoCardData()
         # Disable the annoying stage unlock alerts.
-        self.pm.write_bytes(self.pm.base_address + ADDR_ALERT_POPUP_PTR, bytes([0x0A]), 1)
+        self.pm.write_bytes(self.pm.base_address + ADDR_ALERT_POPUP_PTR, bytes([0x90, 0x90]), 2)
+        self.pm.write_bytes(self.pm.base_address + ADDR_ALERT_POPUP_FUNC, bytes([0x90, 0x90, 0x90, 0x90, 0x90]), 5)
         # Disable cursor jumping to the next stage on the list whenever finishing a run.
         # There's 8 lines to modify, from 1 to 7.
         self.pm.write_bytes(self.pm.base_address + ADDR_CURSOR_SET_STAGE1, bytes([0x01]), 1)
@@ -286,6 +285,8 @@ class GameController:
         self.pm.write_bytes(self.pm.base_address + ADDR_CURSOR_SET_STAGE6, bytes([0x06]), 1)
         self.pm.write_bytes(self.pm.base_address + ADDR_CURSOR_SET_CHIMATA, bytes([0x07]), 1)
         self.pm.write_bytes(self.pm.base_address + ADDR_CURSOR_SET_CHALLENGE, bytes([0x07]), 1)
+        # Forcibly unlock the option to equip no cards at all.
+        self.setNoCardData()
 
     def setNoCardData(self):
         addrFromCardDex = self.getAddressFromPointerWithBase(ADDR_DEX_NO_CARD)
