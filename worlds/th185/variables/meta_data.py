@@ -36,7 +36,6 @@ DEATH_LINK_LIFE_MSGS: list[str] = [
 DEATH_LINK_STAGE_MSGS: list[str] = [
     " got kicked out of the Black Market.",
     " got kicked off the premises.",
-    " got severely wounded.",
     " fumbled their run.",
     " got folded like a deck of Ability Cards."
 ]

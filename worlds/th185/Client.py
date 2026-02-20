@@ -60,12 +60,9 @@ def get_currency_type_from_str(currency_type_string: str, game_context) -> int:
         logger.info(INVALID_CURRENCY_STRING)
         return -1
 
-def get_random_death_message(deathlink_trigger) -> str:
-    if deathlink_trigger is None or deathlink_trigger == DEATH_LINK_TRIGGER_LIFE:
-        return random.choice(DEATH_LINK_LIFE_MSGS + DEATH_LINK_GENERIC_MSGS)
-    elif deathlink_trigger == DEATH_LINK_TRIGGER_STAGE:
-        return random.choice(DEATH_LINK_LIFE_MSGS)
-    return random.choice(DEATH_LINK_GENERIC_MSGS)
+def get_random_death_message(lost_final_life: bool = False) -> str:
+    if lost_final_life: return random.choice(DEATH_LINK_STAGE_MSGS)
+    else: return random.choice(DEATH_LINK_LIFE_MSGS + DEATH_LINK_GENERIC_MSGS)
 
 
 class TouhouHBMClientProcessor(ClientCommandProcessor):
@@ -310,6 +307,7 @@ class TouhouHBMContext(CommonContext):
         self.died_to_deathlink: bool = False
         self.caused_deathlink: bool = False
         self.deathlink_trigger: int = DEATH_LINK_TRIGGER_LIFE
+        self.lost_final_life: bool = False
         self.last_recorded_life: int = 0
 
         # EnergyLink-related fields
@@ -372,6 +370,7 @@ class TouhouHBMContext(CommonContext):
         self.caused_deathlink = False
         self.deathlink_trigger = DEATH_LINK_TRIGGER_LIFE
         self.last_recorded_life = 0
+        self.lost_final_life = False
         self.last_death_link = 0
 
         self.energylink_enabled = False
@@ -1573,7 +1572,7 @@ class TouhouHBMContext(CommonContext):
         """
         # If Death Link is not enabled, don't send anything.
         if not self.deathlink_enabled: return
-        await self.send_death(self.player_names[self.slot] + get_random_death_message(self.deathlink_trigger))
+        await self.send_death(self.player_names[self.slot] + get_random_death_message(self.lost_final_life))
 
     async def deathlink_loop(self):
         # If going back to the menu, the first transition will turn off
@@ -1620,6 +1619,7 @@ class TouhouHBMContext(CommonContext):
             # If a death is registered, send a Death Link.
             elif player_state_dead_bool:
                 if not self.caused_deathlink:
+                    self.lost_final_life = self.last_recorded_life <= 0
                     if (self.deathlink_trigger == DEATH_LINK_TRIGGER_LIFE
                         or (self.deathlink_trigger == DEATH_LINK_TRIGGER_STAGE and self.last_recorded_life <= 0)):
                         self.caused_deathlink = True
@@ -1636,6 +1636,7 @@ class TouhouHBMContext(CommonContext):
         self.pending_life_deduction = False
         self.died_to_deathlink = False
         self.caused_deathlink = False
+        self.lost_final_life = False
 
     def generic_loop_running_condition(self):
         return not self.exit_event.is_set() and self.handler and not self.inError
