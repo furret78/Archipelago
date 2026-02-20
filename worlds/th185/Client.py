@@ -1396,7 +1396,8 @@ class TouhouHBMContext(CommonContext):
                 continue
 
             for card_string_id in ABILITY_CARD_LIST:
-                if CARD_ID_TO_NAME[card_string_id] in full_location_name:
+                card_location_name: str = get_card_location_name_str(card_string_id, True)
+                if card_location_name == full_location_name:
                     self.handler.unconditionalDexUnlock(card_string_id)
 
     def load_save_data_menu(self):
@@ -1445,7 +1446,8 @@ class TouhouHBMContext(CommonContext):
 
             # It does not really matter what value the records are set to aside from 0x00 and non-0x00.
             for card_string_id in menu_shop_card_list:
-                if CARD_ID_TO_NAME[card_string_id] in full_location_name:
+                card_location_name: str = get_card_location_name_str(card_string_id, False)
+                if card_location_name == full_location_name:
                     self.handler.setCardShopRecordGame(card_string_id, True)
 
         await self.save_menu_stats_to_server()
