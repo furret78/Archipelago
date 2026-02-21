@@ -4,6 +4,7 @@ Music Room names and Achievement names
 
 # Music Room track names
 MUSIC_ROOM_UNLOCK_STR = "Music Room"
+# These are 0-indexed, but displayed in-game as 1-indexed.
 MUSIC_ROOM_NAME_DICT = {
     0: "The Collector's Melancholy Afternoon",
     1: "An Exciting and Familiar Gensokyo",

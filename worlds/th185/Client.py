@@ -1454,7 +1454,6 @@ class TouhouHBMContext(CommonContext):
     async def transfer_from_stage_to_menu(self):
         """
         Handles transferring from the game stage to the menu.
-        Mainly for the Ability Card shop addresses.
         """
         menu_shop_card_list = ABILITY_CARD_LIST
         for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
@@ -1471,6 +1470,10 @@ class TouhouHBMContext(CommonContext):
                 self.handler.setCardShopRecordHandler(card_name, True)
                 self.handler.permashop_card_new = self.permashop_cards_new
             self.handler.setCardShopRecordGame(card_name, card_name in self.permashop_cards)
+
+        # Check Card Slots and unlock its achievement as needed, if it hasn't already.
+        if self.handler.getCardSlots() >= 7 and not self.handler.getAchievementStatus(10):
+            self.handler.setAchievementStatus(10, True)
 
         # Resets stats for Death Link if it is active.
         if self.deathlink_enabled: self.reset_deathlink_stats()
@@ -1538,6 +1541,7 @@ class TouhouHBMContext(CommonContext):
         full_file_path = os.path.join(self.scorefile_path, os.path.basename(json_file_name))
 
         full_dict = {
+            JSON_SLOT_NAME: self.player_names[self.slot],
             JSON_SLOT_ITEMS: self.all_received_items
         }
 

@@ -1,0 +1,18 @@
+Check First Card Slot Upgrade Unlock (1 -> 2)
+4a859 - 3 bytes
+Original: 0F 8F BF
+Modified: 90 E9 BF
+
+Check Second Card Slot Upgrade Unlock (2 -> 3)
+4a953 - Same as above
+
+Third Upgrade (3 -> 4)
+4aa4d - Same as above
+
+Fourth Upgrade
+4ab47 - Same as above
+
+Fifth Upgrade
+
+
+Sixth Upgrade

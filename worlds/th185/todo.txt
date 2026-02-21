@@ -1,17 +1,24 @@
-- Add last received item index to server as backup measure if playing on new computer.
-- Implement full game data reset upon disconnect. (if needed)
-- Add a separate tab for HBM configs at some point (mainly for scorefile path lol)
-- Add function to relink to the game after a disconnect without restarting client. (test later)
-- Figure out seamless room switching while the game is running.
-- Consider saving the scorefile path last inputted by the user somehow.
-- Linux support for the client.
+- Fix achievements for clearing all bosses in a stage not recorded between two play sessions
+	- Likely caused because achievements do not check for boss clears in the menu, but according to a hidden stat.
 
-- Code refactoring for more clarity.
-- Refactoring Rules.py to accommodate Rule Builder.
-- Make the ProcessError log look more pleasant in the client.
+- Consider saving the scorefile path last inputted by the user somehow.
+- Add a separate tab for HBM configs at some point (mainly for scorefile path lol)
+
+- Figure out disabling Card Slot and Equip Cost progression in-game.
+
+- Add option: Starting Card Slots (up to 34)
+- Add option: Starting Equip Cost (up to 500%)
+
+- Add Progressive Equipment items.
+- Add rules for Progressive Equipment.
 
 - Add Progressive Card Slot items.
 - Add Progressive Equip Cost items.
+- Add rules for Progressive Card Slots and Equip Cost.
+
+- Implement full game data reset upon disconnect. (if needed)
+- Add function to relink to the game after a disconnect without restarting client. (test later)
+- Figure out seamless room switching while the game is running.
 
 - Add trap: Lily White Trap
     - Requires figuring out how to run game functions from outside.
@@ -25,3 +32,9 @@
 	+ Only Boss Locations
 	+ Only Stage Clear Locations
 - Figure out saving boss defeats to local machine
+
+- Code refactoring for more clarity.
+- Refactoring Rules.py to accommodate Rule Builder.
+- Make the ProcessError log look more pleasant in the client.
+
+- Linux support for the client.

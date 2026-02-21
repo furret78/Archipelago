@@ -14,6 +14,7 @@ SCOREFILE_BACKUP_NAME = "scoreth185bak.dat"
 # Last received item list
 LAST_INDEX_FILE_NAME = "th185ap_"
 JSON_EXTENSION = ".json"
+JSON_SLOT_NAME = "slot_name"
 JSON_SLOT_ITEMS = "items"
 
 # Various client messages
