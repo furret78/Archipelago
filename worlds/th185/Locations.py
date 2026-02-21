@@ -175,7 +175,7 @@ for cards in ABILITY_CARD_LIST:
     location_cards_id_to_card_string_id[location_id_offset] = cards
     location_id_offset += 1
     dex_card_set.add(cardLocationNameString)
-location_groups[CARD_DEX_NAME].update(dex_card_set)
+location_groups.update({CARD_DEX_NAME: dex_card_set})
 
 # Music Room locations.
 music_room_set = set()
@@ -185,7 +185,7 @@ for track_id in MUSIC_ROOM_NAME_DICT.keys():
     location_id_to_name[location_id_offset] = musicLocationNameString
     location_id_offset += 1
     music_room_set.add(musicLocationNameString)
-location_groups[MUSIC_ROOM_UNLOCK_STR].update(music_room_set)
+location_groups.update({MUSIC_ROOM_UNLOCK_STR: music_room_set})
 
 # Achievement locations.
 achievement_set = set()
@@ -195,7 +195,7 @@ for achieve_id in ACHIEVE_NAME_DICT.keys():
     location_id_to_name[location_id_offset] = achieveLocationNameString
     location_id_offset += 1
     achievement_set.add(achieveLocationNameString)
-location_groups["Achievements"].update(achievement_set)
+location_groups.update({"Achievements": achievement_set})
 
 
 def get_location_names_with_ids(location_names: list[str]) -> dict[str, int | None]:
