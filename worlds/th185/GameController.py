@@ -220,12 +220,21 @@ class GameController:
         return self.pm.read_bytes(bossRecordAddress, 1) != bytes([0x00])
 
     def setBossRecord(self, stage: int, boss: int, value: int, category: int):
-        # Practically unused, but might be handy at some point.
         if stage != STAGE_CHALLENGE_ID:
             bossRecordAddress = self.getAddressFromPointerWithBase(ADDR_BOSS_ID_TO_PTR[stage][boss][category])
         else:
             bossRecordAddress = self.getAddressFromPointerWithBase(ADDR_BOSS_ID_TO_PTR[stage][boss])
         self.pm.write_bytes(bossRecordAddress, bytes([value]), 1)
+
+    def setHiddenBossDefeat(self, stage: int, boss: int, value: int):
+        """
+        Sets the hidden boss stats that the achievements use.
+        Arguments here won't be sanitized when executed. Sanitize before calling this function.
+        Check address_menu.py in variables on how it should be sanitized.
+        """
+        finalOffset = OFFSET_HIDDEN_DEFEAT_STAT + (stage * OFFSET_MULT_STAGE_STAT) + boss
+        addrHiddenBossRecord = self.getAddressFromPointerWithBase(finalOffset)
+        self.pm.write_bytes(addrHiddenBossRecord, bytes([value]), 1)
 
     # Card Shop functions
     def getShopCardData(self, card_id: str) -> bytes:

@@ -37,6 +37,12 @@ ADDR_TUTORIAL_SKIP_2 = 0x000267DE # set to whatever tbh, but I prefer 01 here.
 
 # BOSS STATS
 # Each boss has their own encounter and defeat booleans.
+# Achievements track defeats of each individual market via a hidden stat, except for Chimata.
+# MENU_STATIC_ADDRESS + (0x267c0 + (STAGE_ID + 1) * 0x1d + BOSS_ID) (offset)
+# The Boss IDs here count from 0. Need to +2 before checking the data.
+# From Tsukasa onwards, that's +1. Exceptions: If Chimata, +0. If Nitori, +11. If Takane, +3.
+OFFSET_HIDDEN_DEFEAT_STAT = 0x000267C0
+OFFSET_MULT_STAGE_STAT = 0x1D # Multiply the stage ID by this number before adding to the offset.
 
 # TUTORIAL STAGE
 ADDR_TUTORIAL_MIKE_ENCOUNTER = 0x0002660E

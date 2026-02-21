@@ -409,7 +409,7 @@ class TouhouHBMContext(CommonContext):
                         # Encounters
                         self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], False,
                                                        ENCOUNTER_ID)
-                        self.handler.getBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], False,
+                        self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], False,
                                                        DEFEAT_ID)
                 else:
                     # Special Challenge Market clause

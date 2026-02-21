@@ -81,6 +81,9 @@ Modified: 90 90
 
 Actual boss data table calculation:
 MENU_STATIC_ADDRESS + (0x267c0 + arg1 * 0x1d + arg2) (offset)
+The IDs in the Python file count from 0. Need to +2 before checking the data.
+From Tsukasa onwards, that's +1.
+If Chimata, +0. If Nitori, +11. If Takane, +3.
 
 arg1 = Stage ID
 arg2 = Boss ID
@@ -130,3 +133,4 @@ arg2 list
 1C (28) - Takane Yamashiro
 
 missing: 1A (26) - Chimata Tenkyuu (probably)
+Chimata doesn't really matter since her achievement can be gotten just by beating her stage.

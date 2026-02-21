@@ -231,13 +231,29 @@ class GameHandler:
         """
         return self.gameController.getBossRecord(stage_id, boss_id, type)
 
-    def setBossRecordGame(self, stage_id: int, boss_id: int, value: bool, type: int = 0) -> None:
+    def setBossRecordGame(self, stage_id: int, boss_id: int, value: bool, record_type: int = 0) -> None:
         """
         Sets the stats of a boss in a specific stage in the game memory itself.
         Type 0 is for encounters, type 1 is for defeat.
         Challenge Market exclusively has encounter stats.
         """
-        self.gameController.setBossRecord(stage_id, boss_id, value, type)
+        final_value: int = 0
+        if value: final_value = 5
+        self.gameController.setBossRecord(stage_id, boss_id, final_value, record_type)
+
+        # This part is mainly so that the achievements for stage-exclusive bosses work properly.
+        # Chimata's achievement and the all-bosses achievements don't do this.
+        if record_type != DEFEAT_ID or stage_id == STAGE_CHALLENGE_ID or boss_id == BOSS_CHIMATA: return
+        hidden_stat_stage = stage_id + 1
+        hidden_stat_boss = boss_id + 2
+        if boss_id == BOSS_NITORI:
+            hidden_stat_boss = boss_id + 11
+        elif boss_id == BOSS_TAKANE:
+            hidden_stat_boss = boss_id + 3
+        elif boss_id >= BOSS_TSUKASA:
+            hidden_stat_boss = boss_id + 1
+
+        self.gameController.setHiddenBossDefeat(hidden_stat_stage, hidden_stat_boss, final_value)
 
     def unlockNoCard(self):
         """
