@@ -923,7 +923,7 @@ class TouhouHBMContext(CommonContext):
                     self.received_invinc_cancel = True
                 # Default
                 case _:
-                    logger.info("Unknown game item detected! Ignoring...")
+                    logger.info(f"Ignoring unknown game item (ID {item_id}).")
 
             self.gameItemQueue.remove(item_id)
 
@@ -992,7 +992,7 @@ class TouhouHBMContext(CommonContext):
                     self.received_equip_cost -= 50
                 # Default
                 case _:
-                    logger.info("Unknown global item! Ignoring...")
+                    logger.info(f"Ignoring unknown item (ID {item_id}).")
 
             self.menuItemQueue.remove(item_id)
 
