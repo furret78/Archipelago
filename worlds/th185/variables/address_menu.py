@@ -11,14 +11,6 @@ ADDR_BASE_MENU_PTR = 0x000D7C48
 # Everything is considered as a 1-byte hex boolean where 00 is FALSE and anything else is TRUE.
 # Some addresses have additional notes.
 
-# The "No exist card!" string. Override that for fun.
-# The original line: 4E 6F 20 65 78 69 73 74 20 63 61 72 64 21
-# Change it to "No cards here!"
-# Which is this: 4E 6F 20 63 61 72 64 73 20 68 65 72 65 21
-# Length of 14.
-ADDR_STATIC_NO_CARD = 0x000B8B30
-NO_CARD_HERE_BYTES = bytes([0x4e, 0x6f, 0x20, 0x63, 0x61, 0x72, 0x64, 0x73, 0x20, 0x68, 0x65, 0x72, 0x65, 0x21])
-
 # Player stats (all use 4-byte decimals)
 ADDR_EQUIP_SLOT_COUNT = 0x000269D0 # max 34
 ADDR_EQUIP_COST = 0x000269E0

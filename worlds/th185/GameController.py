@@ -272,8 +272,6 @@ class GameController:
     def initGamePrep(self):
         # Disable the anti-cheat.
         self.pm.write_bytes(self.pm.base_address + ADDR_ANTICHEAT_HACK, bytes([0x90, 0x90]), 2)
-        # Change the "No exist card!" string to "No cards here!".
-        self.pm.write_bytes(self.pm.base_address + ADDR_STATIC_NO_CARD, NO_CARD_HERE_BYTES, 14)
         # Disable the annoying stage unlock alerts.
         self.pm.write_bytes(self.pm.base_address + ADDR_ALERT_POPUP_PTR, bytes([0x90, 0x90]), 2)
         self.pm.write_bytes(self.pm.base_address + ADDR_ALERT_POPUP_FUNC, bytes([0x90, 0x90, 0x90, 0x90, 0x90]), 5)
