@@ -18,7 +18,7 @@ from CommonClient import (
 )
 from NetUtils import NetworkItem
 from .GameHandler import *
-from .Items import GAME_ONLY_ITEM_ID, item_table
+from .Items import GAME_ONLY_ITEM_ID, item_table, ITEM_TABLE_ID_TO_STAGE_NAME, ITEM_TABLE_ID_TO_CARD_ID
 from .Locations import *
 from .variables.meta_data import *
 from .Tools import get_item_index_save_name, convert_currency_to_joules, get_energy_withdraw_tag, \
@@ -603,6 +603,7 @@ class TouhouHBMContext(CommonContext):
     def checkIfGameInStage(self):
         """
         Helper function that checks if the game is currently in a stage.
+        This checks both whether the game is actually in a stage and whether it should scan for Market Card Rewards.
         If it is, return True.
         """
         return self.handler.isGameInStage() and self.enable_card_selection_checking
@@ -1576,7 +1577,9 @@ class TouhouHBMContext(CommonContext):
         """
         # If Death Link is not enabled, don't send anything.
         if not self.deathlink_enabled: return
-        await self.send_death(self.player_names[self.slot] + get_random_death_message(self.lost_final_life))
+        random_death_msg = get_random_death_message(self.lost_final_life)
+        logger.info(random_death_msg)
+        await self.send_death(self.player_names[self.slot] + random_death_msg)
 
     async def deathlink_loop(self):
         # If going back to the menu, the first transition will turn off

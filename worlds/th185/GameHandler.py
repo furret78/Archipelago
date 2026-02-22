@@ -230,7 +230,8 @@ class GameHandler:
         The Final Wave consists of Stage 6 bosses.
         """
         if type == DEFEAT_ID:
-            return self.gameController.getHiddenBossDefeat(stage_id, boss_id)
+            hidden_records = get_boss_and_stage_id(stage_id, boss_id)
+            return self.gameController.getHiddenBossDefeat(hidden_records[0], hidden_records[1])
         else: return self.gameController.getBossRecord(stage_id, boss_id, type)
 
     def setBossRecordGame(self, stage_id: int, boss_id: int, value: bool, record_type: int = 0) -> None:
