@@ -242,8 +242,8 @@ class GameHandler:
         self.gameController.setBossRecord(stage_id, boss_id, final_value, record_type)
 
         # This part is mainly so that the achievements for stage-exclusive bosses work properly.
-        # Chimata's achievement and the all-bosses achievements don't do this.
-        if record_type != DEFEAT_ID or stage_id == STAGE_CHALLENGE_ID or boss_id == BOSS_CHIMATA: return
+        # The all-bosses achievements don't do this.
+        if record_type != DEFEAT_ID or not (TUTORIAL_ID < stage_id < STAGE_CHALLENGE_ID): return
         hidden_stat_stage = stage_id + 1
         hidden_stat_boss = boss_id + 2
         if boss_id == BOSS_NITORI:
@@ -252,6 +252,9 @@ class GameHandler:
             hidden_stat_boss = boss_id + 3
         elif boss_id >= BOSS_TSUKASA:
             hidden_stat_boss = boss_id + 1
+        if boss_id == BOSS_CHIMATA:
+            hidden_stat_boss = BOSS_CHIMATA
+            hidden_stat_stage = 7
 
         self.gameController.setHiddenBossDefeat(hidden_stat_stage, hidden_stat_boss, final_value)
 

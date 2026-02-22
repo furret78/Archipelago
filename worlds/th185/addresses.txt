@@ -132,5 +132,8 @@ arg2 list
 19 (25) - Momoyo Himemushi
 1C (28) - Takane Yamashiro
 
-missing: 1A (26) - Chimata Tenkyuu (probably)
-Chimata doesn't really matter since her achievement can be gotten just by beating her stage.
+missing: 1A (26) - Chimata Tenkyuu (uses same stage ID as takane)
+
+
+d1028 - last defeated boss
+if 255 then no boss yet

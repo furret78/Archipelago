@@ -171,34 +171,34 @@ class CompletionType(Choice):
     """
     A goal to reach.
 
-    1. Defeat all 3 story bosses - Chimata Tenkyuu, Nitori Kawashiro, Takane Yamashiro.
-    2. Defeat only the last Story boss - Takane Yamashiro.
-    3. Register all Ability Card dex entries.
-    4. Defeat all bosses - Challenge Market does not count.
+    1. Full Story Clear - Defeat Chimata Tenkyuu, Nitori Kawashiro, Takane Yamashiro.
+    2. Minimum Story Clear - Defeat Takane Yamashiro.
+    3. All Ability Cards Owned.
+    4. All Bosses Defeated - Challenge Market does not count.
     5. Clear everything.
     """
 
     display_name = "Completion Goal"
 
-    option_Full_Main_Story = 0
-    option_Minimum_Main_Story = 1
-    option_All_Cards_Owned = 2
-    option_All_Bosses_Defeated = 3
-    option_Full_Clear = 4
+    option_full = 0
+    option_min = 1
+    option_cards = 2
+    option_bosses = 3
+    option_all = 4
 
-    default = option_Full_Main_Story
+    default = option_full
 
     @classmethod
     def get_option_name(cls, value: T) -> str:
-        if value == cls.option_Full_Main_Story:
-            return "Defeat all 3 story bosses"
-        elif value == cls.option_Minimum_Main_Story:
-            return "Defeat only the last Story boss"
-        elif value == cls.option_All_Cards_Owned:
-            return "Register all Ability Card dex entries"
-        elif value == cls.option_All_Bosses_Defeated:
-            return "Defeat all bosses"
-        elif value == cls.option_Full_Clear:
+        if value == cls.option_full:
+            return "Full Story Clear"
+        elif value == cls.option_min:
+            return "Minimum Story Clear"
+        elif value == cls.option_cards:
+            return "All Ability Cards Owned"
+        elif value == cls.option_bosses:
+            return "All Bosses Defeated"
+        elif value == cls.option_all:
             return "Clear everything"
         return super().get_option_name(value)
 
