@@ -1,12 +1,10 @@
-- Rewrite the client to use the secret boss defeat stats to check locations.
-
 - Add Challenge Market defeat locations.
     - Final Wave bosses can be tracked via the hidden records.
     - As for non-Final Wave bosses, possibly check for Black Market opening + current boss ID?
 
 - Allow cards unlocked in the shop to be used during Black Markets.
-    - Check boss ID on whether the player is already at the end of a stage yet, and change as appropriate.
-    - Not possible in Challenge Market at the moment.
+    - Check boss ID during normal markets, since there will be no Black Markets after a boss.
+    - In Challenge Market, check if it's the Final Wave boss IDs instead.
 
 - Consider saving the scorefile path last inputted by the user somehow.
 - Add a separate tab for HBM configs at some point (mainly for scorefile path lol)

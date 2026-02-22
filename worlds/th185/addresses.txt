@@ -146,7 +146,7 @@ arg2 list
 19 (25) - Momoyo Himemushi
 
 d1028 - last defeated boss
-unreliable during challenge stage
 during normal stages, anything not in the above list is no boss
+unreliable during challenge market
 
-If Junko's card is equipped, all normal waves are replaced with boss waves.
+If Junko's card is equipped, all normal waves are replaced with boss waves. That means bosses arrive right on Wave 1.
