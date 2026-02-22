@@ -1,10 +1,9 @@
+import random
 import sys
 
 from . import MAX_BULLET_MONEY
 from .GameController import GameController
-from .Items import ITEM_TABLE_ID_TO_STAGE_NAME, ITEM_TABLE_ID_TO_CARD_ID
-from .Tools import clamp
-from .variables.boss_and_stage import *
+from .Tools import clamp, get_boss_and_stage_id
 from .variables.card_const import *
 
 class GameHandler:
@@ -227,9 +226,12 @@ class GameHandler:
         """
         Gets the stats of a boss in a specific stage from the game itself.
         Type 0 is checking for encounters, and type 1 is checking for defeat.
-        Challenge Market skips the type check and always returns the encounter value.
+        Challenge Market only stores data for boss defeats of the Final Wave.
+        The Final Wave consists of Stage 6 bosses.
         """
-        return self.gameController.getBossRecord(stage_id, boss_id, type)
+        if type == DEFEAT_ID:
+            return self.gameController.getHiddenBossDefeat(stage_id, boss_id)
+        else: return self.gameController.getBossRecord(stage_id, boss_id, type)
 
     def setBossRecordGame(self, stage_id: int, boss_id: int, value: bool, record_type: int = 0) -> None:
         """
@@ -238,25 +240,14 @@ class GameHandler:
         Challenge Market exclusively has encounter stats.
         """
         final_value: int = 0
-        if value: final_value = 5
+        if value: final_value = random.randint(1, 255)
         self.gameController.setBossRecord(stage_id, boss_id, final_value, record_type)
 
         # This part is mainly so that the achievements for stage-exclusive bosses work properly.
         # The all-bosses achievements don't do this.
-        if record_type != DEFEAT_ID or not (TUTORIAL_ID < stage_id < STAGE_CHALLENGE_ID): return
-        hidden_stat_stage = stage_id + 1
-        hidden_stat_boss = boss_id + 2
-        if boss_id == BOSS_NITORI:
-            hidden_stat_boss = boss_id + 11
-        elif boss_id == BOSS_TAKANE:
-            hidden_stat_boss = boss_id + 3
-        elif boss_id >= BOSS_TSUKASA:
-            hidden_stat_boss = boss_id + 1
-        if boss_id == BOSS_CHIMATA:
-            hidden_stat_boss = BOSS_CHIMATA
-            hidden_stat_stage = 7
-
-        self.gameController.setHiddenBossDefeat(hidden_stat_stage, hidden_stat_boss, final_value)
+        if record_type != DEFEAT_ID: return
+        hidden_records = get_boss_and_stage_id(stage_id, boss_id)
+        self.gameController.setHiddenBossDefeat(hidden_records[0], hidden_records[1], final_value)
 
     def unlockNoCard(self):
         """

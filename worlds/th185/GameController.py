@@ -226,9 +226,19 @@ class GameController:
             bossRecordAddress = self.getAddressFromPointerWithBase(ADDR_BOSS_ID_TO_PTR[stage][boss])
         self.pm.write_bytes(bossRecordAddress, bytes([value]), 1)
 
+    def getHiddenBossDefeat(self, stage: int, boss: int) -> bool:
+        """
+        Retrieves the hidden boss defeat records from the game.
+        This can keep track of Challenge Market defeats as well, but only for the bosses on the Final Wave.
+        The game never saves defeat records for non-Final Wave bosses.
+        """
+        finalOffset = OFFSET_HIDDEN_DEFEAT_STAT + (stage * OFFSET_MULT_STAGE_STAT) + boss
+        addrHiddenBossRecord = self.getAddressFromPointerWithBase(finalOffset)
+        return self.pm.read_bytes(addrHiddenBossRecord, 1) != bytes([0x00])
+
     def setHiddenBossDefeat(self, stage: int, boss: int, value: int):
         """
-        Sets the hidden boss stats that the achievements use.
+        Sets the hidden boss stats that the achievements and 4th boss unlocks use.
         Arguments here won't be sanitized when executed. Sanitize before calling this function.
         Check address_menu.py in variables on how it should be sanitized.
         """

@@ -137,3 +137,39 @@ def get_achievement_location_name_str(achievement_id: int) -> str:
     """
     safe_id_used = clamp(achievement_id, 0, 11)
     return f"{ACHIEVE_UNLOCK_STR}{safe_id_used + 1}: {ACHIEVE_NAME_DICT[safe_id_used]}"
+
+
+def get_boss_id_according_to_internal(boss_id: int) -> int:
+    """
+    Retrieves the boss ID according to how it's internally set in the game.
+    """
+    if boss_id == BOSS_NITORI:
+        return boss_id + 11
+    elif boss_id == BOSS_TAKANE:
+        return boss_id + 3
+    elif boss_id == BOSS_CHIMATA:
+        return boss_id
+    elif boss_id >= BOSS_TSUKASA:
+        return boss_id + 1
+
+    return boss_id + 2
+
+
+def get_stage_id_according_to_internal(stage_id: int) -> int:
+    """
+    Retrieves the stage ID according to how it's internally set in the game.
+    """
+    return stage_id + 1
+
+def get_boss_and_stage_id(stage_id: int, boss_id: int) -> list[int]:
+    """
+    Retrieves both the stage ID and boss ID according to the game's internal values.
+    The first returned value is the stage ID, while the second is the boss ID.
+    """
+    hidden_boss_id = get_boss_id_according_to_internal(boss_id)
+    hidden_stage_id = get_stage_id_according_to_internal(stage_id)
+    # Tutorial has exactly 1 boss. That is Mike.
+    # That Mike is special.
+    if stage_id == TUTORIAL_ID:
+        return [hidden_stage_id, 1]
+    return [hidden_stage_id, hidden_boss_id]
