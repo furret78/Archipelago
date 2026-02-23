@@ -669,12 +669,10 @@ class TouhouHBMContext(CommonContext):
         """
         Handle items received from the server. Since some save data is also
         embedded into the items list, the index will be ignored for them specifically.
-        The rest of the items will be put into a queue.
-
-        The first argument is the index, second is the NetworkItem list.
+        The rest of the items are separated into queues and processed simultaneously.
         """
-        # Wait until the game is online before processing the items.
-        while self.handler is None or self.handler.gameController is None or not self.handler.gameController.check_if_in_game():
+        # Wait until the game is online and the client is not having issues before processing the items.
+        while self.handler is None or self.handler.gameController is None or not self.handler.gameController.check_if_in_game() or self.inError:
             await asyncio.sleep(0.5)
 
         network_item_in_id: list[int] = []
@@ -1535,7 +1533,7 @@ class TouhouHBMContext(CommonContext):
     async def write_last_item_list(self):
         # Writes the last received item index to a .json file named "th185ap".
         # Initial check to make sure the client has not reset itself.
-        if not self.is_connected: return
+        if not self.is_connected and not self.inError: return
         if len(self.all_received_items) <= 0: return
 
         json_file_name = get_item_index_save_name(self.seed_name, self.team, self.slot)
