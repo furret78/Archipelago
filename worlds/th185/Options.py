@@ -110,16 +110,16 @@ class DeathLinkTrigger(Choice):
 
     display_name = "Death Link Trigger"
 
-    option_Upon_Life_Loss = 0
-    option_Upon_Stage_Fail = 1
+    option_life = 0
+    option_stage = 1
 
-    default = option_Upon_Life_Loss
+    default = option_life
 
     @classmethod
     def get_option_name(cls, value: T) -> str:
-        if value == cls.option_Upon_Life_Loss:
+        if value == cls.option_life:
             return "Upon losing a life"
-        if value == cls.option_Upon_Stage_Fail:
+        if value == cls.option_stage:
             return "Upon failing a stage attempt"
         return super().get_option_name(value)
 
