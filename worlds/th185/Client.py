@@ -1,12 +1,8 @@
-import os
-import pkgutil
-import random
 import traceback
 import typing
 from typing import Optional
 import asyncio
 import colorama
-import orjson
 
 from CommonClient import (
     CommonContext,
@@ -20,50 +16,11 @@ from NetUtils import NetworkItem
 from .GameHandler import *
 from .Items import GAME_ONLY_ITEM_ID, item_table, ITEM_TABLE_ID_TO_STAGE_NAME, ITEM_TABLE_ID_TO_CARD_ID
 from .Locations import *
-from .variables.meta_data import *
-from .Tools import get_item_index_save_name, convert_currency_to_joules, get_energy_withdraw_tag, \
-    convert_joules_to_currency, get_boss_location_name_str, get_card_location_name_str
+from .Tools import *
 from .variables.music_and_achiev import MUSIC_ROOM_UNLOCK_STR, ACHIEVE_UNLOCK_STR
 
 
 # Handles the game itself. The watcher that runs loops is down below.
-
-def copy_and_replace(directory: str):
-    ap_scorefile_data = pkgutil.get_data("worlds.th185", "scorefile/scoreth185.dat")
-    if ap_scorefile_data is None:
-        logger.error("The Client could not find its own save data!")
-        return
-
-    # The actual scorefile used by the game.
-    full_file_path = os.path.join(directory, os.path.basename(SCOREFILE_NAME))
-    if os.path.exists(full_file_path):
-        os.remove(full_file_path)
-    with open(full_file_path, "wb") as binary_file:
-        binary_file.write(ap_scorefile_data)
-
-    # Remove the backup scorefile in there since it interferes with Archipelago functionality.
-    backup_file_path = os.path.join(directory, os.path.basename(SCOREFILE_BACKUP_NAME))
-    if os.path.exists(backup_file_path):
-        os.remove(backup_file_path)
-
-    logger.info(f"Successfully replaced save data at: {full_file_path}")
-
-def get_currency_type_from_str(currency_type_string: str, game_context) -> int:
-    if currency_type_string in CURRENCY_FUNDS_ARGS_LIST:
-        return CURRENCY_FUNDS_ID
-    elif currency_type_string in CURRENCY_BULLET_MONEY_ARGS_LIST:
-        if not game_context.energylink_bulletmoney_enabled:
-            logger.info("Bullet Money exchanges are not enabled for this slot.")
-            return -1
-        return CURRENCY_BULLET_MONEY_ID
-    else:
-        logger.info(INVALID_CURRENCY_STRING)
-        return -1
-
-def get_random_death_message(lost_final_life: bool = False) -> str:
-    if lost_final_life: return random.choice(DEATH_LINK_STAGE_MSGS)
-    else: return random.choice(DEATH_LINK_LIFE_MSGS + DEATH_LINK_GENERIC_MSGS)
-
 
 class TouhouHBMClientProcessor(ClientCommandProcessor):
     def __init__(self, ctx):
@@ -125,7 +82,7 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
             logger.info("Amount must be a positive integer!")
             return
 
-        final_currency_type: int = get_currency_type_from_str(currency_type, self.ctx)
+        final_currency_type: int = get_currency_type_from_str(currency_type, self.ctx, logger)
         if final_currency_type == -1:
             return
 
@@ -203,6 +160,7 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
                 self.ctx.scorefile_path = None
             else:
                 self.ctx.scorefile_path = default_appdata_path + APPDATA_PATH
+                self.ctx.write_client_settings()
 
             logger.info(f"Save data directory was reset to default.")
 
@@ -213,7 +171,21 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
         The game's save data is often located at %appdata%/ShanghaiAlice/th185.
         Recommended to run before launching the game itself.
         """
-        copy_and_replace(self.ctx.scorefile_path)
+        copy_and_replace(self.ctx.scorefile_path, logger)
+
+    def _cmd_toggle_auto_replace(self):
+        """
+        Toggles whether the client will automatically replace the game's save data file upon connecting to a server.
+        """
+        if CLIENT_AUTO_REPLACE not in self.ctx.client_settings:
+            # Defaults to True. Turn it False.
+            self.ctx.client_settings[CLIENT_AUTO_REPLACE] = not CLIENT_AUTO_REPLACE_DEFAULT
+            self.ctx.write_client_settings()
+        else:
+            self.ctx.client_settings[CLIENT_AUTO_REPLACE] = not self.ctx.client_settings[CLIENT_AUTO_REPLACE]
+            self.ctx.write_client_settings()
+
+        logger.info(f"Automatic save replacement set to: {self.ctx.client_settings[CLIENT_AUTO_REPLACE]}")
 
 
 class TouhouHBMContext(CommonContext):
@@ -235,6 +207,7 @@ class TouhouHBMContext(CommonContext):
         self.game = DISPLAY_NAME
         self.items_handling = 0b111  # Item from starting inventory, own world and other world
         self.command_processor = TouhouHBMClientProcessor
+        self.client_settings = {}
 
         self.no_card_unlocked: bool = False
         self.loadingDataSetup: bool = True
@@ -593,6 +566,17 @@ class TouhouHBMContext(CommonContext):
             - RoomInfo package received (seed name populated)
         """
         return self.is_connected
+
+    def get_or_default_client_settings(self):
+        self.client_settings = get_client_settings()
+
+        if CLIENT_SCOREFILE_PATH not in self.client_settings:
+            self.client_settings[CLIENT_SCOREFILE_PATH] = self.scorefile_path
+        if CLIENT_AUTO_REPLACE not in self.client_settings:
+            self.client_settings[CLIENT_AUTO_REPLACE] = CLIENT_AUTO_REPLACE_DEFAULT
+
+    def write_client_settings(self):
+        write_client_settings(self.client_settings)
 
     #
     # More game helper functions
@@ -1879,7 +1863,14 @@ async def game_watcher(ctx: TouhouHBMContext):
     Start the different loops once connected that will handle the game.
 	It will also attempt to reconnect if the connection to the game is lost.
     """
+    ctx.get_or_default_client_settings()
+
     await ctx.wait_for_initial_connection_info()
+
+    if CLIENT_AUTO_REPLACE in ctx.client_settings:
+        if ctx.client_settings[CLIENT_AUTO_REPLACE]:
+            copy_and_replace(ctx.scorefile_path, logger)
+
     await ctx.initial_load_last_item_list()
 
     while not ctx.exit_event.is_set():
@@ -1965,22 +1956,18 @@ async def game_watcher(ctx: TouhouHBMContext):
             # If there is, exit to restart the connection.
             # Stop all loops if possible at this phase.
             if ctx.exit_event.is_set():
-                # Save last item index and then quit.
-                pass
+                ctx.write_client_settings()
 
             if ctx.inError or ctx.exit_event.is_set() or not ctx.server:
                 for loop in loops:
-                    try:
-                        loop.cancel()
-                    except:
-                        pass
+                    try: loop.cancel()
+                    except: pass
 
 
 def launch():
     """
     Launch a client instance (wrapper / args parser)
     """
-
     async def main(args):
         """
         Launch a client instance (threaded)

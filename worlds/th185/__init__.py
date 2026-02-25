@@ -1,5 +1,3 @@
-from unittest import case
-
 from .Tools import get_progress_item_count
 from .WebWorld import TouhouHBMWebWorld
 from .variables.boss_and_stage import *

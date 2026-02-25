@@ -1,10 +1,73 @@
 import shutil
 import os
+import random
+import pkgutil
+from logging import Logger
+from typing import Any
 
+import orjson
+
+from Utils import user_path
 from .variables.boss_and_stage import *
 from .variables.card_const import CARD_ID_TO_NAME
 from .variables.meta_data import *
 from .variables.music_and_achiev import *
+
+
+def copy_and_replace(directory: str, logger):
+    ap_scorefile_data = pkgutil.get_data("worlds.th185", "scorefile/scoreth185.dat")
+    if ap_scorefile_data is None:
+        logger.error("The Client could not find its own save data!")
+        return
+
+    # The actual scorefile used by the game.
+    full_file_path = os.path.join(directory, os.path.basename(SCOREFILE_NAME))
+    if os.path.exists(full_file_path):
+        os.remove(full_file_path)
+    with open(full_file_path, "wb") as binary_file:
+        binary_file.write(ap_scorefile_data)
+
+    # Remove the backup scorefile in there since it interferes with Archipelago functionality.
+    backup_file_path = os.path.join(directory, os.path.basename(SCOREFILE_BACKUP_NAME))
+    if os.path.exists(backup_file_path):
+        os.remove(backup_file_path)
+
+    logger.info(f"Successfully replaced save data at: {full_file_path}")
+
+
+def get_currency_type_from_str(currency_type_string: str, game_context, logger) -> int:
+    if currency_type_string in CURRENCY_FUNDS_ARGS_LIST:
+        return CURRENCY_FUNDS_ID
+    elif currency_type_string in CURRENCY_BULLET_MONEY_ARGS_LIST:
+        if not game_context.energylink_bulletmoney_enabled:
+            logger.info("Bullet Money exchanges are not enabled for this slot.")
+            return -1
+        return CURRENCY_BULLET_MONEY_ID
+    else:
+        logger.info(INVALID_CURRENCY_STRING)
+        return -1
+
+
+def get_random_death_message(lost_final_life: bool = False) -> str:
+    if lost_final_life: return random.choice(DEATH_LINK_STAGE_MSGS)
+    else: return random.choice(DEATH_LINK_LIFE_MSGS + DEATH_LINK_GENERIC_MSGS)
+
+
+def get_client_settings() -> dict:
+    full_file_path = user_path("data\\th185_client.json")
+
+    if not os.path.exists(full_file_path):
+        return {}
+    else:
+        with open(full_file_path) as json_file:
+            return orjson.loads(json_file.read())
+
+
+def write_client_settings(user_data_dict: dict):
+    full_file_path = user_path("data\\th185_client.json")
+
+    with open(full_file_path, "wb") as json_file:
+        json_file.write(orjson.dumps(user_data_dict))
 
 
 def getAddressFromPointer(pm, static_base, offsets=None):

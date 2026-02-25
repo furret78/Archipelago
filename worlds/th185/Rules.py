@@ -1,5 +1,3 @@
-from unittest import case
-
 from BaseClasses import CollectionState
 from worlds.generic.Rules import add_rule, set_rule
 from .Tools import get_progress_item_requirement, get_boss_location_name_str, get_card_location_name_str, \

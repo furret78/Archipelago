@@ -1,5 +1,4 @@
-from BaseClasses import Entrance, Region
-from .Tools import get_progress_item_requirement
+from BaseClasses import Region
 from .variables.boss_and_stage import *
 
 

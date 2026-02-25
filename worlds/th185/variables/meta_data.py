@@ -16,6 +16,9 @@ LAST_INDEX_FILE_NAME = "th185ap_"
 JSON_EXTENSION = ".json"
 JSON_SLOT_NAME = "slot_name"
 JSON_SLOT_ITEMS = "items"
+CLIENT_SCOREFILE_PATH = "scorefile_path"
+CLIENT_AUTO_REPLACE = "auto_replace_save"
+CLIENT_AUTO_REPLACE_DEFAULT = True
 
 # Various client messages
 SERVER_NOT_CONNECTED_MSG = "The client hasn't connected to the server yet!"
