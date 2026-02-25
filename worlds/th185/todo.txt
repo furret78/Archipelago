@@ -1,3 +1,5 @@
+- Add automatic save replacement
+
 - Go over and fix Item ID reception and check which ones keep getting flagged as unknown.
 
 - Add Challenge Market defeat locations.
