@@ -855,14 +855,14 @@ class TouhouHBMContext(CommonContext):
                 case 56: self.received_circle_atk -= 45
                 case 57: self.received_circle_atk -= 60
                 # Magic Circle Size
-                case 60: self.received_circle_size += 5
-                case 61: self.received_circle_size += 10
-                case 62: self.received_circle_size += 15
-                case 63: self.received_circle_size += 20
-                case 64: self.received_circle_size -= 5
-                case 65: self.received_circle_size -= 10
-                case 66: self.received_circle_size -= 15
-                case 67: self.received_circle_size -= 20
+                case 60: self.received_circle_size += 10
+                case 61: self.received_circle_size += 20
+                case 62: self.received_circle_size += 30
+                case 63: self.received_circle_size += 50
+                case 64: self.received_circle_size -= 10
+                case 65: self.received_circle_size -= 20
+                case 66: self.received_circle_size -= 30
+                case 67: self.received_circle_size -= 50
                 # Magic Circle Duration
                 case 70: self.received_circle_duration += 5
                 case 71: self.received_circle_duration += 10
