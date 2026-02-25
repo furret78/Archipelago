@@ -570,8 +570,11 @@ class TouhouHBMContext(CommonContext):
     def get_or_default_client_settings(self):
         self.client_settings = get_client_settings()
 
+        # Scorefile path.
         if CLIENT_SCOREFILE_PATH not in self.client_settings:
             self.client_settings[CLIENT_SCOREFILE_PATH] = self.scorefile_path
+        else: self.scorefile_path = self.client_settings[CLIENT_SCOREFILE_PATH]
+        # Automatic save data replacement.
         if CLIENT_AUTO_REPLACE not in self.client_settings:
             self.client_settings[CLIENT_AUTO_REPLACE] = CLIENT_AUTO_REPLACE_DEFAULT
 
@@ -1874,6 +1877,10 @@ async def game_watcher(ctx: TouhouHBMContext):
     await ctx.initial_load_last_item_list()
 
     while not ctx.exit_event.is_set():
+        # Client closing for some reason.
+        if ctx.exit_event.is_set():
+            ctx.write_client_settings()
+
         # Client was disconnected from the server
         if not ctx.server:
             # Reset the context in that case
@@ -1956,7 +1963,8 @@ async def game_watcher(ctx: TouhouHBMContext):
             # If there is, exit to restart the connection.
             # Stop all loops if possible at this phase.
             if ctx.exit_event.is_set():
-                ctx.write_client_settings()
+                # Save index here.
+                pass
 
             if ctx.inError or ctx.exit_event.is_set() or not ctx.server:
                 for loop in loops:
