@@ -16,6 +16,7 @@ LAST_INDEX_FILE_NAME = "th185ap_"
 JSON_EXTENSION = ".json"
 JSON_SLOT_NAME = "slot_name"
 JSON_SLOT_ITEMS = "items"
+CLIENT_DATA_PATH = "data\\th185"
 CLIENT_SCOREFILE_PATH = "scorefile_path"
 CLIENT_AUTO_REPLACE = "auto_replace_save"
 CLIENT_AUTO_REPLACE_DEFAULT = True

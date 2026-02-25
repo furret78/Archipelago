@@ -53,8 +53,16 @@ def get_random_death_message(lost_final_life: bool = False) -> str:
     else: return random.choice(DEATH_LINK_LIFE_MSGS + DEATH_LINK_GENERIC_MSGS)
 
 
+def client_directory_get_or_default():
+    directory_path = user_path(CLIENT_DATA_PATH)
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
+
+
 def get_client_settings() -> dict:
-    full_file_path = user_path("data\\th185_client.json")
+    full_file_path = user_path(CLIENT_DATA_PATH + "\\th185_client.json")
+
+    client_directory_get_or_default()
 
     if not os.path.exists(full_file_path):
         return {}
@@ -64,7 +72,9 @@ def get_client_settings() -> dict:
 
 
 def write_client_settings(user_data_dict: dict):
-    full_file_path = user_path("data\\th185_client.json")
+    full_file_path = user_path(CLIENT_DATA_PATH + "\\th185_client.json")
+
+    client_directory_get_or_default()
 
     with open(full_file_path, "wb") as json_file:
         json_file.write(orjson.dumps(user_data_dict))

@@ -560,8 +560,8 @@ class TouhouHBMContext(CommonContext):
         """
         This method waits until the client finishes the initial conversation with the server.
         This means:
-            - All LocationInfo packages received - requested only if patch files dont exist.
-            - DataPackage package received (id_to_name maps and name_to_id maps are popualted)
+            - All LocationInfo packages received - requested only if patch files don't exist.
+            - DataPackage package received (id_to_name maps and name_to_id maps are populated)
             - Connection package received (slot number populated)
             - RoomInfo package received (seed name populated)
         """
@@ -1490,7 +1490,7 @@ class TouhouHBMContext(CommonContext):
         if self.loaded_past_received_items: return
 
         json_file_name = get_item_index_save_name(self.seed_name, self.team, self.slot)
-        full_file_path = os.path.join(self.scorefile_path, os.path.basename(json_file_name))
+        full_file_path = os.path.join(user_path(CLIENT_DATA_PATH), os.path.basename(json_file_name))
 
         # Check if the file exists.
         if os.path.exists(full_file_path):
@@ -1524,12 +1524,14 @@ class TouhouHBMContext(CommonContext):
         if len(self.all_received_items) <= 0: return
 
         json_file_name = get_item_index_save_name(self.seed_name, self.team, self.slot)
-        full_file_path = os.path.join(self.scorefile_path, os.path.basename(json_file_name))
+        full_file_path = os.path.join(user_path(CLIENT_DATA_PATH), os.path.basename(json_file_name))
 
         full_dict = {
             JSON_SLOT_NAME: self.player_names[self.slot],
             JSON_SLOT_ITEMS: self.all_received_items
         }
+
+        client_directory_get_or_default()
 
         # Remove the old file before writing.
         if os.path.exists(full_file_path):
@@ -1877,10 +1879,6 @@ async def game_watcher(ctx: TouhouHBMContext):
     await ctx.initial_load_last_item_list()
 
     while not ctx.exit_event.is_set():
-        # Client closing for some reason.
-        if ctx.exit_event.is_set():
-            ctx.write_client_settings()
-
         # Client was disconnected from the server
         if not ctx.server:
             # Reset the context in that case
