@@ -38,7 +38,7 @@ If the .apworld for 100th Black Market has not yet been installed, do so.
 
 For Steam releases, disable Steam's Cloud saving feature for the game. This can be done in Settings -> Properties... -> General -> Steam Cloud.
 
-Before attempting to open the game and play, please backup your previous save data. This is typically located in `%appdata%\ShanghaiAlice\th185`, and **nowhere** anywhere in the game's installation folder. These files would be named `scoreth185.dat` and `scoreth185bak.dat`, wherein the latter is a backup copy of the former.
+Before attempting to open the game and play, please backup your previous save data. This is typically located in `%appdata%\ShanghaiAlice\th185`, and **nowhere** in the game's installation folder. These files would be named `scoreth185.dat` and `scoreth185bak.dat`, wherein the latter is a backup copy of the former.
 
 Before launching the game, open the Touhou 18.5 client in the Archipelago Launcher and run the `/replace_save` command in order to clear the game's save data. The command will paste in save data specifically tailored to work with the randomizer. Do this every time before opening the game to ensure no inconveniences arise during launcher. Alternatively, if the command does not work, you may manually delete the save data.
 
