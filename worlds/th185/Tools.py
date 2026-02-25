@@ -56,7 +56,7 @@ def get_random_death_message(lost_final_life: bool = False) -> str:
 def client_directory_get_or_default():
     directory_path = user_path(CLIENT_DATA_PATH)
     if not os.path.exists(directory_path):
-        os.makedirs(directory_path)
+        os.makedirs(directory_path, exist_ok=True)
 
 
 def get_client_settings() -> dict:
