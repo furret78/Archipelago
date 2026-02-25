@@ -1,7 +1,3 @@
-- Add automatic save replacement
-
-- Go over and fix Item ID reception and check which ones keep getting flagged as unknown.
-
 - Add Challenge Market defeat locations.
     - Final Wave bosses can be tracked via the hidden records.
     - As for non-Final Wave bosses, possibly check for Black Market opening + current boss ID?

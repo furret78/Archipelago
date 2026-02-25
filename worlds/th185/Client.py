@@ -14,7 +14,8 @@ from CommonClient import (
 )
 from NetUtils import NetworkItem
 from .GameHandler import *
-from .Items import GAME_ONLY_ITEM_ID, item_table, ITEM_TABLE_ID_TO_STAGE_NAME, ITEM_TABLE_ID_TO_CARD_ID
+from .Items import item_table, ITEM_TABLE_ID_TO_STAGE_NAME, ITEM_TABLE_ID_TO_CARD_ID, \
+    PROGRESSIVE_ITEMS_LIST, check_for_game_filler
 from .Locations import *
 from .Tools import *
 from .variables.music_and_achiev import MUSIC_ROOM_UNLOCK_STR, ACHIEVE_UNLOCK_STR
@@ -785,8 +786,8 @@ class TouhouHBMContext(CommonContext):
             item_id = filler_item.item
             if item_id in ITEM_TABLE_ID_TO_STAGE_NAME: continue
             if item_id in ITEM_TABLE_ID_TO_CARD_ID: continue
-            if item_id == item_table[PROGRESS_ITEM_NAME_FULL].code: continue
-            if item_id in GAME_ONLY_ITEM_ID:
+            if item_id in PROGRESSIVE_ITEMS_LIST: continue
+            if check_for_game_filler(item_id):
                 self.gameItemQueue.append(item_id)
                 continue
 
@@ -814,99 +815,80 @@ class TouhouHBMContext(CommonContext):
 
         for item_id in self.gameItemQueue:
             match item_id:
-                # Filler + Useful
+                # Bullet Money
+                case 20: self.received_bullet_money += 5
+                case 21: self.received_bullet_money += 10
+                case 22: self.received_bullet_money += 200
+                case 23: self.received_bullet_money += 500
+                case 24: self.received_bullet_money += 1000
+                case 25: self.received_bullet_money += 2000
+                case 26: self.received_bullet_money += 5000
+                # Bullet Money Traps
+                case 30: self.received_bullet_money -= 50
+                case 31: self.received_bullet_money -= 100
+                case 32: self.received_bullet_money -= 200
+                case 33: self.received_bullet_money -= 300
+                case 34: self.received_bullet_money -= 500
+                case 35: self.received_bullet_money -= 1000
+                case 36: self.received_bullet_money -= 2000
                 # Lives
-                case 1:
-                    self.received_lives += 1
-                case 8:
-                    self.received_lives += 2
-                # Bullet Money
-                case 4:
-                    self.received_bullet_money += 200
-                case 5:
-                    self.received_bullet_money += 500
-                case 7:
-                    self.received_bullet_money += 1000
-                case 12:
-                    self.received_bullet_money += 5
-                case 13:
-                    self.received_bullet_money += 10
-                # Shot Attack %
-                case 14:
-                    self.received_shot_attack += 15
-                case 15:
-                    self.received_shot_attack += 30
-                case 16:
-                    self.received_shot_attack += 45
-                case 17:
-                    self.received_shot_attack += 60
-                case 300:
-                    self.received_shot_attack += 100
-                case 301:
-                    self.received_shot_attack += 200
-                # Magic Circle Attack %
-                case 18:
-                    self.received_circle_atk += 30
-                case 19:
-                    self.received_circle_atk += 60
-                case 20:
-                    self.received_circle_atk += 90
-                case 21:
-                    self.received_circle_atk += 120
-                # Magic Circle Size %
-                case 22:
-                    self.received_circle_size += 5
-                case 23:
-                    self.received_circle_size += 10
-                case 24:
-                    self.received_circle_size += 15
-                case 25:
-                    self.received_circle_size += 20
-                # Magic Circle Duration %
-                case 26:
-                    self.received_circle_duration += 10
-                case 27:
-                    self.received_circle_duration += 20
-                # Magic Circle Graze Range %
-                case 28:
-                    self.received_circle_graze += 15
-                case 29:
-                    self.received_circle_graze += 30
-                case 30:
-                    self.received_circle_graze += 45
-                case 31:
-                    self.received_circle_graze += 60
-                # Movement Speed %
-                case 32:
-                    self.received_speed += 20
-                # Invincibility
-                case 40:
-                    self.received_invincibility += 120
-                case 41:
-                    self.received_invincibility += 300
-                case 42:
-                    self.received_invincibility += 600
-                case 400:
-                    self.received_invincibility += 420
-
-                # Traps
-                # Bullet Money
-                case 50:
-                    self.received_bullet_money -= 50
-                case 51:
-                    self.received_bullet_money -= 100
-                case 52:
-                    self.received_bullet_money -= 200
-                case 53:
-                    self.received_bullet_money -= 300
+                case 38: self.received_lives += 1
+                case 39: self.received_lives += 2
+                # Shot Attack
+                case 40: self.received_shot_attack += 15
+                case 41: self.received_shot_attack += 30
+                case 42: self.received_shot_attack += 45
+                case 43: self.received_shot_attack += 60
+                case 44: self.received_shot_attack += 100
+                case 45: self.received_shot_attack += 200
+                case 46: self.received_shot_attack += 300
+                case 47: self.received_shot_attack += 400
+                case 48: self.received_shot_attack -= 30
+                case 49: self.received_shot_attack -= 60
+                # Magic Circle Attack
+                case 50: self.received_circle_atk += 30
+                case 51: self.received_circle_atk += 60
+                case 52: self.received_circle_atk += 90
+                case 53: self.received_circle_atk += 120
+                case 54: self.received_circle_atk -= 15
+                case 55: self.received_circle_atk -= 30
+                case 56: self.received_circle_atk -= 45
+                case 57: self.received_circle_atk -= 60
+                # Magic Circle Size
+                case 60: self.received_circle_size += 5
+                case 61: self.received_circle_size += 10
+                case 62: self.received_circle_size += 15
+                case 63: self.received_circle_size += 20
+                case 64: self.received_circle_size -= 5
+                case 65: self.received_circle_size -= 10
+                case 66: self.received_circle_size -= 15
+                case 67: self.received_circle_size -= 20
+                # Magic Circle Duration
+                case 70: self.received_circle_duration += 5
+                case 71: self.received_circle_duration += 10
+                case 72: self.received_circle_duration += 100
+                case 73: self.received_circle_duration += 200
+                # Magic Circle Graze Range
+                case 80: self.received_circle_graze += 20
+                case 81: self.received_circle_graze += 40
+                case 82: self.received_circle_graze += 60
+                case 83: self.received_circle_graze += 80
+                case 84: self.received_circle_graze += 100
+                case 85: self.received_circle_graze -= 15
+                case 86: self.received_circle_graze -= 30
+                case 87: self.received_circle_graze -= 45
+                case 88: self.received_circle_graze -= 60
+                case 89: self.received_circle_graze -= 75
                 # Movement Speed
-                case 71:
-                    self.received_speed += 500
-                case 73:
-                    self.received_speed += 1000
+                case 90: self.received_speed += 20
+                case 91: self.received_speed += 500
+                case 92: self.received_speed += 1000
                 # Invincibility
-                case 72:
-                    self.received_invinc_cancel = True
+                case 95: self.received_invincibility += 120
+                case 96: self.received_invincibility += 300
+                case 97: self.received_invincibility += 420
+                case 98: self.received_invincibility += 600
+                case 99: self.received_invinc_cancel = True
                 # Default
                 case _:
                     logger.info(f"Ignoring unknown game item (ID {item_id}).")
@@ -955,27 +937,21 @@ class TouhouHBMContext(CommonContext):
         for item_id in self.menuItemQueue:
             match item_id:
                 # Filler + Useful
-                case 2:
-                    self.received_funds += 200
-                case 3:
-                    self.received_funds += 1000
-                case 6:
-                    self.received_funds += 500
-                case 10:
-                    self.received_funds += 5
-                case 11:
-                    self.received_funds += 10
+                case 1: self.received_funds += 5
+                case 2: self.received_funds += 10
+                case 3: self.received_funds += 200
+                case 4: self.received_funds += 500
+                case 5: self.received_funds += 1000
+                case 6: self.received_funds += 2000
+                case 7: self.received_funds += 5000
                 # Traps
-                case 60:
-                    self.received_funds -= 50
-                case 61:
-                    self.received_funds -= 100
-                case 62:
-                    self.received_funds -= 200
-                case 63:
-                    self.received_funds -= 300
-                case 70:
-                    self.received_equip_cost -= 50
+                case 10: self.received_funds -= 50
+                case 11: self.received_funds -= 100
+                case 12: self.received_funds -= 200
+                case 13: self.received_funds -= 300
+                case 14: self.received_funds -= 500
+                case 15: self.received_funds -= 1000
+                case 16: self.received_funds -= 2000
                 # Default
                 case _:
                     logger.info(f"Ignoring unknown item (ID {item_id}).")
