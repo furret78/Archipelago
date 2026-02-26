@@ -2,8 +2,6 @@ import shutil
 import os
 import random
 import pkgutil
-from logging import Logger
-from typing import Any
 
 import orjson
 
@@ -78,6 +76,26 @@ def write_client_settings(user_data_dict: dict):
 
     with open(full_file_path, "wb") as json_file:
         json_file.write(orjson.dumps(user_data_dict))
+
+
+def get_boss_names_challenge_list() -> list[str]:
+    """
+    Gets all bosses that appears in Challenge Market.
+    """
+    result_boss_list: list[str] = []
+    challenge_set_id = 1
+    # This will iterate through the entire boss list.
+    for boss_sets in ALL_BOSSES_LIST:
+        if challenge_set_id <= TUTORIAL_ID or challenge_set_id >= STAGE_CHIMATA_ID: continue
+        # Iterate through the current boss list. If the index is 4 or more, that's a story boss.
+        for boss_challenge in ALL_BOSSES_LIST[challenge_set_id]:
+            if boss_challenge in STORY_BOSSES_LIST: continue
+            result_boss_list.append(boss_challenge)
+        # Move onto the next stage.
+        challenge_set_id += 1
+
+    # Return the final list.
+    return result_boss_list
 
 
 def getAddressFromPointer(pm, static_base, offsets=None):

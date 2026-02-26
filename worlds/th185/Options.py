@@ -59,12 +59,11 @@ class ProgressiveStages(DefaultOnToggle):
 
 class DisableChallengeLogic(DefaultOnToggle):
     """
-    Challenge Market will not count for Market Card Reward locations.
-    Does not exclude boss encounters in Challenge Market.
+    Generation logic will consider Challenge Market inaccessible before unlocking all other stages.
     Disable this option to turn off the above handicap.
     """
 
-    display_name = "Disable Challenge Market in Logic"
+    display_name = "Lock Challenge Market in Logic"
 
 
 class TrapChance(Range):

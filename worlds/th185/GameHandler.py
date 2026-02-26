@@ -62,17 +62,17 @@ class GameHandler:
             STAGE5_ID: {BOSS_TSUKASA: False, BOSS_MEGUMU: False, BOSS_CLOWNPIECE: False, BOSS_TENSHI: False},
             STAGE6_ID: {BOSS_SUIKA: False, BOSS_MAMIZOU: False, BOSS_SAKI: False, BOSS_MOMOYO: False, BOSS_TAKANE: False},
             STAGE_CHIMATA_ID: {BOSS_CHIMATA: False},
+            STAGE_CHALLENGE_ID: {BOSS_SUIKA: False, BOSS_MAMIZOU: False, BOSS_SAKI: False, BOSS_MOMOYO: False}
         }
 
         self.bosses_met = self.bosses_beaten
-        self.bosses_met[STAGE_CHALLENGE_ID] = {
+        self.bosses_met[STAGE_CHALLENGE_ID].update({
                 BOSS_MIKE: False, BOSS_MINORIKO: False, BOSS_ETERNITY: False, BOSS_NEMUNO: False,
                 BOSS_CIRNO: False, BOSS_WAKASAGI: False, BOSS_SEKIBANKI: False, BOSS_URUMI: False,
                 BOSS_EBISU: False, BOSS_KUTAKA: False, BOSS_NARUMI: False, BOSS_KOMACHI: False,
                 BOSS_SANAE: False, BOSS_SAKUYA: False, BOSS_YOUMU: False, BOSS_REIMU: False,
-                BOSS_TSUKASA: False, BOSS_MEGUMU: False, BOSS_CLOWNPIECE: False, BOSS_TENSHI: False,
-                BOSS_SUIKA: False, BOSS_MAMIZOU: False, BOSS_SAKI: False, BOSS_MOMOYO: False
-            }
+                BOSS_TSUKASA: False, BOSS_MEGUMU: False, BOSS_CLOWNPIECE: False, BOSS_TENSHI: False
+            })
 
         for stage_name in STAGE_LIST:
             self.stages_unlocked[stage_name] = False
@@ -198,6 +198,7 @@ class GameHandler:
         Gets the stats of a boss in a specific stage from the handler.
         Type 0 is checking for encounters, and type 1 is checking for defeat.
         Challenge Market skips the type check and always returns the encounter value.
+        Except for the Final Wave bosses.
         """
         if stage_id == STAGE_CHALLENGE_ID:
             return self.bosses_met[STAGE_CHALLENGE_ID][boss_id]
@@ -213,10 +214,11 @@ class GameHandler:
         """
         Sets the stats of a boss in a specific stage in the handler's data.
         Type 0 is for encounters, type 1 for defeat.
-        Challenge Market exclusively has encounter stats.
+        Challenge Market exclusively has encounter stats, except for the Final Wave bosses.
         """
-        if stage_id == STAGE_CHALLENGE_ID:
+        if stage_id == STAGE_CHALLENGE_ID and boss_id not in [BOSS_SUIKA, BOSS_MAMIZOU, BOSS_SAKI, BOSS_MOMOYO]:
             self.bosses_met[STAGE_CHALLENGE_ID][boss_id] = value
+            return
 
         match type:
             case 0: self.bosses_met[stage_id][boss_id] = value
@@ -238,7 +240,7 @@ class GameHandler:
         """
         Sets the stats of a boss in a specific stage in the game memory itself.
         Type 0 is for encounters, type 1 is for defeat.
-        Challenge Market exclusively has encounter stats.
+        Challenge Market exclusively has encounter stats, except for Final Wave bosses.
         """
         final_value: int = 0
         if value: final_value = random.randint(1, 255)

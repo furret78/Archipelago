@@ -1,7 +1,7 @@
 from BaseClasses import CollectionState
 from worlds.generic.Rules import add_rule, set_rule
 from .Tools import get_progress_item_requirement, get_boss_location_name_str, get_card_location_name_str, \
-    get_music_location_name_str, get_achievement_location_name_str
+    get_music_location_name_str, get_achievement_location_name_str, get_boss_names_challenge_list
 from .variables.card_const import *
 from .variables.music_and_achiev import MUSIC_ROOM_NAME_DICT, ACHIEVE_NAME_DICT
 
@@ -41,6 +41,8 @@ def set_all_entrance_rules(world) -> None:
         if world.options.progressive_stages:
             progress_requirement_count = get_progress_item_requirement(given_stage, True)
             return state.has(PROGRESS_ITEM_NAME_FULL, world.player, progress_requirement_count)
+        elif given_stage == CHALLENGE_NAME_FULL and world.options.disable_challenge_logic:
+            return state.has_all((STAGE_NAME_LIST[:-1]), world.player)
         else:
             return state.has(given_stage, world.player)
 
@@ -310,19 +312,15 @@ def set_all_location_rules(world) -> None:
                 # If it's none of them
                 add_rule(location_encounter, lambda state, the_name = stage_short_name: has_stage_access_item(state, the_name))
                 add_rule(location_defeat, lambda state, the_name = stage_short_name: has_stage_access_item(state, the_name))
-        # Challenge Market Encounter clause.
+        # Challenge Market clause.
         else:
-            internal_stage_id = 0
-            for challenge_boss_set in ALL_BOSSES_LIST:
-                if TUTORIAL_ID < internal_stage_id < STAGE_CHIMATA_ID:
-                    for challenge_boss_name in challenge_boss_set:
-                        # If it's Nitori or Takane, do not set rules.
-                        if challenge_boss_name == BOSS_NITORI_NAME or challenge_boss_name == BOSS_TAKANE_NAME:
-                            continue
+            for challenge_boss in get_boss_names_challenge_list():
+                location_encounter = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss)
+                add_rule(world.get_location(location_encounter), lambda state: has_challenge_access_item(state, True))
 
-                        location_encounter = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss_name)
-                        add_rule(world.get_location(location_encounter), lambda state: has_challenge_access_item(state, True))
-                internal_stage_id += 1
+                if challenge_boss in ALL_BOSSES_LIST[STAGE6_ID]:
+                    location_defeat = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss, True)
+                    add_rule(world.get_location(location_defeat), lambda state: has_challenge_access_item(state, True))
 
     #
     # Location rules for Ability Cards as stage rewards here.

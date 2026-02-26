@@ -387,16 +387,14 @@ class TouhouHBMContext(CommonContext):
                                                        DEFEAT_ID)
                 else:
                     # Special Challenge Market clause
-                    boss_set_id_loc = 1
-                    for boss_set in ALL_BOSSES_LIST:
-                        # If it's the Tutorial set or End of Market set, discard those.
-                        if TUTORIAL_ID <= boss_set_id_loc >= STAGE_CHIMATA_ID: continue
-                        for boss_name in boss_set:
-                            # Make sure to exclude the story bosses.
-                            if boss_name in STORY_BOSSES_LIST: continue
-                            # There are only encounters. Check those.
-                            self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], False,
-                                                           ENCOUNTER_ID)
+                    challenge_boss_list = get_boss_names_challenge_list()
+                    for boss_name in challenge_boss_list:
+                        if boss_name in STORY_BOSSES_LIST: continue
+                        self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], False,
+                                                       ENCOUNTER_ID)
+                        if boss_name not in ALL_BOSSES_LIST[STAGE6_ID]: continue
+                        self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], False,
+                                                       DEFEAT_ID)
 
         reset_boss_records()
 
@@ -1191,23 +1189,28 @@ class TouhouHBMContext(CommonContext):
                         locationName: str = get_boss_location_name_str(STAGE_NAME_TO_ID[stage_name], boss_name, True)
                         if obligatory_location_table_check(locationName):
                             self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
-                                                              True, 1)
+                                                              True, DEFEAT_ID)
                             new_locations.append(location_table[locationName])
             else:
                 # Special Challenge Market clause
-                boss_set_id_loc = 1
-                for boss_set in ALL_BOSSES_LIST:
-                    # If it's the Tutorial set or End of Market set, discard those.
-                    if TUTORIAL_ID <= boss_set_id_loc >= STAGE_CHIMATA_ID: continue
-                    for boss_name in boss_set:
-                        # Make sure to exclude the story bosses.
-                        if boss_name in STORY_BOSSES_LIST: continue
-                        # There are only encounters. Check those.
-                        if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name]):
-                            locationName: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss_name)
-                            if obligatory_location_table_check(locationName):
-                                self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
-                                new_locations.append(location_table[locationName])
+                challenge_boss_list = get_boss_names_challenge_list()
+                for boss_name in challenge_boss_list:
+                    # Make sure to exclude the story bosses.
+                    if boss_name in STORY_BOSSES_LIST: continue
+                    # There are mostly only encounters. Check those.
+                    if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name]):
+                        challenge_encounter: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss_name)
+                        if obligatory_location_table_check(challenge_encounter):
+                            self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
+                            new_locations.append(location_table[challenge_encounter])
+                    # Final Wave bosses do leave records. Check those.
+                    if boss_name not in ALL_BOSSES_LIST[STAGE6_ID]: continue
+                    if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], DEFEAT_ID):
+                        challenge_defeat: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss_name, True)
+                        if obligatory_location_table_check(challenge_defeat):
+                            self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True,
+                                                              DEFEAT_ID)
+                            new_locations.append(location_table[challenge_defeat])
 
         # Check Ability Cards.
         # Split into stage-exclusive and dex.
@@ -1330,14 +1333,16 @@ class TouhouHBMContext(CommonContext):
                 if stage_name in full_location_name:
                     if stage_name == CHALLENGE_NAME:
                         # Special Challenge Market clause
-                        boss_set_id_loc = 1
-                        for boss_set in ALL_BOSSES_LIST:
-                            # If it's the Tutorial set or End of Market set, discard those.
-                            if TUTORIAL_ID <= boss_set_id_loc >= STAGE_CHIMATA_ID: continue
-                            for boss_name in boss_set:
-                                if boss_name not in full_location_name: continue
-                                self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
-                                self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
+                        challenge_boss_list = get_boss_names_challenge_list()
+                        for boss_name in challenge_boss_list:
+                            if boss_name not in full_location_name: continue
+                            if boss_name in STORY_BOSSES_LIST: continue
+                            self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
+                            self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
+
+                            if boss_name not in ALL_BOSSES_LIST[STAGE6_ID]: continue
+                            self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True, DEFEAT_ID)
+                            self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True, DEFEAT_ID)
                     else:
                         for boss_name in ALL_BOSSES_LIST[STAGE_NAME_TO_ID[stage_name]]:
                             if boss_name not in full_location_name: continue

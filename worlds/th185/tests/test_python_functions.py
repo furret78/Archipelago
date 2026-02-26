@@ -27,8 +27,13 @@ class PythonTestFunctions(unittest.TestCase):
 
     def test_slice(self):
         list = ["REIMU", "MARISA", "SAKUYA", "SANAE"]
-        print(list[1:])
-        # This prints ["MARISA", "SAKUYA", "SANAE"]
+        print(list[1:-1])
+        # list[1:] prints ["MARISA", "SAKUYA", "SANAE"]
+        # list[:-1] prints ["REIMU", "MARISA", "SAKUYA"]
+        #
+        # list[-2:] prints ["SAKUYA", "SANAE"]
+        # list[list.index("MARISA"):] includes ["MARISA"] + the above.
+        # list[-list.index("MARISA"):] removes ["SAKUYA"] from the above.
 
     def test_kill_player(self):
         self.pm = pymem.Pymem(process_name=FILE_NAME)
