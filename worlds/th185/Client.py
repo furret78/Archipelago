@@ -1362,7 +1362,7 @@ class TouhouHBMContext(CommonContext):
                     self.handler.unconditionalDexUnlock(card_string_id)
 
     def load_save_data_menu(self):
-        self.handler.setMenuFunds(self.menuFunds)
+        if not self.energylink_enabled: self.handler.setMenuFunds(self.menuFunds)
         self.handler.setCardSlots(self.loadout_slots)
         self.handler.setEquipCost(self.equip_cost)
 
@@ -1904,7 +1904,6 @@ async def game_watcher(ctx: TouhouHBMContext):
 
             if ctx.loadingDataSetup:
                 logger.info(f"Found {SHORT_NAME} process! Now loading...")
-                asyncio.create_task(ctx.load_save_data())
 
                 if ctx.options["death_link"]:
                     await ctx.update_death_link(True)
@@ -1921,6 +1920,7 @@ async def game_watcher(ctx: TouhouHBMContext):
                 if "energy_link_bullet_money" in ctx.options:
                     ctx.energylink_bulletmoney_enabled = ctx.options["energy_link_bullet_money"]
 
+                asyncio.create_task(ctx.load_save_data())
                 ctx.loadingDataSetup = False
                 continue
 

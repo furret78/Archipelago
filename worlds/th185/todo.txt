@@ -1,3 +1,5 @@
+- Fix Miracle Mallet location not detected in Dex.
+
 - Add Challenge Market defeat locations.
     - Final Wave bosses can be tracked via the hidden records.
     - As for non-Final Wave bosses, possibly check for Black Market opening + current boss ID?
