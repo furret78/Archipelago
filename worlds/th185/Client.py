@@ -1219,12 +1219,9 @@ class TouhouHBMContext(CommonContext):
         # Stage-exclusive.
         player_has_found_card_in_stage = False
         if self.checkIfGameInStage():
-            shop_card_list = ABILITY_CARD_LIST
-            for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
-                if invalid_card in shop_card_list: shop_card_list.remove(invalid_card)
-            if MALLET_CARD in shop_card_list: shop_card_list.remove(MALLET_CARD)
-
-            for card in shop_card_list:
+            # Go over the entire Ability Card list.
+            # Invalid locations get bounced off of the location table check anyways.
+            for card in ABILITY_CARD_LIST:
                 cardLocationName: str = get_card_location_name_str(card, False)
                 if not obligatory_location_table_check(cardLocationName): continue
 
@@ -1429,6 +1426,8 @@ class TouhouHBMContext(CommonContext):
         # Clear out the records of the entire Card Shop in the memory.
         for card_string_id in menu_shop_card_list:
             self.handler.setCardShopRecordGame(card_string_id, False)
+
+        await asyncio.sleep(0.5)
 
         # For all cards that can be bought in the shop...
         for card_name in menu_shop_card_list:
