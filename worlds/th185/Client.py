@@ -1173,8 +1173,6 @@ class TouhouHBMContext(CommonContext):
 
         if self.loadingDataSetup: return
 
-        challenge_boss_list = get_boss_names_challenge_list()
-
         # Check bosses first.
         for stage_name in STAGE_LIST:
             if stage_name != CHALLENGE_NAME:
@@ -1197,7 +1195,7 @@ class TouhouHBMContext(CommonContext):
                             new_locations.append(location_table[locationName])
             else:
                 # Special Challenge Market clause
-                for boss_name in challenge_boss_list:
+                for boss_name in get_boss_names_challenge_list():
                     # There are mostly only encounters. Check those.
                     if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name]):
                         challenge_encounter: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss_name)
