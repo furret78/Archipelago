@@ -4,7 +4,7 @@ from .Regions import get_regions_dict
 from .variables.card_const import *
 from .variables.meta_data import *
 from .Tools import get_boss_location_name_str, get_card_location_name_str, get_music_location_name_str, \
-    get_achievement_location_name_str, get_boss_names_challenge_list
+    get_achievement_location_name_str, get_boss_names_challenge_list, get_stage_clear_location_name_str
 from BaseClasses import Location
 from .variables.music_and_achiev import MUSIC_ROOM_NAME_DICT, ACHIEVE_NAME_DICT, MUSIC_ROOM_UNLOCK_STR
 
@@ -24,12 +24,13 @@ location_table = {} # Name to ID
 location_id_to_name = {} # ID to Name
 location_cards_id_to_card_string_id = {}
 
-# Boss locations
-stage_id = 0
+# Boss locations + Stage clear locations
 for stages in STAGE_LIST:
+    stage_id = STAGE_NAME_TO_ID[stages]
     # Normal stages
-    if stage_id < STAGE_CHALLENGE_ID:
+    if stages != CHALLENGE_NAME:
         stage_boss_group: set[str] = set()
+
         # This goes through the boss list of a given market.
         for boss in ALL_BOSSES_LIST[stage_id]:
             stage_boss_string_encounter: str = get_boss_location_name_str(stage_id, boss)
@@ -45,10 +46,10 @@ for stages in STAGE_LIST:
 
             stage_boss_group.add(stage_boss_string_encounter)
             stage_boss_group.add(stage_boss_string_defeat)
-        location_groups.update({STAGE_SHORT_TO_FULL_NAME[stages]: stage_boss_group})
 
+        location_groups.update({STAGE_SHORT_TO_FULL_NAME[stages]: stage_boss_group})
     # Challenge Market
-    if stage_id == STAGE_CHALLENGE_ID:
+    else:
         challenge_boss_group: set[str] = set()
         for boss in get_boss_names_challenge_list():
             challenge_boss_encounter: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss)
@@ -65,7 +66,13 @@ for stages in STAGE_LIST:
             challenge_boss_group.add(challenge_boss_defeat)
         location_groups.update({CHALLENGE_NAME_FULL: challenge_boss_group})
 
-    stage_id += 1
+    # Generic stage clear location.
+    stage_clear_string: str = get_stage_clear_location_name_str(stage_id)
+    location_table[stage_clear_string] = location_id_offset
+    location_id_to_name[location_id_offset] = stage_clear_string
+    location_id_offset += 1
+
+    location_groups.update({CHALLENGE_NAME_FULL: set(stage_clear_string)})
 
 # Card Shop locations at the end of each Market.
 # Location name groups.

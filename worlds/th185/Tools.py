@@ -202,6 +202,10 @@ def get_boss_location_name_str(market_stage_id: int, boss_name: str, is_defeat: 
     return f"[{STAGE_LIST[market_stage_id]}] {boss_name} - {locationType}"
 
 
+def get_stage_clear_location_name_str(market_stage_id: int) -> str:
+    return f"[{STAGE_LIST[market_stage_id]}] {GENERIC_STAGE_CLEAR_NAME}"
+
+
 def get_card_location_name_str(card_id: str, is_dex: bool = False) -> str:
     """
     Gets the location name according to Ability Card string ID.

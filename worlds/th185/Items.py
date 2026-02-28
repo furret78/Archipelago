@@ -127,6 +127,9 @@ def create_all_items(world):
         # Grab full name of item and create.
         item_pool.append(world.create_item(CARD_ID_TO_NAME[string_id]))
 
+    # Finally, Progressive Loadout.
+    # This is the least important of the important things.
+
     # Now that all the important stuff is added, check if there's any spots left.
     number_of_items = len(item_pool)
     number_of_unfilled_locations = len(world.multiworld.get_unfilled_locations(world.player))
@@ -388,7 +391,8 @@ item_table: Dict[str, TouhouHBMItemData] = {
     TEACUP_REIMU_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 281, ItemClassification.progression),
     TEACUP_MARISA_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 282, ItemClassification.progression),
     # Progressive Items
-    PROGRESS_ITEM_NAME_FULL: TouhouHBMItemData(CATEGORY_PROGRESS, 290, ItemClassification.progression)
+    PROGRESS_ITEM_NAME_FULL: TouhouHBMItemData(CATEGORY_PROGRESS, 290, ItemClassification.progression),
+    PROGRESS_SLOTS_NAME_FULL: TouhouHBMItemData(CATEGORY_PROGRESS, 291, ItemClassification.progression)
 }
 
 ITEM_TABLE_ID_TO_STAGE_NAME: Dict[int, str] = {

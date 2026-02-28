@@ -100,6 +100,8 @@ class TouhouHBMWorld(World):
             # Options
             "starting_market": self.options.starting_market.value,
             "progressive_stages": self.options.progressive_stages.value,
+            "progressive_loadout": self.options.progressive_loadout.value,
+            "stage_boss_locations": self.options.stage_boss_locations.value,
             "disable_challenge_logic": self.options.disable_challenge_logic.value,
             "trap_chance": self.options.trap_chance.value,
             "low_skill_logic": self.options.low_skill_logic.value,

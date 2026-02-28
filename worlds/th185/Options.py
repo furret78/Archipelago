@@ -57,6 +57,40 @@ class ProgressiveStages(DefaultOnToggle):
     display_name = "Progressive Markets"
 
 
+class StageBossLocations(Choice):
+    """
+    Whether boss encounters and defeats will count as locations and whether stage clears will count as locations.
+    Currently unimplemented.
+    """
+
+    option_boss_only = 0
+    option_stage_only = 1
+    option_full = 2
+
+    default = option_boss_only
+
+    display_name = "Boss and Stage Locations"
+
+    @classmethod
+    def get_option_name(cls, value: T) -> str:
+        if value == cls.option_boss_only:
+            return "Boss Encounters and Defeats Only"
+        if value == cls.option_stage_only:
+            return "Stage Clear Only"
+        if value == cls.option_full:
+            return "Full Boss and Stage Clear Locations"
+        return super().get_option_name(value)
+
+
+class ProgressiveLoadout(DefaultOnToggle):
+    """
+    Whether starting card slots and equip cost will be upgraded according to the number of bosses defeated or via items received.
+    Currently unimplemented.
+    """
+
+    display_name = "Progressive Equipment"
+
+
 class DisableChallengeLogic(DefaultOnToggle):
     """
     Generation logic will consider Challenge Market inaccessible if all other stages are locked.
@@ -206,6 +240,8 @@ class CompletionType(Choice):
 class TouhouHBMDataclass(PerGameCommonOptions):
     starting_market: StartingMarket
     progressive_stages: ProgressiveStages
+    progressive_loadout: ProgressiveLoadout
+    stage_boss_locations: StageBossLocations
     disable_challenge_logic: DisableChallengeLogic
     trap_chance: TrapChance
     low_skill_logic: LowSkillLogic
@@ -228,14 +264,20 @@ option_groups = [
     ),
     OptionGroup(
         "Generation Options",
-        [StartingMarket, ProgressiveStages, MusicRoomChecks, AchieveChecks, DisableChallengeLogic, LowSkillLogic, TrapChance, IncludeGameplayFiller, CompletionType]
+        [StartingMarket, ProgressiveStages, ProgressiveLoadout, StageBossLocations, MusicRoomChecks, AchieveChecks]
+    ),
+    OptionGroup(
+        "Logic Options",
+        [DisableChallengeLogic, LowSkillLogic, CompletionType]
     )
 ]
 
 option_presets = {
     "easy": {
-        "starting_market": 0,
+        "starting_market": 0, # Tutorial
         "progressive_stages": True,
+        "progressive_loadout": False,
+        "stage_boss_locations": 1, # Only stage clears
         "disable_challenge_logic": True,
         "trap_chance": 0,
         "low_skill_logic": True,
@@ -252,6 +294,8 @@ option_presets = {
     "normal": {
         "starting_market": 1, # 1st Market
         "progressive_stages": True,
+        "progressive_loadout": False,
+        "stage_boss_locations": 0, # Only boss clears
         "disable_challenge_logic": True,
         "trap_chance": 5,
         "low_skill_logic": True,
@@ -268,6 +312,8 @@ option_presets = {
     "hard": {
         "starting_market": 3, # 3rd Market
         "progressive_stages": True,
+        "progressive_loadout": True,
+        "stage_boss_locations": 0, # Only boss clears
         "disable_challenge_logic": True,
         "trap_chance": 10,
         "low_skill_logic": False,
@@ -284,6 +330,8 @@ option_presets = {
     "lunatic": {
         "starting_market": 5, # 5th Market
         "progressive_stages": False,
+        "progressive_loadout": True,
+        "stage_boss_locations": 2, # Both boss clears and stage clears
         "disable_challenge_logic": False,
         "trap_chance": 20,
         "low_skill_logic": False,
@@ -300,6 +348,8 @@ option_presets = {
     "overdrive": {
         "starting_market": 8, # Challenge Market
         "progressive_stages": False,
+        "progressive_loadout": True,
+        "stage_boss_locations": 2, # Both boss clears and stage clears
         "disable_challenge_logic": False,
         "trap_chance": 50,
         "low_skill_logic": False,

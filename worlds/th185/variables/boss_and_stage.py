@@ -32,6 +32,8 @@ BOSS_CHIMATA_NAME = "Chimata Tenkyuu"
 BOSS_NITORI_NAME = "Nitori Kawashiro"
 BOSS_TAKANE_NAME = "Takane Yamashiro"
 
+GENERIC_STAGE_CLEAR_NAME = "Stage Clear"
+
 # Boss IDs
 BOSS_MIKE = 0
 BOSS_MINORIKO = 1
@@ -161,6 +163,7 @@ BOSS_ID_TO_NAME = {
 # Special progressive item name
 # Having one is equivalent to having access to the Tutorial
 PROGRESS_ITEM_NAME_FULL = "Progressive Market"
+PROGRESS_SLOTS_NAME_FULL = "Progressive Equipment"
 PROGRESS_SLOT_NAME = "Progressive Initial Cards"
 PROGRESS_COST_NAME = "Progressive Equipment Cost"
 
