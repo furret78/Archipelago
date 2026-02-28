@@ -59,7 +59,7 @@ class ProgressiveStages(DefaultOnToggle):
 
 class DisableChallengeLogic(DefaultOnToggle):
     """
-    Generation logic will consider Challenge Market inaccessible before unlocking all other stages.
+    Generation logic will consider Challenge Market inaccessible if all other stages are locked.
     Disable this option to turn off the above handicap.
     """
 

@@ -13,7 +13,6 @@
 - Add rules for Progressive Card Slots and Equip Cost.
 
 - Implement full game data reset upon disconnect. (if needed)
-- Add function to relink to the game after a disconnect without restarting client. (test later)
 - Figure out seamless room switching while the game is running.
 
 - Add trap: Lily White Trap

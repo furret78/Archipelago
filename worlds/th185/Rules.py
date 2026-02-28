@@ -16,20 +16,6 @@ def set_all_rules(world) -> None:
     set_all_location_rules(world)
     set_goal_condition(world)
 
-def check_for_softlock(world) -> None:
-    start_inv = world.options.start_inventory_from_pool.value.keys()
-    has_no_valid_stage: bool = True
-    for stage_full_name in STAGE_NAME_LIST:
-        if world.options.disable_challenge_logic and CHALLENGE_NAME_FULL in start_inv:
-            break
-        if stage_full_name in start_inv:
-            has_no_valid_stage = False
-            break
-
-    if has_no_valid_stage:
-        from Fill import FillError
-        raise FillError(f"No valid stages found in Start Inventory from Pool for player {world.multiworld.player_name[world.player]} (Touhou 18.5). Go back and add some!")
-
 
 def get_card_shop_item_names() -> list[str]:
     # Go through both lists and fetch the card names.
