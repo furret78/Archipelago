@@ -245,6 +245,21 @@ def get_boss_id_according_to_internal(boss_id: int) -> int:
 
     return boss_id + 2
 
+def get_internal_boss_id_to_client(boss_id: int) -> int:
+    """
+    Converts the boss ID retrieved from the game into the client's.
+    """
+    if boss_id == BOSS_NITORI + 11:
+        return BOSS_NITORI
+    elif boss_id == BOSS_TAKANE + 3:
+        return BOSS_TAKANE
+    elif boss_id == BOSS_CHIMATA:
+        return BOSS_CHIMATA
+    # ID 1 is a special case since it is Mike (Tutorial).
+    elif boss_id >= BOSS_TSUKASA + 1 or boss_id == 1:
+        return boss_id - 1
+
+    return boss_id - 2
 
 def get_stage_id_according_to_internal(stage_id: int) -> int:
     """

@@ -51,19 +51,18 @@ for stages in STAGE_LIST:
     if stage_id == STAGE_CHALLENGE_ID:
         challenge_boss_group: set[str] = set()
         for boss in get_boss_names_challenge_list():
-            # Most bosses in Challenge Market only have encounter stats.
             challenge_boss_encounter: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss)
+            challenge_boss_defeat: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss, True)
+
             location_table[challenge_boss_encounter] = location_id_offset
             location_id_to_name[location_id_offset] = challenge_boss_encounter
-            location_id_offset += 1
+
+            location_table[challenge_boss_defeat] = location_id_offset + 1
+            location_id_to_name[location_id_offset + 1] = challenge_boss_defeat
+
+            location_id_offset += 2
             challenge_boss_group.add(challenge_boss_encounter)
-            # Defeat stats for the Final Wave bosses actually get saved.
-            if boss in ALL_BOSSES_LIST[STAGE6_ID]:
-                challenge_boss_defeat: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss, True)
-                location_table[challenge_boss_defeat] = location_id_offset
-                location_id_to_name[location_id_offset] = challenge_boss_defeat
-                location_id_offset += 1
-                challenge_boss_group.add(challenge_boss_defeat)
+            challenge_boss_group.add(challenge_boss_defeat)
         location_groups.update({CHALLENGE_NAME_FULL: challenge_boss_group})
 
     stage_id += 1
@@ -218,6 +217,7 @@ def create_regular_locations(world):
                 boss_challenge_list = get_boss_names_challenge_list()
                 for challenge_boss in boss_challenge_list:
                     location_challenge_encounter: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss)
+                    location_challenge_defeat: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss, True)
 
                     boss_encounter_location = TouhouHBMLocation(
                         world.player,
@@ -225,20 +225,15 @@ def create_regular_locations(world):
                         world.location_name_to_id[location_challenge_encounter],
                         all_regions_dict[CHALLENGE_NAME]
                     )
+                    boss_defeat_location = TouhouHBMLocation(
+                        world.player,
+                        location_challenge_defeat,
+                        world.location_name_to_id[location_challenge_defeat],
+                        all_regions_dict[CHALLENGE_NAME]
+                    )
 
                     all_regions_dict[CHALLENGE_NAME].locations.append(boss_encounter_location)
-
-                    if challenge_boss in ALL_BOSSES_LIST[STAGE6_ID]:
-                        location_challenge_defeat: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss, True)
-
-                        boss_defeat_location = TouhouHBMLocation(
-                            world.player,
-                            location_challenge_defeat,
-                            world.location_name_to_id[location_challenge_defeat],
-                            all_regions_dict[CHALLENGE_NAME]
-                        )
-
-                        all_regions_dict[CHALLENGE_NAME].locations.append(boss_defeat_location)
+                    all_regions_dict[CHALLENGE_NAME].locations.append(boss_defeat_location)
         # Ability Card as Market Card Rewards
         elif region_name == ENDSTAGE_CHOOSE_NAME:
             for stage_card in ABILITY_CARD_LIST:

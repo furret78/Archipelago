@@ -3,7 +3,8 @@ import unittest
 import pymem
 
 import Utils
-from ..Tools import getAddressFromPointer, getPointerAddress, write_user_data, get_user_data
+from ..Tools import getAddressFromPointer, getPointerAddress, get_internal_boss_id_to_client
+from ..variables.address_gameplay import ADDR_LAST_BOSS_MET
 from ..variables.card_const import ADDR_CARD_TO_DEX, MALLET_CARD
 from ..variables.meta_data import DISPLAY_NAME
 from .. import TouhouHBMWorld, FILE_NAME, ADDR_BASE_MENU_PTR
@@ -25,11 +26,9 @@ class PythonTestFunctions(unittest.TestCase):
         self.pm.write_bytes(addrFromCardDex, bytes([0x00]), 1)
         print(self.pm.read_bytes(addrFromCardDex, 1))
 
-    def test_write_client_settings(self):
-        write_user_data({
-            "path": "something here",
-            "numbers": 40
-        })
-
-    def test_read_client_settings(self):
-        print(get_user_data())
+    def test_read_boss_data(self):
+        self.pm = pymem.Pymem(process_name=FILE_NAME)
+        addrBossMet = self.pm.base_address + ADDR_LAST_BOSS_MET
+        last_boss_met_id = self.pm.read_int(addrBossMet)
+        if last_boss_met_id < 1 or last_boss_met_id > 28: last_boss_met_id = -1
+        print(f"Boss Met: {get_internal_boss_id_to_client(last_boss_met_id)}")

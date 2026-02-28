@@ -12,9 +12,17 @@ ADDR_BULLET_MONEY_PTR = 0x000D1074
 ADDR_BULLET_MONEY_2_PTR = 0x000D1070
 ADDR_LIVES_PTR = 0x000D10BC
 ADDR_ANTICHEAT_HACK = 0x000744A6 # NOP opcodes should be used.
-ADDR_ALERT_POPUP_PTR = 0x0004819f # Set this to FF.
-ADDR_ALERT_POPUP_FUNC = 0x000481a7 # Set this to 90, 90, 90, 90, 90.
+ADDR_ALERT_POPUP_PTR = 0x0004819F # Set this to FF.
+ADDR_ALERT_POPUP_FUNC = 0x000481A7 # Set this to 90, 90, 90, 90, 90.
 ADDR_BLACK_MARKET_PTR = 0x000D7AC4 # If does not return 0, Black Market is open.
+
+# Stores the ID of the last boss encountered.
+# Does not get cleared during normal stage segments,
+# so usage during Challenge Market should only be done when a Black Market is open.
+# The range of 02-25 are all of the bosses that can show up in Challenge Market.
+ADDR_LAST_BOSS_MET = 0x000D1028
+# ID of the stage the player is currently in.
+ADDR_CURRENT_STAGE_NUM = 0x000D1004
 
 # This is mainly for menu cursor stuff. Override in order from 1-7.
 # Address of the line that sets the cursor in the menu to Stage #.

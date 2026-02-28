@@ -1,4 +1,9 @@
+# AP 0.6.7 moves CollectionRule to BaseClasses
 from BaseClasses import CollectionState
+try:
+    from BaseClasses import CollectionRule
+except ImportError:
+    from worlds.generic.Rules import CollectionRule
 from worlds.generic.Rules import add_rule, set_rule
 from .Tools import get_progress_item_requirement, get_boss_location_name_str, get_card_location_name_str, \
     get_music_location_name_str, get_achievement_location_name_str, get_boss_names_challenge_list
@@ -318,9 +323,8 @@ def set_all_location_rules(world) -> None:
                 location_encounter = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss)
                 add_rule(world.get_location(location_encounter), lambda state: has_challenge_access_item(state, True))
 
-                if challenge_boss in ALL_BOSSES_LIST[STAGE6_ID]:
-                    location_defeat = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss, True)
-                    add_rule(world.get_location(location_defeat), lambda state: has_challenge_access_item(state, True))
+                location_defeat = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss, True)
+                add_rule(world.get_location(location_defeat), lambda state: has_challenge_access_item(state, True))
 
     #
     # Location rules for Ability Cards as stage rewards here.

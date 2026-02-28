@@ -532,7 +532,7 @@ class TouhouHBMContext(CommonContext):
 
                         # Check here if the player is not in a stage.
                         # If not, return the energy immediately.
-                        if not self.checkIfGameInStage():
+                        if not self.handler.isGameInStage():
                             logger.info(BULLET_MONEY_CANNOT_WITHDRAW)
                             asyncio.create_task(self.send_direct_deposit_msg(args["original_value"] - args["value"]))
                             return
@@ -585,14 +585,6 @@ class TouhouHBMContext(CommonContext):
     #
     def update_stage_list(self):
         self.handler.updateStageList()
-
-    def checkIfGameInStage(self):
-        """
-        Helper function that checks if the game is currently in a stage.
-        This checks both whether the game is actually in a stage and whether it should scan for Market Card Rewards.
-        If it is, return True.
-        """
-        return self.handler.isGameInStage() and self.enable_card_selection_checking
 
     #
     # Victory conditions
@@ -795,10 +787,7 @@ class TouhouHBMContext(CommonContext):
         asyncio.create_task(self.handle_game_only_items())
 
     def try_unlock_card_in_shop(self, card_name: str):
-        if (self.handler.isGameInStage()
-            or self.enable_card_selection_checking
-            or not self.enable_card_shop_scanning):
-            return
+        if self.enable_card_selection_checking: return
 
         self.handler.permashop_card_new = self.permashop_cards_new
         self.handler.setCardShopRecordHandler(card_name, True)
@@ -808,7 +797,7 @@ class TouhouHBMContext(CommonContext):
         # Properly handle the items only meant for stages here.
         # This does not get to run if the queue is empty,
         # or the game is not running, or the game is not in a stage.
-        while not self.enable_card_selection_checking:
+        while not self.handler.isGameInStage() or not self.is_game_running:
             await asyncio.sleep(0.5)
 
         for item_id in self.gameItemQueue:
@@ -969,7 +958,7 @@ class TouhouHBMContext(CommonContext):
         while not self.menu_stats_initialized:
             await asyncio.sleep(0.5)
 
-        if self.enable_card_selection_checking:
+        if self.handler.isGameInStage():
             self.handler.addGameFunds(received_funds)
         else:
             self.handler.addMenuFunds(received_funds)
@@ -1112,14 +1101,25 @@ class TouhouHBMContext(CommonContext):
 
     async def game_loop(self):
         """
-        Game loop. Doesn't really do much.
+        Game loop. Checks when to clear out the shop data in order to scan for Market Card Rewards.
         """
         try:
             if not self.handler.isGameInStage(): return
 
-            if self.enable_card_shop_scanning: self.enable_card_shop_scanning = False
-            if not self.enable_card_selection_checking:
+            current_stage = self.handler.getCurrentStage()
+            current_boss = self.handler.getLastBossMet()
+
+            if self.enable_card_shop_scanning:
+                self.enable_card_shop_scanning = False
                 await self.transfer_from_menu_to_stage()
+            if not self.enable_card_selection_checking:
+                if current_boss == -1: return
+                if ((current_stage == STAGE_CHALLENGE_ID and BOSS_ID_TO_NAME[current_boss] in ALL_BOSSES_LIST[STAGE6_ID]) or
+                    (current_stage != STAGE_CHALLENGE_ID)):
+                    await self.transfer_from_shop_to_reward()
+                else:
+                    return
+
                 self.enable_card_selection_checking = True
         except Exception as e:
             self.inError = True
@@ -1139,7 +1139,9 @@ class TouhouHBMContext(CommonContext):
 
             if self.handler.isGameInStage(): return
 
-            if self.enable_card_selection_checking: self.enable_card_selection_checking = False
+            # Since the game is in the menu, it should no longer check for Market Card Rewards.
+            if self.enable_card_selection_checking:
+                self.enable_card_selection_checking = False
             if not self.enable_card_shop_scanning:
                 await self.transfer_from_stage_to_menu()
                 self.enable_card_shop_scanning = True
@@ -1171,6 +1173,8 @@ class TouhouHBMContext(CommonContext):
 
         if self.loadingDataSetup: return
 
+        challenge_boss_list = get_boss_names_challenge_list()
+
         # Check bosses first.
         for stage_name in STAGE_LIST:
             if stage_name != CHALLENGE_NAME:
@@ -1193,10 +1197,7 @@ class TouhouHBMContext(CommonContext):
                             new_locations.append(location_table[locationName])
             else:
                 # Special Challenge Market clause
-                challenge_boss_list = get_boss_names_challenge_list()
                 for boss_name in challenge_boss_list:
-                    # Make sure to exclude the story bosses.
-                    if boss_name in STORY_BOSSES_LIST: continue
                     # There are mostly only encounters. Check those.
                     if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name]):
                         challenge_encounter: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss_name)
@@ -1212,13 +1213,22 @@ class TouhouHBMContext(CommonContext):
                                                               DEFEAT_ID)
                             new_locations.append(location_table[challenge_defeat])
 
+        # Special check only for non-Final boss defeats in Challenge Market.
+        if self.handler.isGameInStage() and self.handler.isBlackMarketOpen() and self.handler.getCurrentStage() == STAGE_CHALLENGE_ID and self.handler.getLastBossMet() in BOSS_ID_TO_NAME:
+            last_boss_defeated = BOSS_ID_TO_NAME[self.handler.getLastBossMet()]
+            if last_boss_defeated not in ALL_BOSSES_LIST[STAGE6_ID]:
+                challenge_defeat: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, last_boss_defeated, True)
+                if obligatory_location_table_check(challenge_defeat):
+                    self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[last_boss_defeated], True, DEFEAT_ID)
+                    new_locations.append(location_table[challenge_defeat])
+
         # Check Ability Cards.
         # Split into stage-exclusive and dex.
         # First step is checking if the card location exists in the big location table.
 
         # Stage-exclusive.
         player_has_found_card_in_stage = False
-        if self.checkIfGameInStage():
+        if self.enable_card_selection_checking:
             # Go over the entire Ability Card list.
             # Invalid locations get bounced off of the location table check anyways.
             for card in ABILITY_CARD_LIST:
@@ -1231,11 +1241,11 @@ class TouhouHBMContext(CommonContext):
                     new_locations.append(location_table[cardLocationName])
                     player_has_found_card_in_stage = True
 
-            if self.handler.isBlackMarketOpen():
-                self.handler.setDexCardData(NAZRIN_CARD_2, True)
-                cardLocationName: str = get_card_location_name_str(NAZRIN_CARD_2, True)
-                if obligatory_location_table_check(cardLocationName):
-                    new_locations.append(location_table[cardLocationName])
+        if self.handler.isGameInStage() and self.handler.isBlackMarketOpen():
+            self.handler.setDexCardData(NAZRIN_CARD_2, True)
+            cardLocationName: str = get_card_location_name_str(NAZRIN_CARD_2, True)
+            if obligatory_location_table_check(cardLocationName):
+                new_locations.append(location_table[cardLocationName])
 
         # Dex
         player_has_purchased_card_bool = False
@@ -1386,21 +1396,41 @@ class TouhouHBMContext(CommonContext):
                     if achievement_name not in full_location_name: continue
                     self.handler.setAchievementStatus(achievement_id, True)
 
+    # Helper functions for things to do with cards.
+    def get_menu_card_list(self) -> list:
+        menu_card_list = ABILITY_CARD_LIST
+        for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
+            if invalid_card in menu_card_list: menu_card_list.remove(invalid_card)
+        return menu_card_list
+
+    def clear_shop_card_data(self):
+        # Clear out the records of the entire Card Shop in the memory.
+        for card_string_id in self.get_menu_card_list():
+            self.handler.setCardShopRecordGame(card_string_id, False)
+
     async def transfer_from_menu_to_stage(self):
         """
         Handles transferring from the menu to the game stage.
         Mainly for the Ability Card shop addresses.
         Previously checked locations are save data for Card Selection checks.
         """
-        menu_shop_card_list = ABILITY_CARD_LIST
-        for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
-            if invalid_card in menu_shop_card_list: menu_shop_card_list.remove(invalid_card)
+        await self.save_menu_stats_to_server()
 
-        # Clear out the records of the entire Card Shop in the memory.
-        for card_string_id in menu_shop_card_list:
-            self.handler.setCardShopRecordGame(card_string_id, False)
+    async def transfer_from_shop_to_reward(self):
+        """
+        Handles loading data specifically regarding the Market Card Rewards.
+        Since the addresses for unlocking cards in the shop are the exact same as the ones
+        for checking what cards you already have at the end of a stage and what cards
+        can be bought in a Black Market, it has to be changed sometime before the rewards come up.
+        Should only do this at the last boss fight of a stage.
 
-        # Go over the list of acquired checks and set as appropriate.
+        For normal stages, that's any boss at all.
+        For Challenge Market, specifically check for the Stage 6 bosses.
+        """
+        self.clear_shop_card_data()
+
+        await asyncio.sleep(0.2)
+
         for location_id in self.previous_location_checked:
             full_location_name = location_id_to_name[location_id]
             # If none of these locations talk about the Market Card Reward, discard and move on.
@@ -1408,29 +1438,21 @@ class TouhouHBMContext(CommonContext):
                 continue
 
             # It does not really matter what value the records are set to aside from 0x00 and non-0x00.
-            for card_string_id in menu_shop_card_list:
+            for card_string_id in self.get_menu_card_list():
                 card_location_name: str = get_card_location_name_str(card_string_id, False)
                 if card_location_name == full_location_name:
                     self.handler.setCardShopRecordGame(card_string_id, True)
-
-        await self.save_menu_stats_to_server()
 
     async def transfer_from_stage_to_menu(self):
         """
         Handles transferring from the game stage to the menu.
         """
-        menu_shop_card_list = ABILITY_CARD_LIST
-        for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
-            if invalid_card in menu_shop_card_list: menu_shop_card_list.remove(invalid_card)
+        self.clear_shop_card_data()
 
-        # Clear out the records of the entire Card Shop in the memory.
-        for card_string_id in menu_shop_card_list:
-            self.handler.setCardShopRecordGame(card_string_id, False)
-
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.2)
 
         # For all cards that can be bought in the shop...
-        for card_name in menu_shop_card_list:
+        for card_name in self.get_menu_card_list():
             # Check if it's unlocked.
             if card_name in self.permashop_cards:
                 self.handler.setCardShopRecordHandler(card_name, True)
@@ -1533,7 +1555,7 @@ class TouhouHBMContext(CommonContext):
         Called when receiving a Death Link from the server.
         """
         self.pending_received_deathlink = True
-        if not self.enable_card_selection_checking:
+        if not self.handler.isGameInStage():
             self.pending_life_deduction = True
             self.pending_received_deathlink = False
         return super().on_deathlink(data)
@@ -1561,7 +1583,7 @@ class TouhouHBMContext(CommonContext):
             # Skip the loop otherwise.
 
             # If not in a stage, don't do anything here.
-            if not self.checkIfGameInStage(): return
+            if not self.handler.isGameInStage(): return
 
             # If a Death Link had already arrived, it will be stored as a life lost.
             # Upon entering a stage, immediately deduct 1 Life.
@@ -1632,7 +1654,7 @@ class TouhouHBMContext(CommonContext):
             self.menuFunds = self.handler.getMenuFunds()
 
             # Check if the game is in the menu.
-            if not self.checkIfGameInStage():
+            if not self.handler.isGameInStage():
                 if self.menuFunds < amount:
                     amount_to_deposit = self.menuFunds
                 else: amount_to_deposit = amount
@@ -1663,7 +1685,7 @@ class TouhouHBMContext(CommonContext):
         elif currency_type == CURRENCY_BULLET_MONEY_ID:
             # Check if the game is in the menu.
             # If it is, skip.
-            if not self.checkIfGameInStage():
+            if not self.handler.isGameInStage():
                 logger.info("There is no Bullet Money to deposit. Enter a stage first.")
                 return
             # If not, check for Bullet Money.
@@ -1700,7 +1722,7 @@ class TouhouHBMContext(CommonContext):
         # Check for currency type here to read the correct amount.
         # If the retrieved amount is at max, immediately cancel the entire operation.
         if currency_type == CURRENCY_FUNDS_ID:
-            if not self.checkIfGameInStage():
+            if not self.handler.isGameInStage():
                 current_currency_amount = self.handler.getGameFunds()
             else:
                 current_currency_amount = self.handler.getMenuFunds()
@@ -1709,7 +1731,7 @@ class TouhouHBMContext(CommonContext):
                 logger.info("Cannot withdraw any more Funds. Maximum amount reached.")
                 return
         elif currency_type == CURRENCY_BULLET_MONEY_ID:
-            if not self.checkIfGameInStage():
+            if not self.handler.isGameInStage():
                 logger.info(BULLET_MONEY_CANNOT_WITHDRAW)
                 return
 
@@ -1753,13 +1775,13 @@ class TouhouHBMContext(CommonContext):
         difference_amount: int = 0
 
         if currency_type == CURRENCY_FUNDS_ID:
-            if self.checkIfGameInStage():
+            if self.handler.isGameInStage():
                 current_currency_amount = self.handler.getGameFunds()
             else:
                 current_currency_amount = self.handler.getMenuFunds()
         elif currency_type == CURRENCY_BULLET_MONEY_ID:
             withdrawn_currency_name = CURRENCY_NAME_BULLET_MONEY
-            if self.checkIfGameInStage():
+            if self.handler.isGameInStage():
                 current_currency_amount = self.handler.getBulletMoney()
             else:
                 logger.info(BULLET_MONEY_CANNOT_WITHDRAW)
@@ -1779,12 +1801,12 @@ class TouhouHBMContext(CommonContext):
         remaining_currency = received_amount - amount_to_withdraw
 
         if currency_type == CURRENCY_FUNDS_ID:
-            if self.checkIfGameInStage():
+            if self.handler.isGameInStage():
                 self.handler.addGameFunds(amount_to_withdraw)
             else:
                 self.handler.addMenuFunds(amount_to_withdraw)
         elif currency_type == CURRENCY_BULLET_MONEY_ID:
-            if self.checkIfGameInStage():
+            if self.handler.isGameInStage():
                 self.handler.addBulletMoney(amount_to_withdraw)
             else:
                 logger.info(BULLET_MONEY_CANNOT_WITHDRAW)

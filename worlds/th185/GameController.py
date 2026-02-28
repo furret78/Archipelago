@@ -24,6 +24,8 @@ class GameController:
         self.addrBulletMoney = self.pm.base_address+ADDR_BULLET_MONEY_PTR
         self.addrLives = self.pm.base_address+ADDR_LIVES_PTR
         self.addrBlackMarketStatus = self.pm.base_address+ADDR_BLACK_MARKET_PTR
+        self.addrLastBossMet = self.pm.base_address+ADDR_LAST_BOSS_MET
+        self.addrCurrentStageNumber = self.pm.base_address+ADDR_CURRENT_STAGE_NUM
 
         self.addrShotAttack = self.pm.base_address+ADDR_SHOT_ATTACK
         self.addrMagicCircleAttack = self.pm.base_address+ADDR_CIRCLE_ATTACK
@@ -200,7 +202,7 @@ class GameController:
 
         self.pm.write_int(addrEquipCost, final_value)
 
-    # Stage lock functions
+    # Stage functions
     def getStageStatus(self, stage_id: int) -> bool:
         stageLockAddress = self.getAddressFromPointerWithBase(ADDR_STAGE_ID_TO_PTR[stage_id])
         return bool.from_bytes(self.pm.read_bytes(stageLockAddress, 1))
@@ -208,6 +210,18 @@ class GameController:
     def setStageStatus(self, stage_id: int, value: int):
         stageLockAddress = self.getAddressFromPointerWithBase(ADDR_STAGE_ID_TO_PTR[stage_id])
         self.pm.write_bytes(stageLockAddress, bytes([value]), 1)
+
+    def getCurrentMarket(self) -> int:
+        """
+        Returns the ID of the stage currently in.
+        """
+        return self.pm.read_int(self.addrCurrentStageNumber)
+
+    def getLastBossEncountered(self) -> int:
+        """
+        Returns the value retrieved from the game as is for the boss that the player last met.
+        """
+        return self.pm.read_int(self.addrLastBossMet)
 
     # Functions that control boss records
     def getBossRecord(self, stage: int, boss: int, category: int) -> bool:

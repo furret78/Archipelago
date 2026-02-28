@@ -3,7 +3,7 @@ import sys
 
 from . import MAX_BULLET_MONEY
 from .GameController import GameController
-from .Tools import clamp, get_boss_and_stage_id
+from .Tools import clamp, get_boss_and_stage_id, get_internal_boss_id_to_client
 from .variables.card_const import *
 
 class GameHandler:
@@ -62,11 +62,7 @@ class GameHandler:
             STAGE5_ID: {BOSS_TSUKASA: False, BOSS_MEGUMU: False, BOSS_CLOWNPIECE: False, BOSS_TENSHI: False},
             STAGE6_ID: {BOSS_SUIKA: False, BOSS_MAMIZOU: False, BOSS_SAKI: False, BOSS_MOMOYO: False, BOSS_TAKANE: False},
             STAGE_CHIMATA_ID: {BOSS_CHIMATA: False},
-            STAGE_CHALLENGE_ID: {BOSS_SUIKA: False, BOSS_MAMIZOU: False, BOSS_SAKI: False, BOSS_MOMOYO: False}
-        }
-
-        self.bosses_met = self.bosses_beaten
-        self.bosses_met[STAGE_CHALLENGE_ID] = {
+            STAGE_CHALLENGE_ID: {
                 BOSS_MIKE: False, BOSS_MINORIKO: False, BOSS_ETERNITY: False, BOSS_NEMUNO: False,
                 BOSS_CIRNO: False, BOSS_WAKASAGI: False, BOSS_SEKIBANKI: False, BOSS_URUMI: False,
                 BOSS_EBISU: False, BOSS_KUTAKA: False, BOSS_NARUMI: False, BOSS_KOMACHI: False,
@@ -74,6 +70,8 @@ class GameHandler:
                 BOSS_TSUKASA: False, BOSS_MEGUMU: False, BOSS_CLOWNPIECE: False, BOSS_TENSHI: False,
                 BOSS_SUIKA: False, BOSS_MAMIZOU: False, BOSS_SAKI: False, BOSS_MOMOYO: False
             }
+        }
+        self.bosses_met = self.bosses_beaten
 
         for stage_name in STAGE_LIST:
             self.stages_unlocked[stage_name] = False
@@ -187,11 +185,8 @@ class GameHandler:
     def setLoadMenuIndex(self, starting_market: int):
         self.gameController.setStageCursorIndex(clamp(starting_market + 1, 1, 9))
 
-    def getLastStageIndex(self) -> int:
-        """
-        If this returns 0, the player hasn't even started anything yet.
-        """
-        return self.gameController.getLastStageIndex()
+    def getCurrentStage(self) -> int:
+        return self.gameController.getCurrentMarket() - 1
 
     # Other functions
     def getBossRecordHandler(self, stage_id: int, boss_id: int, type: int = 0):
@@ -252,6 +247,16 @@ class GameHandler:
         if record_type != DEFEAT_ID: return
         hidden_records = get_boss_and_stage_id(stage_id, boss_id)
         self.gameController.setHiddenBossDefeat(hidden_records[0], hidden_records[1], final_value)
+
+    def getLastBossMet(self) -> int:
+        """
+        Returns the last boss that the player has met.
+        The number retrieved from the game is converted into the ID chart that the client uses.
+        """
+        last_boss_met_id = self.gameController.getLastBossEncountered()
+        if last_boss_met_id < 1 or last_boss_met_id > 28: return -1
+        return get_internal_boss_id_to_client(self.gameController.getLastBossEncountered())
+
 
     def unlockNoCard(self):
         """
