@@ -21,18 +21,20 @@ ADDR_EQUIP_UPGRADE_6 = 0x0004AC95
 # In a loop starting from 0, go up to 29 and then stop if >= 30.
 ADDR_EQUIP_UPGRADE_7 = 0x0004AC97
 
+ADDR_EQUIP_UPGRADE_SET = (ADDR_EQUIP_UPGRADE_1, ADDR_EQUIP_UPGRADE_2, ADDR_EQUIP_UPGRADE_3, ADDR_EQUIP_UPGRADE_4)
+
 # Addresses of Card Upgrade conditional statements, checking for boss clears.
 # These conditionals just skip the entire logic chain if the number of bosses defeated aren't met.
 # This means it will also skip achievements.
-# Disable that by overwriting 4 bytes of the code at these addresses with NOP.
-ADDR_EQUIP_BOSS_CHECK_1 = 0x0004a834
-ADDR_EQUIP_BOSS_CHECK_2 = 0x0004a922
-ADDR_EQUIP_BOSS_CHECK_3 = 0x0004aa1c
-ADDR_EQUIP_BOSS_CHECK_4 = 0x0004ab16
-# This one is just 3 bytes.
-ADDR_EQUIP_BOSS_CHECK_5 = 0x0004ac10
-# 2 bytes here.
-ADDR_EQUIP_BOSS_CHECK_6 = 0x0004ac66
+# Disable that by making the number compared to always 0 instead, so that it always passes the checks.
+ADDR_EQUIP_BOSS_CHECK_1 = 0x0004a833
+ADDR_EQUIP_BOSS_CHECK_2 = 0x0004a921
+ADDR_EQUIP_BOSS_CHECK_3 = 0x0004aa1b
+ADDR_EQUIP_BOSS_CHECK_4 = 0x0004ab15
+ADDR_EQUIP_BOSS_CHECK_5 = 0x0004ac0e
+ADDR_EQUIP_BOSS_CHECK_6 = 0x0004ac65
+
+ADDR_EQUIP_BOSS_SET = (ADDR_EQUIP_BOSS_CHECK_1, ADDR_EQUIP_BOSS_CHECK_2, ADDR_EQUIP_BOSS_CHECK_3, ADDR_EQUIP_BOSS_CHECK_4, ADDR_EQUIP_BOSS_CHECK_5, ADDR_EQUIP_BOSS_CHECK_6)
 
 # This is mainly for menu cursor stuff. Override in order from 1-7.
 # Address of the line that sets the cursor in the menu to Stage #.

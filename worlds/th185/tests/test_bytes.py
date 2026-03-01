@@ -2,8 +2,7 @@ import unittest
 
 import pymem
 
-import Utils
-from ..Tools import getAddressFromPointer, getPointerAddress, get_internal_boss_id_to_client
+from ..Tools import getPointerAddress, get_internal_boss_id_to_client
 from ..variables.address_gameplay import ADDR_LAST_BOSS_MET
 from ..variables.card_const import ADDR_CARD_TO_DEX, MALLET_CARD
 from ..variables.meta_data import DISPLAY_NAME
