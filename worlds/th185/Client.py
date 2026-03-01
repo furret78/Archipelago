@@ -948,9 +948,9 @@ class TouhouHBMContext(CommonContext):
         if self.received_funds != 0:
             asyncio.create_task(self.addFundsToGame(self.received_funds))
         # Equip Cost never goes below 100%. This is checked when applying.
-        if self.received_equip_cost != 0:
-            self.handler.addEquipCost(self.received_equip_cost)
-            self.received_equip_cost = 0
+        #if self.received_equip_cost != 0:
+        #    self.handler.addEquipCost(self.received_equip_cost)
+        #    self.received_equip_cost = 0
 
         return
 
@@ -972,51 +972,41 @@ class TouhouHBMContext(CommonContext):
     #
     # If EnergyLink is enabled, don't save anything related to Funds.
     async def save_menu_stats_to_server(self):
+        list_msg_to_send: list[dict] = []
+
         self.menuFunds = self.handler.getMenuFunds()
         self.loadout_slots = clamp(self.handler.getCardSlots(), 1, 34)
         self.equip_cost = self.handler.getEquipCost()
 
-        if self.energylink_enabled:
-            await self.send_msgs(
-                [
-                    {
-                        "cmd": "Set",
-                        "key": self.custom_data_keys_list[1],
-                        "default": 1,
-                        "operations": [{"operation": 'replace', "value": self.loadout_slots}]
-                    },
-                    {
-                        "cmd": "Set",
-                        "key": self.custom_data_keys_list[2],
-                        "default": 100,
-                        "operations": [{"operation": 'replace', "value": self.equip_cost}]
-                    }
-                ]
-            )
-            return
-
-        await self.send_msgs(
-            [
+        if not self.energylink_enabled:
+            list_msg_to_send.append(
                 {
                     "cmd": 'Set',
                     "key": self.custom_data_keys_list[0],
                     "default": 0,
                     "operations": [{"operation": 'replace', "value": self.menuFunds}]
-                },
+                }
+            )
+        if self.is_progressive_equip_disabled():
+            list_msg_to_send.append(
                 {
                     "cmd": "Set",
                     "key": self.custom_data_keys_list[1],
                     "default": 1,
                     "operations": [{"operation": 'replace', "value": self.loadout_slots}]
-                },
+                }
+            )
+            list_msg_to_send.append(
                 {
                     "cmd": "Set",
                     "key": self.custom_data_keys_list[2],
                     "default": 100,
                     "operations": [{"operation": 'replace', "value": self.equip_cost}]
                 }
-            ]
-        )
+            )
+
+        if len(list_msg_to_send) <= 0: return
+        await self.send_msgs(list_msg_to_send)
 
     async def save_menu_funds_to_server(self):
         if self.energylink_enabled: return
@@ -1150,6 +1140,29 @@ class TouhouHBMContext(CommonContext):
             logger.error(f"Error in the MENU loop.")
             logger.error(traceback.format_exc())
 
+    # Helper functions for some Options
+    def is_progressive_equip_together(self):
+        """
+        Checks if Progressive Equipment is set to the Together type.
+        Returns False if not.
+        """
+        return self.options["progressive_loadout"] == 1
+
+    def is_progressive_equip_separate(self):
+        """
+        Checks if Progressive Equipment is set to the Separate type.
+        Returns False if not.
+        """
+        return self.options["progressive_loadout"] == 2
+
+    def is_progressive_equip_disabled(self):
+        """
+        Checks if Progressive Equipment is set to the Disabled type.
+        Returns False if not.
+        """
+        return self.options["progressive_loadout"] == 0
+
+    # Update locations
     async def update_locations_checked(self):
         """
         Check if any locations has been checked since this was last called.
@@ -1373,8 +1386,9 @@ class TouhouHBMContext(CommonContext):
 
     def load_save_data_menu(self):
         if not self.energylink_enabled: self.handler.setMenuFunds(self.menuFunds)
-        self.handler.setCardSlots(self.loadout_slots)
-        self.handler.setEquipCost(self.equip_cost)
+        if self.is_progressive_equip_disabled():
+            self.handler.setCardSlots(self.loadout_slots)
+            self.handler.setEquipCost(self.equip_cost)
 
         self.menu_stats_initialized = True
 
@@ -1943,6 +1957,9 @@ async def game_watcher(ctx: TouhouHBMContext):
 
                 if "energy_link_bullet_money" in ctx.options:
                     ctx.energylink_bulletmoney_enabled = ctx.options["energy_link_bullet_money"]
+
+                if not ctx.is_progressive_equip_disabled():
+                    ctx.handler.initGameProgressSlots()
 
                 asyncio.create_task(ctx.load_save_data())
                 ctx.loadingDataSetup = False

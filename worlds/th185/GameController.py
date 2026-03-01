@@ -2,6 +2,7 @@ import pymem
 import pymem.exception
 
 from .Tools import *
+from .variables.address_code import *
 from .variables.card_const import *
 from .variables.meta_data import *
 from .variables.address_gameplay import *
@@ -320,6 +321,31 @@ class GameController:
         self.pm.write_bytes(self.pm.base_address + ADDR_CURSOR_SET_CHALLENGE, bytes([0x07]), 1)
         # Forcibly unlock the option to equip no cards at all.
         self.setNoCardData()
+
+    def initGameCardOverride(self):
+        """
+        Things to do during boot-up if the player feels inclined to have the client handle loadout equipment progression.
+        """
+        # This will skip the unlocking functions.
+        upgrade_quartet_tuple = (ADDR_EQUIP_UPGRADE_1, ADDR_EQUIP_UPGRADE_2, ADDR_EQUIP_UPGRADE_3, ADDR_EQUIP_UPGRADE_4)
+        for upgrade_addr in upgrade_quartet_tuple:
+             self.pm.write_bytes(self.pm.base_address + upgrade_addr, bytes([0x90, 0xE9, 0xBF]), 3)
+
+        self.pm.write_bytes(self.pm.base_address + ADDR_EQUIP_UPGRADE_5, bytes([0xEB, 0x1F]), 2)
+        self.pm.write_bytes(self.pm.base_address + ADDR_EQUIP_UPGRADE_6, bytes([0x7E]), 1)
+
+        throwaway_addr_offset = 0
+        while throwaway_addr_offset < 30:
+            self.pm.write_bytes(self.pm.base_address + ADDR_EQUIP_UPGRADE_7 + throwaway_addr_offset, bytes([0x90]), 1)
+            throwaway_addr_offset += 1
+
+        # This will skip gating the achievement checks behind the number of bosses defeated.
+        boss_conditional_tuple = (ADDR_EQUIP_BOSS_CHECK_1, ADDR_EQUIP_BOSS_CHECK_2, ADDR_EQUIP_BOSS_CHECK_3, ADDR_EQUIP_BOSS_CHECK_4)
+        for boss_conditional_addr in boss_conditional_tuple:
+            self.pm.write_bytes(self.pm.base_address + boss_conditional_addr, bytes([0x90, 0x90, 0x90, 0x90]), 4)
+
+        self.pm.write_bytes(self.pm.base_address + ADDR_EQUIP_BOSS_CHECK_5, bytes([0x90, 0x90, 0x90]), 3)
+        self.pm.write_bytes(self.pm.base_address + ADDR_EQUIP_BOSS_CHECK_6, bytes([0x90, 0x90]), 2)
 
     def setNoCardData(self):
         addrFromCardDex = self.getAddressFromPointerWithBase(ADDR_DEX_NO_CARD)

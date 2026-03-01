@@ -80,6 +80,12 @@ class GameHandler:
         if self.gameController is None: return
         self.gameController.initGamePrep()
 
+    def initGameProgressSlots(self):
+        """
+        Overwrites some opcodes to allow the client to handle Card Slot and Equip Cost upgrades.
+        """
+        self.gameController.initGameCardOverride()
+
     # Get Handler functions
     def isGameInStage(self):
         """Check if the game is currently in any stage. Returns True if yes."""

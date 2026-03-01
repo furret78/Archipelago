@@ -82,13 +82,33 @@ class StageBossLocations(Choice):
         return super().get_option_name(value)
 
 
-class ProgressiveLoadout(DefaultOnToggle):
+class ProgressiveLoadout(Choice):
     """
     Whether starting card slots and equip cost will be upgraded according to the number of bosses defeated or via items received.
     Currently unimplemented.
+
+    1. Disabled - Slots and cost will be unlocked according to the number of bosses defeated.
+    2. Simultaneous - Both slots and cost will be upgraded at the same time.
+    3. Separate - Slots and cost will only be upgraded with the appropriate items received.
     """
 
-    display_name = "Progressive Equipment"
+    option_none = 0
+    option_together = 1
+    option_separate = 2
+
+    default = option_none
+
+    display_name = "Itemize Equipment Upgrades"
+
+    @classmethod
+    def get_option_name(cls, value: T) -> str:
+        if value == cls.option_none:
+            return "Disabled"
+        if value == cls.option_together:
+            return "Simultaneous Equipment Upgrades"
+        if value == cls.option_separate:
+            return "Separate Equipment Upgrades"
+        return super().get_option_name(value)
 
 
 class DisableChallengeLogic(DefaultOnToggle):
@@ -276,7 +296,7 @@ option_presets = {
     "easy": {
         "starting_market": 0, # Tutorial
         "progressive_stages": True,
-        "progressive_loadout": False,
+        "progressive_loadout": 0,
         "stage_boss_locations": 1, # Only stage clears
         "disable_challenge_logic": True,
         "trap_chance": 0,
@@ -294,7 +314,7 @@ option_presets = {
     "normal": {
         "starting_market": 1, # 1st Market
         "progressive_stages": True,
-        "progressive_loadout": False,
+        "progressive_loadout": 0,
         "stage_boss_locations": 0, # Only boss clears
         "disable_challenge_logic": True,
         "trap_chance": 5,

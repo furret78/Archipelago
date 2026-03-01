@@ -5,12 +5,7 @@
 - Add option: Starting Card Slots (up to 34)
 - Add option: Starting Equip Cost (up to 500%)
 
-- Add Progressive Equipment items.
-- Add rules for Progressive Equipment.
-
-- Add Progressive Card Slot items.
-- Add Progressive Equip Cost items.
-- Add rules for Progressive Card Slots and Equip Cost.
+- Implement receiving Progressive Equipment (Slots + Cost) items.
 
 - Implement full game data reset upon disconnect. (if needed)
 - Figure out seamless room switching while the game is running.

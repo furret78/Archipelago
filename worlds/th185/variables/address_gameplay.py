@@ -11,9 +11,6 @@ ADDR_GAME_FUNDS_PTR = 0x000D106C
 ADDR_BULLET_MONEY_PTR = 0x000D1074
 ADDR_BULLET_MONEY_2_PTR = 0x000D1070
 ADDR_LIVES_PTR = 0x000D10BC
-ADDR_ANTICHEAT_HACK = 0x000744A6 # NOP opcodes should be used.
-ADDR_ALERT_POPUP_PTR = 0x0004819F # Set this to FF.
-ADDR_ALERT_POPUP_FUNC = 0x000481A7 # Set this to 90, 90, 90, 90, 90.
 ADDR_BLACK_MARKET_PTR = 0x000D7AC4 # If does not return 0, Black Market is open.
 
 # Stores the ID of the last boss encountered.
@@ -23,18 +20,6 @@ ADDR_BLACK_MARKET_PTR = 0x000D7AC4 # If does not return 0, Black Market is open.
 ADDR_LAST_BOSS_MET = 0x000D1028
 # ID of the stage the player is currently in.
 ADDR_CURRENT_STAGE_NUM = 0x000D1004
-
-# This is mainly for menu cursor stuff. Override in order from 1-7.
-# Address of the line that sets the cursor in the menu to Stage #.
-ADDR_STAGE_CURSOR_STATIC = 0x000CDCAC # Set this when first loading into the game.
-ADDR_CURSOR_SET_STAGE1 = 0x0004a3e8 + 6 # 1
-ADDR_CURSOR_SET_STAGE2 = 0x0004a42a + 6 # 2
-ADDR_CURSOR_SET_STAGE3 = 0x0004a4ae + 6 # 3
-ADDR_CURSOR_SET_STAGE4 = 0x0004a532 + 6 # 4
-ADDR_CURSOR_SET_STAGE5 = 0x0004a5b6 + 6 # 5
-ADDR_CURSOR_SET_STAGE6 = 0x0004a64b + 6 # 6
-ADDR_CURSOR_SET_CHIMATA = 0x0004a6cf + 6 # 7
-ADDR_CURSOR_SET_CHALLENGE = 0x0004a73e + 6 # 7
 
 # These are specifically for invincibility. Both fields must be changed at the same time
 ADDR_GAMEPLAY_BASE_PTR = 0X000D7C3C

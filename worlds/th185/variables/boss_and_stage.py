@@ -163,7 +163,7 @@ BOSS_ID_TO_NAME = {
 # Special progressive item name
 # Having one is equivalent to having access to the Tutorial
 PROGRESS_ITEM_NAME_FULL = "Progressive Market"
-PROGRESS_SLOTS_NAME_FULL = "Progressive Equipment"
+PROGRESS_EQUIP_NAME = "Progressive Equipment"
 PROGRESS_SLOT_NAME = "Progressive Initial Cards"
 PROGRESS_COST_NAME = "Progressive Equipment Cost"
 

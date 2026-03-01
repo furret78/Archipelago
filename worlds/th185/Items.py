@@ -129,6 +129,16 @@ def create_all_items(world):
 
     # Finally, Progressive Loadout.
     # This is the least important of the important things.
+    # If it's disabled, nothing happens here.
+    match world.options.progressive_loadout:
+        case 1: # Upgrades go hand-in-hand.
+            for prog_item_num in range(6):
+                item_pool.append(world.create_item(PROGRESS_EQUIP_NAME))
+        case 2: # Upgrades go separately.
+            for i in range(6):
+                item_pool.append(world.create_item(PROGRESS_SLOT_NAME))
+            for i in range(5):
+                item_pool.append(world.create_item(PROGRESS_COST_NAME))
 
     # Now that all the important stuff is added, check if there's any spots left.
     number_of_items = len(item_pool)
@@ -392,7 +402,9 @@ item_table: Dict[str, TouhouHBMItemData] = {
     TEACUP_MARISA_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 282, ItemClassification.progression),
     # Progressive Items
     PROGRESS_ITEM_NAME_FULL: TouhouHBMItemData(CATEGORY_PROGRESS, 290, ItemClassification.progression),
-    PROGRESS_SLOTS_NAME_FULL: TouhouHBMItemData(CATEGORY_PROGRESS, 291, ItemClassification.progression)
+    PROGRESS_EQUIP_NAME: TouhouHBMItemData(CATEGORY_PROGRESS, 291, ItemClassification.progression),
+    PROGRESS_SLOT_NAME: TouhouHBMItemData(CATEGORY_PROGRESS, 292, ItemClassification.progression),
+    PROGRESS_COST_NAME: TouhouHBMItemData(CATEGORY_PROGRESS, 293, ItemClassification.progression)
 }
 
 ITEM_TABLE_ID_TO_STAGE_NAME: Dict[int, str] = {
