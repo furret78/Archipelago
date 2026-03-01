@@ -85,7 +85,6 @@ class StageBossLocations(Choice):
 class ProgressiveLoadout(Choice):
     """
     Whether starting card slots and equip cost will be upgraded according to the number of bosses defeated or via items received.
-    Currently unimplemented.
 
     1. Disabled - Slots and cost will be unlocked according to the number of bosses defeated.
     2. Simultaneous - Both slots and cost will be upgraded at the same time.

@@ -5,12 +5,6 @@
 - Add option: Starting Card Slots (up to 34)
 - Add option: Starting Equip Cost (up to 500%)
 
-- Implement receiving Progressive Equipment (Slots + Cost) items.
-    - Temporary workaround for Card Slots defaulting to Blank Card:
-        - Slots = Game Only
-        - This does mean treating it like loading in Shop Cards in reverse.
-    - Equip Cost can be handled anywhere.
-
 - Implement full game data reset upon disconnect. (if needed)
 - Figure out seamless room switching while the game is running.
 
@@ -26,6 +20,8 @@
 	+ Only Boss Locations
 	+ Only Stage Clear Locations
 - Figure out saving boss defeats to local machine
+
+- Figure out non-horrible handling of Progressive Card Slots.
 
 - Code refactoring for more clarity.
 - Refactoring Rules.py to accommodate Rule Builder.
