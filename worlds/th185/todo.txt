@@ -6,6 +6,10 @@
 - Add option: Starting Equip Cost (up to 500%)
 
 - Implement receiving Progressive Equipment (Slots + Cost) items.
+    - Temporary workaround for Card Slots defaulting to Blank Card:
+        - Slots = Game Only
+        - This does mean treating it like loading in Shop Cards in reverse.
+    - Equip Cost can be handled anywhere.
 
 - Implement full game data reset upon disconnect. (if needed)
 - Figure out seamless room switching while the game is running.

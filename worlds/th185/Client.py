@@ -756,7 +756,7 @@ class TouhouHBMContext(CommonContext):
         self.handler.updateStageList()
 
     def handle_progressive_stages(self, all_items_list):
-        if len(all_items_list) < 0: return
+        if len(all_items_list) <= 0: return
 
         progress_item_count = all_items_list.count(item_table[PROGRESS_ITEM_NAME_FULL].code)
         if progress_item_count <= 0: return
@@ -768,6 +768,14 @@ class TouhouHBMContext(CommonContext):
                     self.handler.stages_unlocked[stage_name_in_list] = True
 
         self.handler.updateStageList()
+
+    def handle_progressive_loadout(self, all_items_list):
+        if len(all_items_list) <= 0: return
+
+        progress_item_count: list[int] = []
+        for item_code in all_items_list:
+            if item_code in PROGRESSIVE_ITEMS_LIST: progress_item_count.append(item_code)
+        if len(progress_item_count) <= 0: return
 
     def handle_filler_items(self, filtered_list):
         if len(filtered_list) <= 0: return
