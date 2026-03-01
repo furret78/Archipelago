@@ -15,7 +15,7 @@ from CommonClient import (
 from NetUtils import NetworkItem
 from .GameHandler import *
 from .Items import item_table, ITEM_TABLE_ID_TO_STAGE_NAME, ITEM_TABLE_ID_TO_CARD_ID, \
-    PROGRESSIVE_ITEMS_LIST, check_for_game_filler
+    PROGRESSIVE_ITEMS_LIST, check_for_game_filler, PROGRESSIVE_COST_LIST
 from .Locations import *
 from .Tools import *
 from .variables.music_and_achiev import MUSIC_ROOM_UNLOCK_STR, ACHIEVE_UNLOCK_STR
@@ -239,6 +239,7 @@ class TouhouHBMContext(CommonContext):
         self.permashop_cards: list = []
         self.unlocked_stages: list = []
         self.progressive_stage_list: list[int] = []
+        self.progressive_cost_list: list[int] = []
         # Dex dictionary does not exist. Use the list of acquired checks for that.
         # Owning a card and unlocking its dex entry is one and the same,
         # but it is separate for the player.
@@ -716,6 +717,7 @@ class TouhouHBMContext(CommonContext):
         ability_card_unlock_list = []
         stage_unlock_list = []
         progress_item_list = []
+        cost_item_list = []
 
         for network_item in network_item_list:
             if network_item.item in ITEM_TABLE_ID_TO_STAGE_NAME:
@@ -729,14 +731,20 @@ class TouhouHBMContext(CommonContext):
             # is via console.
             elif self.options["progressive_stages"] and network_item.item == item_table[PROGRESS_ITEM_NAME_FULL].code:
                 progress_item_list.append(network_item.item)
+            # Item ID for progressive loadout (equip cost).
+            elif not self.is_progressive_equip_disabled() and network_item.item in PROGRESSIVE_COST_LIST:
+                cost_item_list.append(network_item.item)
 
         self.handle_ability_cards(ability_card_unlock_list)
         self.handle_stages(stage_unlock_list)
 
         if len(progress_item_list) > 0:
             self.progressive_stage_list += progress_item_list
+        if len(cost_item_list) > 0:
+            self.progressive_cost_list += cost_item_list
 
         self.handle_progressive_stages(self.progressive_stage_list)
+        self.handle_progressive_cost(self.progressive_cost_list)
 
     def handle_ability_cards(self, filtered_list):
         if len(filtered_list) <= 0: return
@@ -769,13 +777,32 @@ class TouhouHBMContext(CommonContext):
 
         self.handler.updateStageList()
 
-    def handle_progressive_loadout(self, all_items_list):
-        if len(all_items_list) <= 0: return
+    def handle_progressive_cost(self, progress_cost_list):
+        """
+        Handle items related to Progressive Loadout.
+        This only takes care of Equip Cost.
+        """
+        if len(progress_cost_list) <= 0 or self.is_progressive_equip_disabled(): return
 
-        progress_item_count: list[int] = []
-        for item_code in all_items_list:
-            if item_code in PROGRESSIVE_ITEMS_LIST: progress_item_count.append(item_code)
-        if len(progress_item_count) <= 0: return
+        if self.is_progressive_equip_together():
+            combined_cost_count = progress_cost_list.count(item_table[PROGRESS_EQUIP_NAME].code)
+            if combined_cost_count <= 0: return
+            # TODO: Make this not hardcoded at some point.
+            final_cost_bonus = 0
+
+            match combined_cost_count:
+                case 1: final_cost_bonus = 50
+                case 2: final_cost_bonus = 50 * 2
+                case 3: final_cost_bonus = 50 * 3
+                case 4: final_cost_bonus = 50 * 4
+                case 5: final_cost_bonus = 50 * 4
+                case 6: final_cost_bonus = 50 * 5
+
+            self.handler.setEquipCost(100 + final_cost_bonus)
+        elif self.is_progressive_equip_separate():
+            separate_cost_count = progress_cost_list.count(item_table[PROGRESS_COST_NAME].code)
+            if separate_cost_count <= 0: return
+            self.handler.setEquipCost(100 + (50 * separate_cost_count))
 
     def handle_filler_items(self, filtered_list):
         if len(filtered_list) <= 0: return
@@ -1400,6 +1427,9 @@ class TouhouHBMContext(CommonContext):
         if self.is_progressive_equip_disabled():
             self.handler.setCardSlots(self.loadout_slots)
             self.handler.setEquipCost(self.equip_cost)
+        # Load progressive loadout stuff here.
+        else:
+            self.set_loadout_slots_in_stage()
 
         self.menu_stats_initialized = True
 
@@ -1419,7 +1449,7 @@ class TouhouHBMContext(CommonContext):
                     if achievement_name not in full_location_name: continue
                     self.handler.setAchievementStatus(achievement_id, True)
 
-    # Helper functions for things to do with cards.
+    # Helper functions for things to do with the menu.
     def get_menu_card_list(self) -> list:
         menu_card_list = ABILITY_CARD_LIST
         for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
@@ -1431,12 +1461,32 @@ class TouhouHBMContext(CommonContext):
         for card_string_id in self.get_menu_card_list():
             self.handler.setCardShopRecordGame(card_string_id, False)
 
+    def set_loadout_slots_in_stage(self):
+        """
+        Sets the loadout slots for the player after leaving a stage.
+        This should only ever be called after leaving a stage or at bootup.
+        """
+        if self.is_progressive_equip_disabled(): return
+
+        received_slot_count = 0
+
+        for received_item in self.all_received_items:
+            if received_item == item_table[PROGRESS_EQUIP_NAME].code:
+                received_slot_count += 1
+            if received_item == item_table[PROGRESS_SLOT_NAME].code:
+                received_slot_count += 1
+
+        if received_slot_count <= 0: return
+
+        self.handler.setCardSlots(1 + received_slot_count)
+
     async def transfer_from_menu_to_stage(self):
         """
         Handles transferring from the menu to the game stage.
         Mainly for the Ability Card shop addresses.
         Previously checked locations are save data for Card Selection checks.
         """
+        self.set_loadout_slots_in_stage()
         await self.save_menu_stats_to_server()
 
     async def transfer_from_shop_to_reward(self):
@@ -1470,6 +1520,7 @@ class TouhouHBMContext(CommonContext):
         """
         Handles transferring from the game stage to the menu.
         """
+        self.set_loadout_slots_in_stage()
         self.clear_shop_card_data()
 
         await asyncio.sleep(0.2)
