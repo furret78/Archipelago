@@ -787,7 +787,10 @@ class TouhouHBMContext(CommonContext):
         asyncio.create_task(self.handle_game_only_items())
 
     def try_unlock_card_in_shop(self, card_name: str):
-        if self.enable_card_selection_checking: return
+        if self.handler.isGameInStage():
+            if ((self.handler.getCurrentStage() != STAGE_CHALLENGE_ID and self.handler.getLastBossMet() != -1) or
+                (self.handler.getCurrentStage() == STAGE_CHALLENGE_ID and self.handler.getLastBossMet() in ALL_BOSSES_LIST[STAGE6_ID])):
+                return
 
         self.handler.permashop_card_new = self.permashop_cards_new
         self.handler.setCardShopRecordHandler(card_name, True)
