@@ -1,7 +1,5 @@
 - Add a separate tab for HBM configs at some point (mainly for scorefile path lol)
 
-- Figure out disabling Card Slot and Equip Cost progression in-game.
-
 - Add option: Starting Card Slots (up to 34)
 - Add option: Starting Equip Cost (up to 500%)
 
