@@ -47,12 +47,7 @@ def get_currency_type_from_str(currency_type_string: str, game_context, logger) 
         return -1
 
 
-def get_random_death_message(lost_final_life: bool = False) -> str:
-    if lost_final_life: return random.choice(DEATH_LINK_STAGE_MSGS)
-    else: return random.choice(DEATH_LINK_LIFE_MSGS + DEATH_LINK_GENERIC_MSGS)
-
-
-def get_random_death_message_new(current_stage: int = 0, current_boss: int = -1, lost_final_life: bool = False) -> str:
+def get_random_death_message(current_stage: int = 0, current_boss: int = -1, lost_final_life: bool = False) -> str:
     """
     Retrieves a random death message.
 
@@ -60,6 +55,27 @@ def get_random_death_message_new(current_stage: int = 0, current_boss: int = -1,
     :param current_boss: The ID of the current boss that the player is facing. If -1, there is no boss.
     :param lost_final_life: Whether the player will get kicked out or not.
     """
+    # Function that gets a random boss death message.
+    # This is to make the conditional below less messy.
+    def get_random_boss_death_message():
+        if lost_final_life:
+            return DEATH_LINK_BOSS_STAGE[0] + STAGE_ID_TO_DEATHLINK_LOCATION[current_stage] + DEATH_LINK_BOSS_STAGE[1] + BOSS_ID_TO_NAME[current_boss] + "."
+        elif random.randint(0, 1) == 0:
+            return random.choice(DEATH_LINK_BOSS_MSGS[current_boss])
+        return None
+
+    final_death_message = None
+
+    # First, check the boss ID.
+    if current_boss != -1:
+        # If the boss ID is valid, check if it's Challenge Market.
+        # If it is Challenge Market, check if the boss ID is part of the Final Wave ones.
+        if ((current_stage == STAGE_CHALLENGE_ID and BOSS_ID_TO_NAME[current_boss] in ALL_BOSSES_LIST[STAGE6_ID])
+                or current_stage != STAGE_CHALLENGE_ID):
+            final_death_message = get_random_boss_death_message()
+    if final_death_message is not None: return final_death_message
+
+    # If it gets to here, then there is no boss active.
     if lost_final_life: return random.choice(DEATH_LINK_STAGE_MSGS)
     else: return random.choice(DEATH_LINK_LIFE_MSGS + DEATH_LINK_GENERIC_MSGS)
 

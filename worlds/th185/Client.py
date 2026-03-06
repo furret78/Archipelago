@@ -1640,7 +1640,8 @@ class TouhouHBMContext(CommonContext):
         """
         # If Death Link is not enabled, don't send anything.
         if not self.deathlink_enabled: return
-        await self.send_death(self.player_names[self.slot] + get_random_death_message(self.lost_final_life))
+        await self.send_death(self.player_names[self.slot] + get_random_death_message(self.handler.getCurrentStage(), self.handler.getLastBossMet(), self.lost_final_life))
+        #await self.send_death(self.player_names[self.slot] + get_random_death_message(self.lost_final_life))
 
     async def deathlink_loop(self):
         # If going back to the menu, the first transition will turn off
