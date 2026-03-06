@@ -10,6 +10,7 @@ from .variables.boss_and_stage import *
 from .variables.card_const import CARD_ID_TO_NAME
 from .variables.meta_data import *
 from .variables.music_and_achiev import *
+from .variables.string_death_link import *
 
 
 def copy_and_replace(directory: str, logger):
@@ -47,6 +48,18 @@ def get_currency_type_from_str(currency_type_string: str, game_context, logger) 
 
 
 def get_random_death_message(lost_final_life: bool = False) -> str:
+    if lost_final_life: return random.choice(DEATH_LINK_STAGE_MSGS)
+    else: return random.choice(DEATH_LINK_LIFE_MSGS + DEATH_LINK_GENERIC_MSGS)
+
+
+def get_random_death_message_new(current_stage: int = 0, current_boss: int = -1, lost_final_life: bool = False) -> str:
+    """
+    Retrieves a random death message.
+
+    :param current_stage: The ID of the current stage the player is in.
+    :param current_boss: The ID of the current boss that the player is facing. If -1, there is no boss.
+    :param lost_final_life: Whether the player will get kicked out or not.
+    """
     if lost_final_life: return random.choice(DEATH_LINK_STAGE_MSGS)
     else: return random.choice(DEATH_LINK_LIFE_MSGS + DEATH_LINK_GENERIC_MSGS)
 

@@ -30,26 +30,7 @@ GAME_NOT_RUNNING_MSG = "The game isn't running!"
 DEATH_LINK_TRIGGER_LIFE = 0
 DEATH_LINK_TRIGGER_STAGE = 1
 
-DEATH_LINK_LIFE_MSGS: list[str] = [
-    " flew too close to a bullet.",
-    " can't dodge very well.",
-    " has a big hitbox.",
-    " thought the bullets were made of candy.",
-    " hit a fairy."
-]
-
-DEATH_LINK_STAGE_MSGS: list[str] = [
-    " got kicked out of the Black Market.",
-    " got kicked off the premises.",
-    " fumbled their run.",
-    " got folded like a deck of Ability Cards."
-]
-
-DEATH_LINK_GENERIC_MSGS: list[str] = [
-    " pichuun'd.",
-    " fell through a gap.",
-    " got spirited away."
-]
+# See Death Link strings in string_death_link.py
 
 DEATH_LINK_NOT_ENABLED = "Death Link is not enabled for this slot."
 DEATH_LINK_INFO_CHANGED = "Death Link trigger temporarily changed: "
