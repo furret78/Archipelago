@@ -1,3 +1,10 @@
+- Add generic clear locations for each stage
+- Add Choice option to allow choosing between:
+	+ Boss Locations and Stage Clear Locations
+	+ Only Boss Locations
+	+ Only Stage Clear Locations
+- Figure out saving boss defeats to local machine
+
 - Add a separate tab for HBM configs at some point (mainly for scorefile path lol)
 
 - Add option: Starting Card Slots (up to 34)
@@ -11,13 +18,6 @@
 - Add trap: -1 Life
 - Add filler: +500% Shot Attack Strength
 - Add trap loop and turn some traps (max speed trap, freeze trap, etc.) into temporary timed traps.
-
-- Add generic clear locations for each stage
-- Add Choice option to allow choosing between:
-	+ Boss Locations and Stage Clear Locations
-	+ Only Boss Locations
-	+ Only Stage Clear Locations
-- Figure out saving boss defeats to local machine
 
 - Figure out non-horrible handling of Progressive Card Slots.
 
