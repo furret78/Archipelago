@@ -1277,7 +1277,7 @@ class TouhouHBMContext(CommonContext):
 
         # Stage-exclusive.
         player_has_found_card_in_stage = False
-        if self.enable_card_selection_checking:
+        if self.enable_card_selection_checking and not self.enable_card_shop_scanning:
             # Go over the entire Ability Card list.
             # Invalid locations get bounced off of the location table check anyways.
             for card in ABILITY_CARD_LIST:
