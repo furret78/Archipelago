@@ -313,7 +313,7 @@ def set_all_location_rules(world) -> None:
         if stage_short_name != CHALLENGE_NAME:
             for boss_name in ALL_BOSSES_LIST[stage_id_from_list]:
                 location_encounter = world.get_location(get_boss_location_name_str(stage_id_from_list, boss_name))
-                location_defeat = world.get_location(get_boss_location_name_str(stage_id_from_list, boss_name))
+                location_defeat = world.get_location(get_boss_location_name_str(stage_id_from_list, boss_name, True))
 
                 # Check if it's Nitori or Takane
                 if boss_name == BOSS_NITORI_NAME:
@@ -332,9 +332,8 @@ def set_all_location_rules(world) -> None:
         else:
             for challenge_boss in get_boss_names_challenge_list():
                 location_encounter = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss)
-                add_rule(world.get_location(location_encounter), lambda state: has_challenge_access_item(state, True))
-
                 location_defeat = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss, True)
+                add_rule(world.get_location(location_encounter), lambda state: has_challenge_access_item(state, True))
                 add_rule(world.get_location(location_defeat), lambda state: has_challenge_access_item(state, True))
 
     #
