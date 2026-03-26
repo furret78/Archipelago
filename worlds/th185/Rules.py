@@ -6,7 +6,7 @@ except ImportError:
     from worlds.generic.Rules import CollectionRule
 from worlds.generic.Rules import add_rule, set_rule
 from .Tools import get_progress_item_requirement, get_boss_location_name_str, get_card_location_name_str, \
-    get_music_location_name_str, get_achievement_location_name_str, get_boss_names_challenge_list
+    get_music_location_name_str, get_achievement_location_name_str, get_boss_names_challenge_list, clamp
 from .variables.card_const import *
 from .variables.music_and_achiev import MUSIC_ROOM_NAME_DICT, ACHIEVE_NAME_DICT
 
@@ -64,7 +64,7 @@ def set_all_location_rules(world) -> None:
             case 2: # Separate. Only check for Slots since the achievement only tracks that.
                 return state.has(PROGRESS_SLOT_NAME, world.player, 6)
             case _: # If it does not, require stage 4 at minimum.
-                return has_stage_list_access_item(state, [TUTORIAL_NAME_FULL, STAGE1_NAME_FULL, STAGE2_NAME_FULL, STAGE3_NAME_FULL, STAGE4_NAME_FULL], True)
+                return has_stage_access_item_count(state, 4)
 
     # Tutorial stage has 5 exclusive cards.
     def has_tutorial_access_item(state: CollectionState) -> bool:
@@ -132,6 +132,35 @@ def set_all_location_rules(world) -> None:
         if CHALLENGE_NAME_FULL in non_challenge_stages:
             non_challenge_stages.remove(CHALLENGE_NAME_FULL)
         return state.has_any(non_challenge_stages, world.player) or has_challenge_access_item(state)
+
+    # Despite the name, this is actually used for the slot upgrade achievement.
+    def has_stage_access_item_count(state: CollectionState, stage_count: int) -> bool:
+        if stage_count <= 0: return True
+
+        def item_count_stages(used_count: int) -> bool:
+            non_story_pool = STAGE_NAME_LIST
+            if CHALLENGE_NAME_FULL in non_story_pool:
+                non_story_pool.remove(CHALLENGE_NAME_FULL)
+            if TUTORIAL_NAME_FULL in non_story_pool:
+                non_story_pool.remove(TUTORIAL_NAME_FULL)
+
+            if world.options.disable_challenge_logic:
+                 return state.has_from_list_unique(non_story_pool, world.player, used_count)
+            else:
+                if STAGE6_NAME_FULL in non_story_pool:
+                    non_story_pool.remove(STAGE6_NAME_FULL)
+                return (state.has_from_list_unique(non_story_pool, world.player, clamp(used_count - 1, 0, len(non_story_pool))) and
+                        state.has_from_list_unique((STAGE6_NAME_FULL, CHALLENGE_NAME_FULL), world.player, 1))
+
+        if world.options.progressive_stages:
+            return state.has(PROGRESS_ITEM_NAME_FULL, world.player, stage_count)
+        return (
+            # The usual.
+            item_count_stages(stage_count) or
+            # The rare case that someone has enough items for the story bosses.
+            (state.has_all((TUTORIAL_NAME_FULL, STAGE4_NAME_FULL, BLANK_CARD_NAME, STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME, ENDSTAGE_NAME_FULL), world.player)
+             and item_count_stages(stage_count - 1))
+        )
 
     # For more open reward pools. Of course, these all imply Challenge Market clauses as well.
     # Common. Shows up in every stage except Tutorial.
