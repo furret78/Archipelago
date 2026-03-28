@@ -213,6 +213,7 @@ class TouhouHBMContext(CommonContext):
         self.no_card_unlocked: bool = False
         self.loadingDataSetup: bool = True
         self.retrievedCustomData: bool = False
+        self.halt_game_logic: bool = False
 
         # Scorefile path.
         default_appdata_path = os.getenv("APPDATA")
@@ -363,6 +364,8 @@ class TouhouHBMContext(CommonContext):
         self.received_invincibility = 0
         self.received_equip_cost = 0
         self.received_invinc_cancel = False
+
+        self.halt_game_logic = False
 
         #self.reset_game_data()
 
@@ -1146,9 +1149,11 @@ class TouhouHBMContext(CommonContext):
             # This usually only happens when the player is constantly resetting the stage.
             if self.enable_card_selection_checking:
                 if current_boss <= -1:
+                    self.halt_game_logic = True
                     self.enable_card_selection_checking = False
                     await self.stage_reset_async()
             else:
+                if self.halt_game_logic: return
                 if current_boss == -1: return
                 if ((current_stage == STAGE_CHALLENGE_ID and BOSS_ID_TO_NAME[current_boss] in ALL_BOSSES_LIST[STAGE6_ID]) or
                     (current_stage != STAGE_CHALLENGE_ID)):
@@ -1174,6 +1179,9 @@ class TouhouHBMContext(CommonContext):
                 self.no_card_unlocked = True
 
             if self.handler.isGameInStage(): return
+
+            # Since the game has returned to the menu, there is no point in halting game logic.
+            if self.halt_game_logic: self.halt_game_logic = False
 
             # Since the game is in the menu, it should no longer check for Market Card Rewards.
             if self.enable_card_selection_checking:
@@ -1568,6 +1576,8 @@ class TouhouHBMContext(CommonContext):
                 self.handler.setCardShopRecordHandler(card_name, True)
                 self.handler.permashop_card_new = self.permashop_cards_new
             self.handler.setCardShopRecordGame(card_name, card_name in self.permashop_cards)
+
+        self.halt_game_logic = False
 
 
     #
