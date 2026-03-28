@@ -823,8 +823,11 @@ class TouhouHBMContext(CommonContext):
 
     def try_unlock_card_in_shop(self, card_name: str):
         if self.handler.isGameInStage():
-            if ((self.handler.getCurrentStage() != STAGE_CHALLENGE_ID and self.handler.getLastBossMet() != -1) or
-                (self.handler.getCurrentStage() == STAGE_CHALLENGE_ID and self.handler.getLastBossMet() in ALL_BOSSES_LIST[STAGE6_ID])):
+            current_stage = self.handler.getCurrentStage()
+            last_boss_met = self.handler.getLastBossMet()
+
+            if ((current_stage != STAGE_CHALLENGE_ID and last_boss_met != -1) or
+                (current_stage == STAGE_CHALLENGE_ID and last_boss_met in ALL_BOSSES_LIST[STAGE6_ID])):
                 return
 
         self.handler.permashop_card_new = self.permashop_cards_new
@@ -1140,7 +1143,12 @@ class TouhouHBMContext(CommonContext):
             if self.enable_card_shop_scanning:
                 self.enable_card_shop_scanning = False
                 await self.transfer_from_menu_to_stage()
-            if not self.enable_card_selection_checking:
+            # This usually only happens when the player is constantly resetting the stage.
+            if self.enable_card_selection_checking:
+                if current_boss <= -1:
+                    self.enable_card_selection_checking = False
+                    await self.stage_reset_async()
+            else:
                 if current_boss == -1: return
                 if ((current_stage == STAGE_CHALLENGE_ID and BOSS_ID_TO_NAME[current_boss] in ALL_BOSSES_LIST[STAGE6_ID]) or
                     (current_stage != STAGE_CHALLENGE_ID)):
@@ -1224,6 +1232,10 @@ class TouhouHBMContext(CommonContext):
 
         if self.loadingDataSetup: return
 
+        stage_exist_status = self.handler.isGameInStage()
+        black_market_status = self.handler.isBlackMarketOpen()
+        last_boss_met = self.handler.getLastBossMet()
+
         # Check bosses first.
         for stage_name in STAGE_LIST:
             if stage_name != CHALLENGE_NAME:
@@ -1263,8 +1275,8 @@ class TouhouHBMContext(CommonContext):
                             new_locations.append(location_table[challenge_defeat])
 
         # Special check only for non-Final boss defeats in Challenge Market.
-        if self.handler.isGameInStage() and self.handler.isBlackMarketOpen() and self.handler.getCurrentStage() == STAGE_CHALLENGE_ID and self.handler.getLastBossMet() in BOSS_ID_TO_NAME:
-            last_boss_defeated = BOSS_ID_TO_NAME[self.handler.getLastBossMet()]
+        if stage_exist_status and black_market_status and self.handler.getCurrentStage() == STAGE_CHALLENGE_ID and last_boss_met in BOSS_ID_TO_NAME:
+            last_boss_defeated = BOSS_ID_TO_NAME[last_boss_met]
             if last_boss_defeated not in ALL_BOSSES_LIST[STAGE6_ID]:
                 challenge_defeat: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, last_boss_defeated, True)
                 if obligatory_location_table_check(challenge_defeat):
@@ -1276,8 +1288,11 @@ class TouhouHBMContext(CommonContext):
         # First step is checking if the card location exists in the big location table.
 
         # Stage-exclusive.
+        def market_card_reward_check() -> bool:
+            return self.enable_card_selection_checking and not self.enable_card_shop_scanning and last_boss_met != -1 and stage_exist_status
+
         player_has_found_card_in_stage = False
-        if self.enable_card_selection_checking and not self.enable_card_shop_scanning:
+        if market_card_reward_check():
             # Go over the entire Ability Card list.
             # Invalid locations get bounced off of the location table check anyways.
             for card in ABILITY_CARD_LIST:
@@ -1290,7 +1305,7 @@ class TouhouHBMContext(CommonContext):
                     new_locations.append(location_table[cardLocationName])
                     player_has_found_card_in_stage = True
 
-        if self.handler.isGameInStage() and self.handler.isBlackMarketOpen():
+        if stage_exist_status and black_market_status:
             self.handler.setDexCardData(NAZRIN_CARD_2, True)
             cardLocationName: str = get_card_location_name_str(NAZRIN_CARD_2, True)
             if obligatory_location_table_check(cardLocationName):
@@ -1542,6 +1557,17 @@ class TouhouHBMContext(CommonContext):
 
         # Save Funds, Card Slots, and Equip Cost.
         await self.save_menu_stats_to_server()
+
+    async def stage_reset_async(self):
+        self.clear_shop_card_data()
+        await asyncio.sleep(0.1)
+        # For all cards that can be bought in the shop...
+        for card_name in self.get_menu_card_list():
+            # Check if it's unlocked.
+            if card_name in self.permashop_cards:
+                self.handler.setCardShopRecordHandler(card_name, True)
+                self.handler.permashop_card_new = self.permashop_cards_new
+            self.handler.setCardShopRecordGame(card_name, card_name in self.permashop_cards)
 
 
     #
