@@ -55,7 +55,7 @@ class GameController:
         """
         Returns True if in a stage.
         """
-        return self.pm.read_int(self.pm.base_address + ADDR_CURRENT_STAGE_PTR) != 0
+        return self.pm.read_int(self.addrCurrentStage) != 0
 
     def check_if_in_game(self):
         """
@@ -79,6 +79,22 @@ class GameController:
             return False
 
         return black_market_int != 0
+
+    def getCurrentGameStatus(self) -> int:
+        """
+        Gets the current status of the game.
+        If -1, there is no stage.
+        4 = Loading stage.
+        16 = Paused.
+        0 = Normal.
+        0x4000 = Finished a stage.
+        0x44000 = Finished a stage due to Doremy's card.
+        """
+        try:
+            game_status = self.getAddressFromPointerCustomBase(self.addrCurrentStage, 0xB0)
+            return self.pm.read_int(game_status)
+        except Exception as e:
+            return -1
 
     # Gameplay.
     # Lives (in-game) functions

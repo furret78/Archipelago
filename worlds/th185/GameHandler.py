@@ -94,6 +94,15 @@ class GameHandler:
     def isBlackMarketOpen(self) -> bool:
         return self.gameController.check_if_black_market()
 
+    def isStageDoremyFinish(self) -> bool:
+        return self.gameController.getCurrentGameStatus() == 0x44000
+
+    def isStageNormalFinish(self) -> bool:
+        return self.gameController.getCurrentGameStatus() == 0x4000
+
+    def isStageNormal(self) -> bool:
+        return self.gameController.getCurrentGameStatus() == 0
+
     def getGameFunds(self) -> int:
         return self.gameController.getGameFunds()
 
