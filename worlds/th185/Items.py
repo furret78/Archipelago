@@ -207,6 +207,7 @@ def check_for_nonmoney_filler(given_item_id: int):
 # If anything new is added, add it to Client.py under give_item()
 # as well as add entries to the other tables below here.
 item_table: Dict[str, TouhouHBMItemData] = {
+    # FILLER
     # Money Filler and Traps - ID 1-29
     "+5 Funds": TouhouHBMItemData(CATEGORY_FILLER, 1),
     "+10 Funds": TouhouHBMItemData(CATEGORY_FILLER, 2),
@@ -244,7 +245,7 @@ item_table: Dict[str, TouhouHBMItemData] = {
     "+1 Life": TouhouHBMItemData(CATEGORY_ITEM, 38, ItemClassification.useful, 5),
     "+2 Lives": TouhouHBMItemData(CATEGORY_ITEM, 39, ItemClassification.useful, 5),
 
-    # Stage Filler
+    # STAGE FILLER
     # Shot Attack Filler and Traps - ID 40-49
     "+15% Shot Attack": TouhouHBMItemData(CATEGORY_FILLER, 40),
     "+30% Shot Attack": TouhouHBMItemData(CATEGORY_FILLER, 41),
@@ -302,10 +303,10 @@ item_table: Dict[str, TouhouHBMItemData] = {
     # Trap
     "Invincibility Cancel Trap": TouhouHBMItemData(CATEGORY_TRAP, 99, ItemClassification.trap),
 
-    # Debilitating Traps - ID 300+
+    # DEBILITATING TRAPS - ID 300+
     # Receiving any of these means a reset of the current stage.
 
-    # Stage unlocks
+    # STAGE UNLOCKS
     TUTORIAL_NAME_FULL: TouhouHBMItemData(CATEGORY_STAGE, 100, ItemClassification.progression),
     STAGE1_NAME_FULL: TouhouHBMItemData(CATEGORY_STAGE, 101, ItemClassification.progression),
     STAGE2_NAME_FULL: TouhouHBMItemData(CATEGORY_STAGE, 102, ItemClassification.progression),
@@ -316,7 +317,7 @@ item_table: Dict[str, TouhouHBMItemData] = {
     ENDSTAGE_NAME_FULL: TouhouHBMItemData(CATEGORY_STAGE, 107, ItemClassification.progression),
     CHALLENGE_NAME_FULL: TouhouHBMItemData(CATEGORY_STAGE, 108, ItemClassification.progression),
 
-    # Card Shop unlocks
+    # ABILITY CARD SHOP UNLOCKS
     LIFE_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 200, ItemClassification.progression),
     YUKARI_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 201, ItemClassification.progression),
     EIRIN_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 202, ItemClassification.progression),
@@ -400,11 +401,13 @@ item_table: Dict[str, TouhouHBMItemData] = {
     SUIKA_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 280, ItemClassification.progression),
     TEACUP_REIMU_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 281, ItemClassification.progression),
     TEACUP_MARISA_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 282, ItemClassification.progression),
-    # Progressive Items
+    # PROGRESSIVE ITEMS
+    # Stage Progress
     PROGRESS_ITEM_NAME_FULL: TouhouHBMItemData(CATEGORY_PROGRESS, 290, ItemClassification.progression),
+    # Equipment Upgrades
     PROGRESS_EQUIP_NAME: TouhouHBMItemData(CATEGORY_PROGRESS, 291, ItemClassification.progression),
     PROGRESS_SLOT_NAME: TouhouHBMItemData(CATEGORY_PROGRESS, 292, ItemClassification.progression),
-    PROGRESS_COST_NAME: TouhouHBMItemData(CATEGORY_PROGRESS, 293, ItemClassification.progression)
+    PROGRESS_COST_NAME: TouhouHBMItemData(CATEGORY_PROGRESS, 293, ItemClassification.progression),
 }
 
 ITEM_TABLE_ID_TO_STAGE_NAME: Dict[int, str] = {

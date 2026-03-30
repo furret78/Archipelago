@@ -1154,12 +1154,9 @@ class TouhouHBMContext(CommonContext):
                     await self.stage_reset_async()
             else:
                 if self.halt_game_logic: return
-                if self.handler.isStageDoremyFinish():
-                    self.enable_card_selection_checking = True
-                    return
                 if current_boss == -1: return
                 if ((current_stage == STAGE_CHALLENGE_ID and BOSS_ID_TO_NAME[current_boss] in ALL_BOSSES_LIST[STAGE6_ID]) or
-                    (current_stage != STAGE_CHALLENGE_ID)):
+                    (current_stage != STAGE_CHALLENGE_ID) or (self.handler.isStageDoremyFinish())):
                     await self.transfer_from_shop_to_reward()
                 else:
                     return
