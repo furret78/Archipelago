@@ -1,14 +1,12 @@
 # AP 0.6.7 moves CollectionRule to BaseClasses
-from BaseClasses import CollectionState
 try:
     from BaseClasses import CollectionRule
 except ImportError:
     from worlds.generic.Rules import CollectionRule
-from worlds.generic.Rules import add_rule, set_rule
-from .Tools import get_progress_item_requirement, get_boss_location_name_str, get_card_location_name_str, \
-    get_music_location_name_str, get_achievement_location_name_str, get_boss_names_challenge_list, clamp
-from .variables.card_const import *
+from worlds.generic.Rules import set_rule
+from .Tools import get_boss_location_name_str, get_music_location_name_str, get_achievement_location_name_str, get_boss_names_challenge_list
 from .variables.music_and_achiev import MUSIC_ROOM_NAME_DICT, ACHIEVE_NAME_DICT
+from Rules_Utils import *
 
 
 def set_all_rules(world) -> None:
@@ -54,285 +52,15 @@ def set_all_entrance_rules(world) -> None:
 
 
 def set_all_location_rules(world) -> None:
-    # Helper CollectionStates specifically for conditions that just require stage access.
+    set_boss_location_rules(world)
+    set_market_reward_rules(world)
+    set_card_dex_rules(world)
+    set_music_rules(world)
+    set_achievement_rules(world)
+    return
 
-    def has_equipment_achievement_access(state: CollectionState) -> bool:
-        # If this passes, Progressive Loadout is active. Should only require getting their respective items.
-        match world.options.progressive_loadout:
-            case 1: # Together
-                return state.has(PROGRESS_EQUIP_NAME, world.player, 6)
-            case 2: # Separate. Only check for Slots since the achievement only tracks that.
-                return state.has(PROGRESS_SLOT_NAME, world.player, 6)
-            case _: # If it does not, require stage 4 at minimum.
-                return has_stage_access_item_count(state, 4)
 
-    # Tutorial stage has 5 exclusive cards.
-    def has_tutorial_access_item(state: CollectionState) -> bool:
-        if world.options.progressive_stages:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player)
-        else:
-            return state.has(TUTORIAL_NAME_FULL, world.player)
-
-    def has_challenge_access_item(state: CollectionState, is_boss: bool = False) -> bool:
-        """
-        Checks for Challenge Market access.
-        If generation has turned off Challenge Market in logic (disable_challenge_logic == true),
-        this will always return False.
-        If doing Progressive Stages, also return False.
-        """
-        if world.options.progressive_stages:
-            if world.options.low_skill_logic:
-                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(CHALLENGE_NAME)) and low_skill_rules(state)
-            else:
-                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(CHALLENGE_NAME))
-        if world.options.disable_challenge_logic and not is_boss: return False
-        else:
-            # Challenge Market is also lategame.
-            if world.options.low_skill_logic:
-                return state.has(CHALLENGE_NAME_FULL, world.player) and low_skill_rules(state)
-            else:
-                return state.has(CHALLENGE_NAME_FULL, world.player)
-
-    # For specific stages (excludes Challenge Market by default).
-    def has_stage_access_item(state: CollectionState, short_stage_name: str) -> bool:
-        full_stage_name = STAGE_SHORT_TO_FULL_NAME[short_stage_name]
-        full_stage_id = STAGE_NAME_TO_ID[short_stage_name]
-
-        if world.options.progressive_stages:
-            if world.options.low_skill_logic and full_stage_id >= STAGE4_ID:
-                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(short_stage_name)) and low_skill_rules(state)
-
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(short_stage_name))
-        else:
-            if world.options.low_skill_logic and full_stage_id >= STAGE4_ID:
-                return state.has(full_stage_name, world.player) and low_skill_rules(state)
-            return state.has(full_stage_name, world.player)
-
-    def has_stage_list_access_item(state: CollectionState, stage_name_list: list[str], achieve_check: bool = False) -> bool:
-        """
-        Checks for whether the player would have any of the stages available.
-        When checking for Progressive Market requirements, this will always take the first name on the list.
-        Challenge Market-related checks have their own separate condition.
-
-        :param state: CollectionState. Just pass the one from the lambda in.
-        :param stage_name_list: The full names of the stages.
-        :param achieve_check: Whether this is for Achievements or not.
-        """
-        if world.options.progressive_stages:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(stage_name_list[0], True))
-        else:
-            if achieve_check: return state.has_all(stage_name_list, world.player)
-            else: return state.has_any(stage_name_list, world.player)
-
-    def has_any_stage_access_item(state: CollectionState) -> bool:
-        if world.options.progressive_stages:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player)
-
-        non_challenge_stages = STAGE_NAME_LIST
-        if CHALLENGE_NAME_FULL in non_challenge_stages:
-            non_challenge_stages.remove(CHALLENGE_NAME_FULL)
-        return state.has_any(non_challenge_stages, world.player) or has_challenge_access_item(state)
-
-    # Despite the name, this is actually used for the slot upgrade achievement.
-    def has_stage_access_item_count(state: CollectionState, stage_count: int) -> bool:
-        if stage_count <= 0: return True
-
-        def item_count_stages(used_count: int) -> bool:
-            non_story_pool = STAGE_NAME_LIST
-            if CHALLENGE_NAME_FULL in non_story_pool:
-                non_story_pool.remove(CHALLENGE_NAME_FULL)
-            if TUTORIAL_NAME_FULL in non_story_pool:
-                non_story_pool.remove(TUTORIAL_NAME_FULL)
-
-            if world.options.disable_challenge_logic:
-                 return state.has_from_list_unique(non_story_pool, world.player, used_count)
-            else:
-                if STAGE6_NAME_FULL in non_story_pool:
-                    non_story_pool.remove(STAGE6_NAME_FULL)
-                return (state.has_from_list_unique(non_story_pool, world.player, clamp(used_count - 1, 0, len(non_story_pool))) and
-                        state.has_from_list_unique((STAGE6_NAME_FULL, CHALLENGE_NAME_FULL), world.player, 1))
-
-        if world.options.progressive_stages:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player, stage_count)
-        return (
-            # The usual.
-            item_count_stages(stage_count) or
-            # The rare case that someone has enough items for the story bosses.
-            (state.has_all((TUTORIAL_NAME_FULL, STAGE4_NAME_FULL, BLANK_CARD_NAME, STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME, ENDSTAGE_NAME_FULL), world.player)
-             and item_count_stages(stage_count - 1))
-        )
-
-    # For more open reward pools. Of course, these all imply Challenge Market clauses as well.
-    # Common. Shows up in every stage except Tutorial.
-    def has_common_access_item(state: CollectionState) -> bool:
-        if world.options.progressive_stages:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE1_NAME))
-
-        non_challenge_stages = STAGE_NAME_LIST
-        if TUTORIAL_NAME_FULL in non_challenge_stages:
-            non_challenge_stages.remove(TUTORIAL_NAME_FULL)
-        if CHALLENGE_NAME_FULL in non_challenge_stages:
-            non_challenge_stages.remove(CHALLENGE_NAME_FULL)
-        return state.has_any(non_challenge_stages, world.player) or has_challenge_access_item(state)
-
-    # Very early game (Stage 1+). Does not show up in Stage 5 or End of Market.
-    def has_very_early_game_access_item(state: CollectionState) -> bool:
-        if world.options.progressive_stages:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE1_NAME))
-
-        return has_early_game_access_item(state) or state.has(STAGE1_NAME_FULL, world.player)
-
-    # Early game (Stage 2+). Does not show up in Stage 5 or End of Market.
-    def has_early_game_access_item(state: CollectionState) -> bool:
-        if world.options.progressive_stages:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE2_NAME))
-
-        return has_midgame_access_item(state) or state.has(STAGE2_NAME_FULL, world.player)
-
-    # Midgame (Stage 3+). Does not show up in Stage 5 or End of Market.
-    def has_midgame_access_item(state: CollectionState) -> bool:
-        if world.options.progressive_stages:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE3_NAME))
-
-        return (state.has_any((STAGE3_NAME_FULL, STAGE4_NAME_FULL, STAGE6_NAME_FULL), world.player)
-                or has_challenge_access_item(state))
-
-    # Lategame (Stage 4+). Does not show up in End of Market.
-    # Low Skill Logic forces the generation to include certain Ability Cards as compulsory.
-    def has_lategame_access_item(state: CollectionState) -> bool:
-        if world.options.progressive_stages:
-            if world.options.low_skill_logic:
-                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE4_NAME)) and low_skill_rules(state)
-            else:
-                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE4_NAME))
-
-        if world.options.low_skill_logic:
-            return ((state.has_any((STAGE4_NAME_FULL, STAGE5_NAME_FULL, STAGE6_NAME_FULL), world.player)
-                     and low_skill_rules(state)) or has_challenge_access_item(state))
-        else:
-            return (state.has_any((STAGE4_NAME_FULL, STAGE5_NAME_FULL, STAGE6_NAME_FULL), world.player)
-                    or has_challenge_access_item(state))
-
-    def low_skill_rules(state: CollectionState) -> bool:
-        match world.options.progressive_loadout:
-            case 1: # Simultaneous upgrades.
-                return state.has_all(LOW_SKILL_CARD_LIST, world.player) and state.has(PROGRESS_EQUIP_NAME, world.player, 3)
-            case 2: # Separate upgrades.
-                return state.has_all(LOW_SKILL_CARD_LIST, world.player) and state.has(PROGRESS_SLOT_NAME, world.player, 3) and state.has(PROGRESS_COST_NAME, world.player, 3)
-            case _:
-                return state.has_all(LOW_SKILL_CARD_LIST, world.player)
-
-    # Special access rules.
-    def has_nitori_access(state: CollectionState) -> bool:
-        if world.options.progressive_stages:
-            if world.options.low_skill_logic:
-                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE4_NAME)) and state.has(BLANK_CARD_NAME, world.player) and low_skill_rules(state)
-            else:
-                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE4_NAME)) and state.has(BLANK_CARD_NAME, world.player)
-
-        if world.options.low_skill_logic:
-            return state.has_all((STAGE4_NAME_FULL, BLANK_CARD_NAME), world.player) and low_skill_rules(state)
-        else:
-            return state.has_all((STAGE4_NAME_FULL, BLANK_CARD_NAME), world.player)
-
-    def has_takane_access(state: CollectionState) -> bool:
-        if world.options.progressive_stages:
-            if world.options.low_skill_logic:
-                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE6_NAME)) and state.has(NITORI_STORY_CARD_NAME, world.player) and low_skill_rules(state)
-            else:
-                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE6_NAME)) and state.has(NITORI_STORY_CARD_NAME, world.player)
-
-        if world.options.low_skill_logic:
-            return state.has_all((STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME), world.player) and low_skill_rules(state)
-        else:
-            return state.has_all((STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME), world.player)
-
-    def has_sekibanki_access(state: CollectionState) -> bool:
-        if world.options.progressive_stages:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE2_NAME))
-
-        return state.has_any((STAGE2_NAME_FULL, ENDSTAGE_NAME_FULL), world.player) or has_challenge_access_item(state)
-
-    # Lily White's and Doremy's cards are a little more open.
-    def has_lily_white_access(state: CollectionState) -> bool:
-        if world.options.progressive_stages:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE1_NAME))
-
-        if world.options.low_skill_logic:
-            return has_very_early_game_access_item(state) or (has_stage_access_item(state, STAGE5_NAME) and low_skill_rules(state)) or has_challenge_access_item(state)
-        else:
-            return has_very_early_game_access_item(state) or has_stage_access_item(state, STAGE5_NAME) or has_challenge_access_item(state)
-
-    def has_doremy_access(state: CollectionState) -> bool:
-        if world.options.progressive_stages:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE2_NAME))
-
-        if world.options.low_skill_logic:
-            return has_early_game_access_item(state) or (has_stage_access_item(state, STAGE5_NAME) and low_skill_rules(state)) or has_challenge_access_item(state)
-        else:
-            return has_early_game_access_item(state) or has_stage_access_item(state, STAGE5_NAME) or has_challenge_access_item(state)
-
-    def has_nazrin2_access(state: CollectionState) -> bool:
-        if world.options.progressive_stages:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player)
-
-        black_market_stages = STAGE_NAME_LIST
-        if ENDSTAGE_NAME_FULL in black_market_stages:
-            black_market_stages.remove(ENDSTAGE_NAME_FULL)
-        if CHALLENGE_NAME_FULL in black_market_stages:
-            black_market_stages.remove(CHALLENGE_NAME_FULL)
-        return state.has_any(black_market_stages, world.player) or has_challenge_access_item(state)
-
-    def all_bosses_access(state: CollectionState) -> bool:
-        """
-        Checks if the player can access all bosses outside of Challenge Market.
-        This accounts for not only all stage unlocks but also the two special cards.
-        """
-        if world.options.progressive_stages:
-            if world.options.low_skill_logic:
-                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(ENDSTAGE_NAME)) and state.has_all((BLANK_CARD_NAME, NITORI_STORY_CARD_NAME), world.player) and low_skill_rules(state)
-            else:
-                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(ENDSTAGE_NAME)) and state.has_all((BLANK_CARD_NAME, NITORI_STORY_CARD_NAME), world.player)
-
-        if world.options.low_skill_logic:
-            return state.has_all(
-                (TUTORIAL_NAME_FULL, STAGE1_NAME_FULL, STAGE2_NAME_FULL, STAGE3_NAME_FULL, STAGE4_NAME_FULL,
-                 STAGE5_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL, NITORI_STORY_CARD_NAME, BLANK_CARD_NAME),
-                world.player) and low_skill_rules(state)
-        else:
-            return state.has_all(
-                (TUTORIAL_NAME_FULL, STAGE1_NAME_FULL, STAGE2_NAME_FULL, STAGE3_NAME_FULL, STAGE4_NAME_FULL,
-                 STAGE5_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL, NITORI_STORY_CARD_NAME, BLANK_CARD_NAME),
-                world.player)
-
-    def all_cards_access(state: CollectionState) -> bool:
-        return state.has_all(get_card_shop_item_names(), world.player)
-
-    # Access rules for the Ability Card dex entries.
-    # Ensures that the player has a way to grind for Funds + the card in the Permanent Card Shop.
-    # This will fail if this is a solo game and the player chooses to start with no Markets unlocked.
-    # (Hopefully)
-    def has_grind_access(state: CollectionState, the_card_id: str) -> bool:
-        return state.has(CARD_ID_TO_NAME[the_card_id], world.player) and has_any_stage_access_item(state)
-
-    def add_generic_access_card_rule(card_name_id: str, access_level: int):
-        generic_location_card_name: str = get_card_location_name_str(card_name_id, False)
-        generic_location_card = world.get_location(generic_location_card_name)
-
-        match access_level:
-            case 0:  # Common access.
-                add_rule(generic_location_card, lambda state: has_common_access_item(state))
-            case 1:  # Stage 1+
-                add_rule(generic_location_card, lambda state: has_very_early_game_access_item(state))
-            case 2:  # Stage 2+
-                add_rule(generic_location_card, lambda state: has_early_game_access_item(state))
-            case 3:  # Stage 3+
-                add_rule(generic_location_card, lambda state: has_midgame_access_item(state))
-            case 4:  # Lategame
-                add_rule(generic_location_card, lambda state: has_lategame_access_item(state))
-            case _:
-                pass
-
+def set_boss_location_rules(world):
     #
     # Location rules for bosses here.
     #
@@ -346,25 +74,29 @@ def set_all_location_rules(world) -> None:
 
                 # Check if it's Nitori or Takane
                 if boss_name == BOSS_NITORI_NAME:
-                    add_rule(location_encounter, lambda state: has_nitori_access(state))
-                    add_rule(location_defeat, lambda state: has_nitori_access(state))
+                    add_rule(location_encounter, lambda state: has_nitori_access(world, state))
+                    add_rule(location_defeat, lambda state: has_nitori_access(world, state))
                     continue
                 elif boss_name == BOSS_TAKANE_NAME:
-                    add_rule(location_encounter, lambda state: has_takane_access(state))
-                    add_rule(location_defeat, lambda state: has_takane_access(state))
+                    add_rule(location_encounter, lambda state: has_takane_access(world, state))
+                    add_rule(location_defeat, lambda state: has_takane_access(world, state))
                     continue
 
                 # If it's none of them
-                add_rule(location_encounter, lambda state, the_name = stage_short_name: has_stage_access_item(state, the_name))
-                add_rule(location_defeat, lambda state, the_name = stage_short_name: has_stage_access_item(state, the_name))
+                add_rule(location_encounter,
+                         lambda state, the_name=stage_short_name: has_stage_access_item(world, state, the_name))
+                add_rule(location_defeat,
+                         lambda state, the_name=stage_short_name: has_stage_access_item(world, state, the_name))
         # Challenge Market clause.
         else:
             for challenge_boss in get_boss_names_challenge_list():
                 location_encounter = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss)
                 location_defeat = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss, True)
-                add_rule(world.get_location(location_encounter), lambda state: has_challenge_access_item(state, True))
-                add_rule(world.get_location(location_defeat), lambda state: has_challenge_access_item(state, True))
+                add_rule(world.get_location(location_encounter), lambda state: has_challenge_access_item(world, state, True))
+                add_rule(world.get_location(location_defeat), lambda state: has_challenge_access_item(world, state, True))
 
+
+def set_market_reward_rules(world):
     #
     # Location rules for Ability Cards as stage rewards here.
     #
@@ -386,23 +118,24 @@ def set_all_location_rules(world) -> None:
 
                 # Tutorial stage has 5 exclusive cards not seen in Challenge Market.
                 if stage_name == TUTORIAL_NAME:
-                    add_rule(location_card_reward, lambda state: has_tutorial_access_item(state))
+                    add_rule(location_card_reward, lambda state: has_tutorial_access_item(world, state))
                     was_exclusive_card = True
                     continue
                 # Capitalist's Dilemma requires Blank Card and 4th Market unlock.
                 if card_string_id == NITORI_STORY_CARD:
                     add_rule(location_card_reward,
-                             lambda state: has_nitori_access(state) or has_challenge_access_item(state))
+                             lambda state: has_nitori_access(world, state) or has_challenge_access_item(world, state))
                 # Hundredth Black Market requires Capitalist's Dilemma and 6th Market unlock.
                 elif card_string_id == TAKANE_STORY_CARD:
                     add_rule(location_card_reward,
-                             lambda state: has_takane_access(state) or has_challenge_access_item(state))
+                             lambda state: has_takane_access(world, state) or has_challenge_access_item(world, state))
                 # Freewheeling Severed Head somehow shows up in End of Market.
                 elif card_string_id == SEKIBANKI_CARD:
-                    add_rule(location_card_reward, lambda state: has_sekibanki_access(state))
+                    add_rule(location_card_reward, lambda state: has_sekibanki_access(world, state))
                 # Generic conditions otherwise.
                 else:
-                    add_rule(location_card_reward, lambda state, the_name = stage_name: has_stage_access_item(state, the_name))
+                    add_rule(location_card_reward,
+                             lambda state, the_name=stage_name: has_stage_access_item(world, state, the_name))
 
                 was_exclusive_card = True
 
@@ -413,47 +146,51 @@ def set_all_location_rules(world) -> None:
         if card_string_id == LILY_WHITE_CARD:
             lily_location_name: str = get_card_location_name_str(LILY_WHITE_CARD, False)
             lily_location = world.get_location(lily_location_name)
-            add_rule(lily_location, lambda state: has_lily_white_access(state))
+            add_rule(lily_location, lambda state: has_lily_white_access(world, state))
             continue
         if card_string_id == DOREMY_CARD:
             doremy_location_name: str = get_card_location_name_str(DOREMY_CARD, False)
             doremy_location = world.get_location(doremy_location_name)
-            add_rule(doremy_location, lambda state: has_doremy_access(state))
+            add_rule(doremy_location, lambda state: has_doremy_access(world, state))
             continue
 
         # If it's not those two, then it belongs in a card tier.
         if card_string_id in STAGE_COMMON_CARD_LIST:
-            add_generic_access_card_rule(card_string_id, 0)
+            add_generic_access_card_rule(world, card_string_id, 0)
             continue
         if card_string_id in STAGE1_CARD_LIST:
-            add_generic_access_card_rule(card_string_id, 1)
+            add_generic_access_card_rule(world, card_string_id, 1)
             continue
         if card_string_id in STAGE2_CARD_LIST:
-            add_generic_access_card_rule(card_string_id, 2)
+            add_generic_access_card_rule(world, card_string_id, 2)
             continue
         if card_string_id in STAGE3_CARD_LIST:
-            add_generic_access_card_rule(card_string_id, 3)
+            add_generic_access_card_rule(world, card_string_id, 3)
             continue
         if card_string_id in LATEGAME_CARD_LIST:
-            add_generic_access_card_rule(card_string_id, 4)
+            add_generic_access_card_rule(world, card_string_id, 4)
             continue
 
+
+def set_card_dex_rules(world):
     #
     # Location rules for Ability Card dex entries here.
     #
     # Nazrin's cards don't have rules for unlocking. Practically every stage has it.
     nazrin_card1_location = world.get_location(get_card_location_name_str(NAZRIN_CARD_1, True))
-    add_rule(nazrin_card1_location, lambda state: has_any_stage_access_item(state))
+    add_rule(nazrin_card1_location, lambda state: has_any_stage_access_item(world, state))
     nazrin_card2_location = world.get_location(get_card_location_name_str(NAZRIN_CARD_2, True))
-    add_rule(nazrin_card2_location, lambda state: has_nazrin2_access(state))
+    add_rule(nazrin_card2_location, lambda state: has_nazrin2_access(world, state))
     # The rest are only available if their respective item is available in the shop.
     for card_string_id in ABILITY_CARD_LIST:
         # Skip Nazrin's cards.
         if card_string_id in ABILITY_CARD_CANNOT_EQUIP: continue
 
         card_dex_location = world.get_location(get_card_location_name_str(card_string_id, True))
-        add_rule(card_dex_location, lambda state, the_card_name = card_string_id: has_grind_access(state, the_card_name))
+        add_rule(card_dex_location, lambda state, the_card_name=card_string_id: has_grind_access(world, state, the_card_name))
 
+
+def set_music_rules(world):
     #
     # Location rules for Music Room tracks here.
     #
@@ -464,26 +201,45 @@ def set_all_location_rules(world) -> None:
             music_track_location = world.get_location(get_music_location_name_str(track_id))
 
             match track_id:
-                case 1: # An Exciting and Familiar Gensokyo
-                    add_rule(music_track_location, lambda state: has_stage_list_access_item(state, [STAGE1_NAME_FULL, STAGE2_NAME_FULL]) or has_challenge_access_item(state))
-                case 2: # Youkai Hook On
-                    add_rule(music_track_location, lambda state: has_stage_list_access_item(state, [TUTORIAL_NAME_FULL, STAGE1_NAME_FULL, STAGE2_NAME_FULL, STAGE3_NAME_FULL]) or has_challenge_access_item(state))
-                case 3: # Black Markets Can Happen Anywhere, Anytime
-                    add_rule(music_track_location, lambda state: has_stage_list_access_item(state, [STAGE3_NAME_FULL, STAGE4_NAME_FULL]) or has_challenge_access_item(state))
-                case 4: # Take Thy Danmaku In Hand, O Bulletphiles
-                    add_rule(music_track_location, lambda state: has_stage_list_access_item(state, [STAGE4_NAME_FULL, STAGE5_NAME_FULL, STAGE6_NAME_FULL]) or has_challenge_access_item(state))
-                case 5: # The 100th Black Market
-                    add_rule(music_track_location, lambda state: has_stage_list_access_item(state, [STAGE5_NAME_FULL, STAGE6_NAME_FULL]) or has_challenge_access_item(state))
-                case 6: # Lunatic Dreamer
-                    add_rule(music_track_location, lambda state: has_stage_list_access_item(state, [TUTORIAL_NAME_FULL]))
-                case 7: # Lunar Rainbow
-                    add_rule(music_track_location, lambda state: has_stage_list_access_item(state, [TUTORIAL_NAME_FULL, ENDSTAGE_NAME_FULL]))
-                case 8: # Where Is That Bustling Marketplace Now ~ Immemorial Marketeers
-                    add_rule(music_track_location, lambda state: has_stage_list_access_item(state, [ENDSTAGE_NAME_FULL]))
-                case 9: # A Rainbow-Colored World
-                    add_rule(music_track_location, lambda state: has_takane_access(state))
-                case _: continue
+                case 1:  # An Exciting and Familiar Gensokyo
+                    add_rule(music_track_location, lambda state: has_stage_list_access_item(world, state, [STAGE1_NAME_FULL,
+                                                                                                    STAGE2_NAME_FULL]) or has_challenge_access_item(world,
+                        state))
+                case 2:  # Youkai Hook On
+                    add_rule(music_track_location, lambda state: has_stage_list_access_item(world, state, [TUTORIAL_NAME_FULL,
+                                                                                                    STAGE1_NAME_FULL,
+                                                                                                    STAGE2_NAME_FULL,
+                                                                                                    STAGE3_NAME_FULL]) or has_challenge_access_item(world,
+                        state))
+                case 3:  # Black Markets Can Happen Anywhere, Anytime
+                    add_rule(music_track_location, lambda state: has_stage_list_access_item(world, state, [STAGE3_NAME_FULL,
+                                                                                                    STAGE4_NAME_FULL]) or has_challenge_access_item(world,
+                        state))
+                case 4:  # Take Thy Danmaku In Hand, O Bulletphiles
+                    add_rule(music_track_location, lambda state: has_stage_list_access_item(world, state, [STAGE4_NAME_FULL,
+                                                                                                    STAGE5_NAME_FULL,
+                                                                                                    STAGE6_NAME_FULL]) or has_challenge_access_item(world,
+                        state))
+                case 5:  # The 100th Black Market
+                    add_rule(music_track_location, lambda state: has_stage_list_access_item(world, state, [STAGE5_NAME_FULL,
+                                                                                                    STAGE6_NAME_FULL]) or has_challenge_access_item(world,
+                        state))
+                case 6:  # Lunatic Dreamer
+                    add_rule(music_track_location,
+                             lambda state: has_stage_list_access_item(world, state, [TUTORIAL_NAME_FULL]))
+                case 7:  # Lunar Rainbow
+                    add_rule(music_track_location,
+                             lambda state: has_stage_list_access_item(world, state, [TUTORIAL_NAME_FULL, ENDSTAGE_NAME_FULL]))
+                case 8:  # Where Is That Bustling Marketplace Now ~ Immemorial Marketeers
+                    add_rule(music_track_location,
+                             lambda state: has_stage_list_access_item(world, state, [ENDSTAGE_NAME_FULL]))
+                case 9:  # A Rainbow-Colored World
+                    add_rule(music_track_location, lambda state: has_takane_access(world, state))
+                case _:
+                    continue
 
+
+def set_achievement_rules(world):
     #
     # Location rules for Achievements here.
     #
@@ -494,65 +250,56 @@ def set_all_location_rules(world) -> None:
             achievement_name_location = world.get_location(get_achievement_location_name_str(achieve_id))
 
             match achieve_id:
-                case 0: # Clear the game.
-                    add_rule(achievement_name_location, lambda state: has_takane_access(state))
-                case 1: # Defeat all Stage 1 bosses.
-                    add_rule(achievement_name_location, lambda state: has_stage_access_item(state, STAGE1_NAME))
-                case 2: # Stage 2 bosses.
-                    add_rule(achievement_name_location, lambda state: has_stage_access_item(state, STAGE2_NAME))
-                case 3: # etc.
-                    add_rule(achievement_name_location, lambda state: has_stage_access_item(state, STAGE3_NAME))
-                case 4: # Needs Blank Card as well.
-                    add_rule(achievement_name_location, lambda state: has_nitori_access(state))
+                case 0:  # Clear the game.
+                    add_rule(achievement_name_location, lambda state: has_takane_access(world, state))
+                case 1:  # Defeat all Stage 1 bosses.
+                    add_rule(achievement_name_location, lambda state: has_stage_access_item(world, state, STAGE1_NAME))
+                case 2:  # Stage 2 bosses.
+                    add_rule(achievement_name_location, lambda state: has_stage_access_item(world, state, STAGE2_NAME))
+                case 3:  # etc.
+                    add_rule(achievement_name_location, lambda state: has_stage_access_item(world, state, STAGE3_NAME))
+                case 4:  # Needs Blank Card as well.
+                    add_rule(achievement_name_location, lambda state: has_nitori_access(world, state))
                 case 5:
-                    add_rule(achievement_name_location, lambda state: has_stage_access_item(state, STAGE5_NAME))
-                case 6: # Needs Capitalist's Dilemma as well.
-                    add_rule(achievement_name_location, lambda state: has_takane_access(state))
-                case 7: # Defeat Chimata.
-                    add_rule(achievement_name_location, lambda state: has_stage_access_item(state, ENDSTAGE_NAME))
-                case 8: # Defeat all bosses. Basically Full Story Clear with all stages.
-                    add_rule(achievement_name_location, lambda state: all_bosses_access(state))
-                case 9: # Clear Challenge Market.
-                    add_rule(achievement_name_location, lambda state: has_challenge_access_item(state, True))
-                case 10: # All equipment slots. 4th Market is where this can be achieved minimally.
-                    add_rule(achievement_name_location, lambda state: has_equipment_achievement_access(state))
-                case 11: # All cards collected. Item-dependent.
-                    add_rule(achievement_name_location, lambda state: all_cards_access(state))
+                    add_rule(achievement_name_location, lambda state: has_stage_access_item(world, state, STAGE5_NAME))
+                case 6:  # Needs Capitalist's Dilemma as well.
+                    add_rule(achievement_name_location, lambda state: has_takane_access(world, state))
+                case 7:  # Defeat Chimata.
+                    add_rule(achievement_name_location, lambda state: has_stage_access_item(world, state, ENDSTAGE_NAME))
+                case 8:  # Defeat all bosses. Basically Full Story Clear with all stages.
+                    add_rule(achievement_name_location, lambda state: all_bosses_access(world, state))
+                case 9:  # Clear Challenge Market.
+                    add_rule(achievement_name_location, lambda state: has_challenge_access_item(world, state, True))
+                case 10:  # All equipment slots. 4th Market is where this can be achieved minimally.
+                    add_rule(achievement_name_location, lambda state: has_equipment_achievement_access(world, state))
+                case 11:  # All cards collected. Item-dependent.
+                    add_rule(achievement_name_location, lambda state: all_cards_access(world, state))
 
 
 def set_goal_condition(world) -> None:
-    def low_skill_logic(state: CollectionState) -> bool:
-        match world.options.progressive_loadout:
-            case 1:  # Simultaneous upgrades.
-                return state.has_all(LOW_SKILL_CARD_LIST, world.player) and state.has(PROGRESS_EQUIP_NAME, world.player, 3)
-            case 2:  # Separate upgrades.
-                return state.has_all(LOW_SKILL_CARD_LIST, world.player) and state.has(PROGRESS_SLOT_NAME, world.player, 3) and state.has(PROGRESS_COST_NAME, world.player, 3)
-            case _:
-                return state.has_all(LOW_SKILL_CARD_LIST, world.player)
-
     def minimum_story_clear(state: CollectionState) -> bool:
         if world.options.progressive_stages:
             if world.options.low_skill_logic:
-                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE6_NAME)) and state.has(NITORI_STORY_CARD_NAME, world.player) and low_skill_logic(state)
+                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE6_NAME)) and state.has(NITORI_STORY_CARD_NAME, world.player) and low_skill_rules(world, state)
             else:
                 return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE6_NAME)) and state.has(NITORI_STORY_CARD_NAME, world.player)
 
         if world.options.low_skill_logic:
-            return state.has_all((NITORI_STORY_CARD_NAME, STAGE6_NAME_FULL), world.player) and low_skill_logic(state)
+            return state.has_all((NITORI_STORY_CARD_NAME, STAGE6_NAME_FULL), world.player) and low_skill_rules(world, state)
         else:
             return state.has_all((NITORI_STORY_CARD_NAME, STAGE6_NAME_FULL), world.player)
 
     def full_story_clear(state: CollectionState) -> bool:
         if world.options.progressive_stages:
             if world.options.low_skill_logic:
-                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(ENDSTAGE_NAME)) and state.has_all((NITORI_STORY_CARD_NAME, BLANK_CARD_NAME), world.player) and low_skill_logic(state)
+                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(ENDSTAGE_NAME)) and state.has_all((NITORI_STORY_CARD_NAME, BLANK_CARD_NAME), world.player) and low_skill_rules(world, state)
             else:
                 return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(ENDSTAGE_NAME)) and state.has_all((NITORI_STORY_CARD_NAME, BLANK_CARD_NAME), world.player)
 
         if world.options.low_skill_logic:
             return state.has_all(
                 (NITORI_STORY_CARD_NAME, BLANK_CARD_NAME, STAGE4_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL),
-                world.player) and low_skill_logic(state)
+                world.player) and low_skill_rules(world, state)
         else:
             return state.has_all(
             (NITORI_STORY_CARD_NAME, BLANK_CARD_NAME, STAGE4_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL),
