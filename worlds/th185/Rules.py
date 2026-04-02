@@ -15,16 +15,6 @@ def set_all_rules(world) -> None:
     set_goal_condition(world)
 
 
-def get_card_shop_item_names() -> list[str]:
-    # Go through both lists and fetch the card names.
-    # Nazrin's cards never show up in shop.
-    shop_card_item_names = []
-    for card_string_id in ABILITY_CARD_LIST:
-        if card_string_id == NAZRIN_CARD_1 or card_string_id == NAZRIN_CARD_2: continue
-        shop_card_item_names.append(CARD_ID_TO_NAME[card_string_id])
-    return shop_card_item_names
-
-
 def set_all_entrance_rules(world) -> None:
     def has_correct_stage_item(state: CollectionState, given_stage: str) -> bool:
         if world.options.progressive_stages:
