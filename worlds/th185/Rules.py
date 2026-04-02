@@ -6,7 +6,7 @@ except ImportError:
 from worlds.generic.Rules import set_rule
 from .Tools import get_boss_location_name_str, get_music_location_name_str, get_achievement_location_name_str, get_boss_names_challenge_list
 from .variables.music_and_achiev import MUSIC_ROOM_NAME_DICT, ACHIEVE_NAME_DICT
-from Rules_Utils import *
+from .Rules_Utils import *
 
 
 def set_all_rules(world) -> None:

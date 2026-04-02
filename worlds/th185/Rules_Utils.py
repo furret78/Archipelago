@@ -1,9 +1,18 @@
 # Utils specifically for generation rules.
 from BaseClasses import CollectionState
-from .Rules import get_card_shop_item_names
 from .Tools import get_progress_item_requirement, clamp, get_card_location_name_str
 from .variables.card_const import *
 from worlds.generic.Rules import add_rule
+
+
+def get_card_shop_item_names() -> list[str]:
+    # Go through both lists and fetch the card names.
+    # Nazrin's cards never show up in shop.
+    shop_card_item_names = []
+    for card_string_id in ABILITY_CARD_LIST:
+        if card_string_id == NAZRIN_CARD_1 or card_string_id == NAZRIN_CARD_2: continue
+        shop_card_item_names.append(CARD_ID_TO_NAME[card_string_id])
+    return shop_card_item_names
 
 
 def has_equipment_achievement_access(world, state: CollectionState) -> bool:
