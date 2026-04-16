@@ -1,3 +1,5 @@
+- Redo rules.py
+
 - Add generic clear locations for each stage
 - Add Choice option to allow choosing between:
 	+ Boss Locations and Stage Clear Locations

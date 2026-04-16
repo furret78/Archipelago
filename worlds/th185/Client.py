@@ -256,6 +256,7 @@ class TouhouHBMContext(CommonContext):
         # Set to True when scanning the card shop addresses as items.
         # Set to False when in stages.
         self.enable_card_shop_scanning: bool = True
+        self.started_card_reset: bool = False
 
         self.receivedItemQueue: list[
             NetworkItem] = []  # All items freshly arrived. Will be filtered for wrong IDs as it's processed.
@@ -366,6 +367,7 @@ class TouhouHBMContext(CommonContext):
         self.received_invinc_cancel = False
 
         self.halt_game_logic = False
+        self.started_card_reset = False
 
         #self.reset_game_data()
 
@@ -1140,33 +1142,53 @@ class TouhouHBMContext(CommonContext):
         try:
             if not self.handler.isGameInStage(): return
 
-            current_stage = self.handler.getCurrentStage()
-            current_boss = self.handler.getLastBossMet()
-
             if self.enable_card_shop_scanning:
                 self.enable_card_shop_scanning = False
                 await self.transfer_from_menu_to_stage()
+
             # This usually only happens when the player is constantly resetting the stage.
             if self.enable_card_selection_checking:
-                if current_boss <= -1:
+                if not self.handler.isStageFinish():
                     self.halt_game_logic = True
+                    self.started_card_reset = True
                     self.enable_card_selection_checking = False
                     await self.stage_reset_async()
+            # If card checking is not enabled.
             else:
+                # If the game is being forced to halt checks, return.
                 if self.halt_game_logic: return
-                # TODO: Fix Doremy shit
-                # if self.handler.isStageDoremyFinish():
-                #    await self.transfer_from_shop_to_reward()
-                #    self.enable_card_selection_checking = True
-                #    return
-                if current_boss == -1: return
-                if ((current_stage == STAGE_CHALLENGE_ID and BOSS_ID_TO_NAME[current_boss] in ALL_BOSSES_LIST[STAGE6_ID]) or
-                    (current_stage != STAGE_CHALLENGE_ID)):
-                    await self.transfer_from_shop_to_reward()
-                else:
+
+                if self.handler.isStageFinish():
+                    self.enable_card_selection_checking = True
                     return
 
-                self.enable_card_selection_checking = True
+                current_stage = self.handler.getCurrentStage()
+                current_boss = self.handler.getLastBossMet()
+                black_market_status = self.handler.isBlackMarketOpen()
+
+                # If a Black Market is open and the game hasn't swapped cards yet.
+                # This will swap the cards to the reward type.
+                if black_market_status and not self.started_card_reset:
+                    self.started_card_reset = True
+                    await self.transfer_from_shop_to_reward()
+
+                # If a Black Market is not open and the game has already swapped cards.
+                # This will swap cards back to the shop unlockables.
+                elif not black_market_status and self.started_card_reset:
+                    self.started_card_reset = False
+                    await self.transfer_from_reward_to_shop()
+
+                # Boss encounter swap.
+                # This will swap the cards to the reward type.
+                if not self.started_card_reset:
+                    # Normal stages check.
+                    if current_stage != STAGE_CHALLENGE_ID and current_boss != -1:
+                        self.started_card_reset = True
+                        await self.transfer_from_shop_to_reward()
+                    # Challenge Market check.
+                    elif current_stage == STAGE_CHALLENGE_ID and BOSS_ID_TO_NAME[current_boss] in ALL_BOSSES_LIST[STAGE6_ID]:
+                        self.started_card_reset = True
+                        await self.transfer_from_shop_to_reward()
         except Exception as e:
             self.inError = True
             logger.error(f"Error in the GAME loop.")
@@ -1544,15 +1566,13 @@ class TouhouHBMContext(CommonContext):
                 if card_location_name == full_location_name:
                     self.handler.setCardShopRecordGame(card_string_id, True)
 
-    async def transfer_from_stage_to_menu(self):
+    async def transfer_from_reward_to_shop(self):
         """
-        Handles transferring from the game stage to the menu.
+        Handles loading data specifically regarding unlocked cards in the Card Market.
+        Only call if it is not stage finish.
         """
-        self.set_loadout_slots_in_stage()
         self.clear_shop_card_data()
-
         await asyncio.sleep(0.2)
-
         # For all cards that can be bought in the shop...
         for card_name in self.get_menu_card_list():
             # Check if it's unlocked.
@@ -1560,6 +1580,15 @@ class TouhouHBMContext(CommonContext):
                 self.handler.setCardShopRecordHandler(card_name, True)
                 self.handler.permashop_card_new = self.permashop_cards_new
             self.handler.setCardShopRecordGame(card_name, card_name in self.permashop_cards)
+
+    async def transfer_from_stage_to_menu(self):
+        """
+        Handles transferring from the game stage to the menu.
+        """
+        self.set_loadout_slots_in_stage()
+        self.started_card_reset = False
+
+        await self.transfer_from_reward_to_shop()
 
         # Check Card Slots and unlock its achievement as needed, if it hasn't already.
         if self.handler.getCardSlots() >= 7 and not self.handler.getAchievementStatus(10):

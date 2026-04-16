@@ -100,6 +100,13 @@ class GameHandler:
     def isStageNormalFinish(self) -> bool:
         return self.gameController.getCurrentGameStatus() == 0x4000
 
+    def isStageFinish(self):
+        """
+        Returns if the stage status is set to finish yet.
+        """
+        stage_status = self.gameController.getCurrentGameStatus()
+        return stage_status == 0x44000 or stage_status == 0x4000
+
     def isStageNormal(self) -> bool:
         return self.gameController.getCurrentGameStatus() == 0
 
