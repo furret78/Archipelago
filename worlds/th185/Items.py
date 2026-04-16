@@ -298,7 +298,7 @@ item_table: Dict[str, TouhouHBMItemData] = {
     # Invincibility Filler and Traps
     "2-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 95), # 120 in int (60 = 1s)
     "5-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 96), # 300 in int
-    "7-second Invincibility": TouhouHBMItemData(CATEGORY_ITEM, 97, ItemClassification.useful, 4), # 420
+    "7-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 97), # 420
     "10-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 98), # 600
     # Trap
     "Invincibility Cancel Trap": TouhouHBMItemData(CATEGORY_TRAP, 99, ItemClassification.trap),

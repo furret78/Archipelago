@@ -1166,13 +1166,13 @@ class TouhouHBMContext(CommonContext):
                 current_boss = self.handler.getLastBossMet()
                 black_market_status = self.handler.isBlackMarketOpen()
 
-                # If a Black Market is open and the game hasn't swapped cards yet.
+                # If a Black Market is open and the game hasn't swapped cards yet,
                 # This will swap the cards to the reward type.
                 if black_market_status and not self.started_card_reset:
                     self.started_card_reset = True
                     await self.transfer_from_shop_to_reward()
 
-                # If a Black Market is not open and the game has already swapped cards.
+                # If a Black Market is not open and the game has already swapped cards,
                 # This will swap cards back to the shop unlockables.
                 elif not black_market_status and self.started_card_reset:
                     self.started_card_reset = False
