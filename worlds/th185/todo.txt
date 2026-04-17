@@ -1,4 +1,4 @@
-- Redo rules.py
+- Check if rules.py was rewritten correctly.
 
 - Add generic clear locations for each stage
 - Add Choice option to allow choosing between:

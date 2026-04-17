@@ -1,4 +1,6 @@
 # Utils specifically for generation rules.
+from unittest import case
+
 from BaseClasses import CollectionState
 from .Tools import get_progress_item_requirement, clamp, get_card_location_name_str
 from .variables.card_const import *
@@ -13,6 +15,78 @@ def get_card_shop_item_names() -> list[str]:
         if card_string_id == NAZRIN_CARD_1 or card_string_id == NAZRIN_CARD_2: continue
         shop_card_item_names.append(CARD_ID_TO_NAME[card_string_id])
     return shop_card_item_names
+
+
+def check_low_skill_logic(world, logic_type: str = "none") -> bool:
+    """
+    Checks if the requested logic type for low skill magic exists in the .yaml.
+    Checks against 0. Disabled if args are left blank.
+    """
+    match logic_type:
+        case "scale":
+            return world.options.low_skill_logic == 1
+        case "full":
+            return world.options.low_skill_logic == 2
+
+    return world.options.low_skill_logic == 0
+
+
+def low_skill_check(world, state: CollectionState, stage_id: int = 0) -> bool:
+    """
+    Runs a proper check on whether the player has all cards needed to satisfy the low skill logic requirements.
+    If low skill logic is disabled entirely, this returns True.
+    """
+    if check_low_skill_logic(world):
+        return True
+
+    # Stage 6 + Challenge remains basically unchanged.
+    if stage_id == STAGE6_ID or stage_id == STAGE_CHALLENGE_ID:
+        return state.has_all(LOW_SKILL_CARD_LIST, world.player)
+    elif stage_id == BOSS_TAKANE:
+        TAKANE_CARD_LIST = LOW_SKILL_CARD_LIST + [MIKE_CARD_NAME]
+        return state.has_all(TAKANE_CARD_LIST, world.player)
+
+    # Adds scaling as an option.
+    if check_low_skill_logic(world, "scale"):
+        if stage_id == STAGE4_ID:
+            return state.has_from_list_unique(LOW_SKILL_CARD_LIST, world.player, 2)
+        elif stage_id == STAGE5_ID:
+            return state.has_from_list_unique(LOW_SKILL_CARD_LIST, world.player, 4)
+        elif stage_id == STAGE_CHIMATA_ID:
+            return state.has_from_list_unique(END_MARKET_CARD_LIST, world.player, 3)
+        else:
+            return True
+    elif check_low_skill_logic(world, "full"):
+        if stage_id == STAGE4_ID or stage_id == STAGE5_ID:
+            return state.has_all(LOW_SKILL_CARD_LIST, world.player)
+        elif stage_id == STAGE_CHIMATA_ID:
+            return state.has_all(END_MARKET_CARD_LIST, world.player)
+        else:
+            return True
+    else:
+        return True
+
+def low_skill_check_nitori(world, state: CollectionState) -> bool:
+    match world.options.progressive_loadout:
+        case 1: # Together - this means check for progression item
+            return low_skill_check(world, state, STAGE_CHIMATA_ID) and state.has(PROGRESS_EQUIP_NAME, world.player, 1)
+        case 2: # Separate - this means check only for cards
+            return low_skill_check(world, state, STAGE_CHIMATA_ID) and state.has(PROGRESS_SLOT_NAME, world.player, 1)
+        case _: # Default - check for stages
+            # First check if Progressive Stages is enabled.
+            if world.options.progressive_stages:
+                return low_skill_check(world, state, STAGE_CHIMATA_ID) and state.has(PROGRESS_ITEM_NAME_FULL, world.player, 1)
+            # If it's not, check if at least one stage is available.
+            else:
+                STANDARD_STAGE_LIST = STAGE_NAME_LIST
+                if TUTORIAL_NAME_FULL in STANDARD_STAGE_LIST:
+                    STANDARD_STAGE_LIST.remove(TUTORIAL_NAME_FULL)
+                if ENDSTAGE_NAME_FULL in STANDARD_STAGE_LIST:
+                    STANDARD_STAGE_LIST.remove(ENDSTAGE_NAME_FULL)
+                if CHALLENGE_NAME_FULL in STANDARD_STAGE_LIST:
+                    STANDARD_STAGE_LIST.remove(CHALLENGE_NAME_FULL)
+
+                return low_skill_check(world, state, STAGE_CHIMATA_ID) and state.has_from_list_unique(STANDARD_STAGE_LIST, world.player, 1)
 
 
 def has_equipment_achievement_access(world, state: CollectionState) -> bool:
@@ -36,42 +110,27 @@ def has_tutorial_access_item(world, state: CollectionState) -> bool:
 
 def has_challenge_access_item(world, state: CollectionState, is_boss: bool = False) -> bool:
     """
-    Checks for Challenge Market access.
+    Checks for Challenge Market access. Also checks for Low Skill Logic.
     If generation has turned off Challenge Market in logic (disable_challenge_logic == true),
     this will always return False.
     If doing Progressive Stages, also return False.
     """
     if world.options.progressive_stages:
-        if world.options.low_skill_logic:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player,
-                             get_progress_item_requirement(CHALLENGE_NAME)) and low_skill_rules(world, state)
-        else:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(CHALLENGE_NAME))
+        return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(CHALLENGE_NAME)) and low_skill_check(world, state, STAGE_CHALLENGE_ID)
     if world.options.disable_challenge_logic and not is_boss:
         return False
     else:
-        # Challenge Market is also lategame.
-        if world.options.low_skill_logic:
-            return state.has(CHALLENGE_NAME_FULL, world.player) and low_skill_rules(world, state)
-        else:
-            return state.has(CHALLENGE_NAME_FULL, world.player)
+        return state.has(CHALLENGE_NAME_FULL, world.player) and low_skill_check(world, state, STAGE_CHALLENGE_ID)
 
 
 # For specific stages (excludes Challenge Market by default).
 def has_stage_access_item(world, state: CollectionState, short_stage_name: str) -> bool:
     full_stage_name = STAGE_SHORT_TO_FULL_NAME[short_stage_name]
-    full_stage_id = STAGE_NAME_TO_ID[short_stage_name]
 
     if world.options.progressive_stages:
-        if world.options.low_skill_logic and full_stage_id >= STAGE4_ID:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player,
-                             get_progress_item_requirement(short_stage_name)) and low_skill_rules(world, state)
-
-        return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(short_stage_name))
+        return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(short_stage_name)) and low_skill_check(world, state, STAGE_NAME_TO_ID[short_stage_name])
     else:
-        if world.options.low_skill_logic and full_stage_id >= STAGE4_ID:
-            return state.has(full_stage_name, world.player) and low_skill_rules(world, state)
-        return state.has(full_stage_name, world.player)
+        return state.has(full_stage_name, world.player) and low_skill_check(world, state, STAGE_NAME_TO_ID[short_stage_name])
 
 
 def has_stage_list_access_item(world, state: CollectionState, stage_name_list: list[str], achieve_check: bool = False) -> bool:
@@ -180,68 +239,29 @@ def has_midgame_access_item(world, state: CollectionState) -> bool:
 # Low Skill Logic forces the generation to include certain Ability Cards as compulsory.
 def has_lategame_access_item(world, state: CollectionState) -> bool:
     if world.options.progressive_stages:
-        if world.options.low_skill_logic:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player,
-                             get_progress_item_requirement(STAGE4_NAME)) and low_skill_rules(world, state)
-        else:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE4_NAME))
+        return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE4_NAME)) and low_skill_check(world, state, STAGE4_NAME)
 
-    if world.options.low_skill_logic:
-        return ((state.has_any((STAGE4_NAME_FULL, STAGE5_NAME_FULL, STAGE6_NAME_FULL), world.player)
-                 and low_skill_rules(world, state)) or has_challenge_access_item(world, state))
-    else:
-        return (state.has_any((STAGE4_NAME_FULL, STAGE5_NAME_FULL, STAGE6_NAME_FULL), world.player)
-                or has_challenge_access_item(world, state))
-
-
-def low_skill_rules(world, state: CollectionState, is_boss_encounter: bool = False) -> bool:
-    if is_boss_encounter:
-        pass
-
-    match world.options.progressive_loadout:
-        case 1:  # Simultaneous upgrades.
-            return state.has_all(LOW_SKILL_CARD_LIST, world.player) and state.has(PROGRESS_EQUIP_NAME, world.player, 3)
-        case 2:  # Separate upgrades.
-            return (state.has_all(LOW_SKILL_CARD_LIST, world.player) and state.has(PROGRESS_SLOT_NAME, world.player, 3)
-                    and state.has(PROGRESS_COST_NAME, world.player, 3))
-        case _:
-            return state.has_all(LOW_SKILL_CARD_LIST, world.player)
+    return ((state.has(STAGE4_NAME_FULL, world.player) and low_skill_check(world, state, STAGE4_ID)) or
+            (state.has(STAGE5_NAME_FULL, world.player) and low_skill_check(world, state, STAGE5_ID)) or
+            (state.has(STAGE6_NAME_FULL, world.player) and low_skill_check(world, state, STAGE6_ID)) or
+            (has_challenge_access_item(world, state) and low_skill_check(world, state, STAGE_CHALLENGE_ID)))
 
 
 # Special access rules.
 def has_nitori_access(world, state: CollectionState) -> bool:
     if world.options.progressive_stages:
-        if world.options.low_skill_logic:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player,
-                             get_progress_item_requirement(STAGE4_NAME)) and state.has(BLANK_CARD_NAME,
-                                                                                       world.player) and low_skill_rules(world,
-                state)
-        else:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player,
-                             get_progress_item_requirement(STAGE4_NAME)) and state.has(BLANK_CARD_NAME, world.player)
-
-    if world.options.low_skill_logic:
-        return state.has_all((STAGE4_NAME_FULL, BLANK_CARD_NAME), world.player) and low_skill_rules(world, state)
+        return (state.has(PROGRESS_ITEM_NAME_FULL, world.player,
+               get_progress_item_requirement(STAGE4_NAME)) and state.has(BLANK_CARD_NAME, world.player) and low_skill_check_nitori(world, state))
     else:
-        return state.has_all((STAGE4_NAME_FULL, BLANK_CARD_NAME), world.player)
+        return state.has_all((STAGE4_NAME_FULL, BLANK_CARD_NAME), world.player) and low_skill_check_nitori(world, state)
 
 
 def has_takane_access(world, state: CollectionState) -> bool:
     if world.options.progressive_stages:
-        if world.options.low_skill_logic:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player,
-                             get_progress_item_requirement(STAGE6_NAME)) and state.has(NITORI_STORY_CARD_NAME,
-                                                                                       world.player) and low_skill_rules(world,
-                state)
-        else:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player,
-                             get_progress_item_requirement(STAGE6_NAME)) and state.has(NITORI_STORY_CARD_NAME,
-                                                                                       world.player)
+        return (state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE6_NAME))
+                and state.has(NITORI_STORY_CARD_NAME, world.player) and low_skill_check(world, state, STAGE6_ID))
 
-    if world.options.low_skill_logic:
-        return state.has_all((STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME), world.player) and low_skill_rules(world, state)
-    else:
-        return state.has_all((STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME), world.player)
+    return state.has_all((STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME), world.player) and low_skill_check(world, state, STAGE6_ID)
 
 
 def has_sekibanki_access(world, state: CollectionState) -> bool:
@@ -256,25 +276,18 @@ def has_lily_white_access(world, state: CollectionState) -> bool:
     if world.options.progressive_stages:
         return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE1_NAME))
 
-    if world.options.low_skill_logic:
-        return has_very_early_game_access_item(world, state) or (
-                    has_stage_access_item(world, state,  STAGE5_NAME) and low_skill_rules(world, state)) or has_challenge_access_item(world,
-            state)
-    else:
-        return has_very_early_game_access_item(world, state) or has_stage_access_item(world, state, 
-                                                                               STAGE5_NAME) or has_challenge_access_item(world,
-            state)
+    return (has_very_early_game_access_item(world, state) or
+            (has_stage_access_item(world, state, STAGE5_NAME) and low_skill_check(world, state, STAGE5_ID)) or
+            has_challenge_access_item(world, state))
 
 
 def has_doremy_access(world, state: CollectionState) -> bool:
     if world.options.progressive_stages:
         return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE2_NAME))
 
-    if world.options.low_skill_logic:
-        return has_early_game_access_item(world, state) or (
-                    has_stage_access_item(world, state,  STAGE5_NAME) and low_skill_rules(world, state)) or has_challenge_access_item(world, state)
-    else:
-        return has_early_game_access_item(world, state) or has_stage_access_item(world, state, STAGE5_NAME) or has_challenge_access_item(world, state)
+    return (has_early_game_access_item(world, state) or
+            (has_stage_access_item(world, state, STAGE5_NAME) and low_skill_check(world, state, STAGE5_ID)) or
+            has_challenge_access_item(world, state))
 
 
 def has_nazrin2_access(world, state: CollectionState) -> bool:
@@ -295,25 +308,17 @@ def all_bosses_access(world, state: CollectionState) -> bool:
     This accounts for not only all stage unlocks but also the two special cards.
     """
     if world.options.progressive_stages:
-        if world.options.low_skill_logic:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player,
-                             get_progress_item_requirement(ENDSTAGE_NAME)) and state.has_all(
-                (BLANK_CARD_NAME, NITORI_STORY_CARD_NAME), world.player) and low_skill_rules(world, state)
-        else:
-            return state.has(PROGRESS_ITEM_NAME_FULL, world.player,
-                             get_progress_item_requirement(ENDSTAGE_NAME)) and state.has_all(
-                (BLANK_CARD_NAME, NITORI_STORY_CARD_NAME), world.player)
+        return (state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(ENDSTAGE_NAME)) and
+                state.has_all((BLANK_CARD_NAME, NITORI_STORY_CARD_NAME), world.player) and
+                low_skill_check(world, state, BOSS_TAKANE))
 
-    if world.options.low_skill_logic:
-        return state.has_all(
-            (TUTORIAL_NAME_FULL, STAGE1_NAME_FULL, STAGE2_NAME_FULL, STAGE3_NAME_FULL, STAGE4_NAME_FULL,
-             STAGE5_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL, NITORI_STORY_CARD_NAME, BLANK_CARD_NAME),
-            world.player) and low_skill_rules(world, state)
-    else:
-        return state.has_all(
-            (TUTORIAL_NAME_FULL, STAGE1_NAME_FULL, STAGE2_NAME_FULL, STAGE3_NAME_FULL, STAGE4_NAME_FULL,
-             STAGE5_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL, NITORI_STORY_CARD_NAME, BLANK_CARD_NAME),
-            world.player)
+    non_challenge_stages = STAGE_NAME_LIST
+    if ENDSTAGE_NAME_FULL in non_challenge_stages:
+        non_challenge_stages.remove(ENDSTAGE_NAME_FULL)
+
+    return (state.has_all(non_challenge_stages, world.player) and
+            state.has_all((NITORI_STORY_CARD_NAME, BLANK_CARD_NAME), world.player) and
+            low_skill_check(world, state, STAGE6_ID) and low_skill_check(world, state, STAGE_CHIMATA_ID))
 
 
 def all_cards_access(world, state: CollectionState) -> bool:

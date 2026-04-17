@@ -269,31 +269,20 @@ def set_achievement_rules(world):
 def set_goal_condition(world) -> None:
     def minimum_story_clear(state: CollectionState) -> bool:
         if world.options.progressive_stages:
-            if world.options.low_skill_logic:
-                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE6_NAME)) and state.has(NITORI_STORY_CARD_NAME, world.player) and low_skill_rules(world, state)
-            else:
-                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE6_NAME)) and state.has(NITORI_STORY_CARD_NAME, world.player)
+            return (state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE6_NAME)) and
+                    state.has(NITORI_STORY_CARD_NAME, world.player) and
+                    low_skill_check(world, state, BOSS_TAKANE))
 
-        if world.options.low_skill_logic:
-            return state.has_all((NITORI_STORY_CARD_NAME, STAGE6_NAME_FULL), world.player) and low_skill_rules(world, state)
-        else:
-            return state.has_all((NITORI_STORY_CARD_NAME, STAGE6_NAME_FULL), world.player)
+        return state.has_all((NITORI_STORY_CARD_NAME, STAGE6_NAME_FULL), world.player) and low_skill_check(world, state, BOSS_TAKANE)
 
     def full_story_clear(state: CollectionState) -> bool:
         if world.options.progressive_stages:
-            if world.options.low_skill_logic:
-                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(ENDSTAGE_NAME)) and state.has_all((NITORI_STORY_CARD_NAME, BLANK_CARD_NAME), world.player) and low_skill_rules(world, state)
-            else:
-                return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(ENDSTAGE_NAME)) and state.has_all((NITORI_STORY_CARD_NAME, BLANK_CARD_NAME), world.player)
+            return (state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(ENDSTAGE_NAME)) and
+                    state.has_all((NITORI_STORY_CARD_NAME, BLANK_CARD_NAME), world.player) and
+                    low_skill_check(world, state, BOSS_TAKANE) and low_skill_check_nitori(world, state))
 
-        if world.options.low_skill_logic:
-            return state.has_all(
-                (NITORI_STORY_CARD_NAME, BLANK_CARD_NAME, STAGE4_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL),
-                world.player) and low_skill_rules(world, state)
-        else:
-            return state.has_all(
-            (NITORI_STORY_CARD_NAME, BLANK_CARD_NAME, STAGE4_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL),
-            world.player)
+        return (state.has_all((NITORI_STORY_CARD_NAME, BLANK_CARD_NAME, STAGE4_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL), world.player) and
+                low_skill_check(world, state, BOSS_TAKANE) and low_skill_check_nitori(world, state))
 
     # Since this checks for items, and full stage names are used as items, use that.
     def all_cards_clear(state: CollectionState) -> bool:
@@ -309,10 +298,8 @@ def set_goal_condition(world) -> None:
         if world.options.progressive_stages:
             return full_story_clear(state)
 
-        if world.options.low_skill_logic:
-            return state.has_all((boss_condition_list + LOW_SKILL_CARD_LIST + [NITORI_STORY_CARD_NAME, BLANK_CARD_NAME]), world.player)
-        else:
-            return state.has_all((boss_condition_list + [NITORI_STORY_CARD_NAME, BLANK_CARD_NAME]), world.player)
+        return (state.has_all((boss_condition_list + [NITORI_STORY_CARD_NAME, BLANK_CARD_NAME]), world.player) and
+                low_skill_check(world, state, BOSS_TAKANE) and low_skill_check_nitori(world, state))
 
     def full_clear_rule(state: CollectionState) -> bool:
         if world.options.progressive_stages:

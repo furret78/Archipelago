@@ -7,6 +7,11 @@ class StartingMarket(Choice):
     """
     Choose which stage to have unlocked at the start of the game.
 
+    0. Tutorial
+    1-6. 1st-6th Market.
+    7. End of Market.
+    8. Challenge Market.
+
     If Progressive Markets is enabled:
     - Unlock items for stages preceding the Starting Market will not appear.
     - Any stages preceding the Starting Market will be unlocked.
@@ -131,15 +136,40 @@ class TrapChance(Range):
     default = 10
 
 
-class LowSkillLogic(DefaultOnToggle):
+class LowSkillLogic(Choice):
     """
     Whether the generation logic should include certain Ability Cards as compulsory before challenging late-game stages.
 
-    This includes: Life Explosion Elixir, Princess Kaguya's Secret Stash, Soot-covered Uchiwa,
+    0. Disabled.
+    1. Stage 4 requires only 2 of them, stage 5 requires 4, etc.
+    2. All late-game stages logically require all cards below.
+
+    * 4th-6th Market + Challenge Market:
+    Life Explosion Elixir, Princess Kaguya's Secret Stash, Soot-covered Uchiwa,
     Esteemed Authority, Gluttonous Centipede, and Money Is The Best Lawyer In Hell.
+    * End of Market:
+    Life Explosion Elixir, Esteemed Authority
+    * Takane: + Lucky Cat with Good Business Skills
+    * Nitori: + 1 card loadout slot progression
     """
 
     display_name = "Recommended Loadout in Logic"
+
+    option_none = 0
+    option_scale = 1
+    option_full = 2
+
+    default = option_scale
+
+    @classmethod
+    def get_option_name(cls, value: T) -> str:
+        if value == cls.option_none:
+            return "Disabled"
+        if value == cls.option_scale:
+            return "Scale According to Stage"
+        if value == cls.option_full:
+            return "Enforce Full Loadout"
+        return super().get_option_name(value)
 
 
 class IncludeGameplayFiller(DefaultOnToggle):
@@ -299,7 +329,7 @@ option_presets = {
         "stage_boss_locations": 1, # Only stage clears
         "disable_challenge_logic": True,
         "trap_chance": 0,
-        "low_skill_logic": True,
+        "low_skill_logic": 1,
         "include_gameplay_filler": False,
         "death_link": False,
         "death_link_trigger": 0,
@@ -309,77 +339,5 @@ option_presets = {
         "music_room_checks": False,
         "achievement_checks": False,
         "completion_type": 0 # Full Main Story
-    },
-    "normal": {
-        "starting_market": 1, # 1st Market
-        "progressive_stages": True,
-        "progressive_loadout": 0,
-        "stage_boss_locations": 0, # Only boss clears
-        "disable_challenge_logic": True,
-        "trap_chance": 5,
-        "low_skill_logic": True,
-        "include_gameplay_filler": False,
-        "death_link": False,
-        "death_link_trigger": 0,
-        "death_link_invincibility": True,
-        "energy_link": False,
-        "energy_link_bullet_money": False,
-        "music_room_checks": False,
-        "achievement_checks": False,
-        "completion_type": 0 # Full Main Story
-    },
-    "hard": {
-        "starting_market": 3, # 3rd Market
-        "progressive_stages": True,
-        "progressive_loadout": True,
-        "stage_boss_locations": 0, # Only boss clears
-        "disable_challenge_logic": True,
-        "trap_chance": 10,
-        "low_skill_logic": False,
-        "include_gameplay_filler": True,
-        "death_link": True,
-        "death_link_trigger": 1,
-        "death_link_invincibility": False,
-        "energy_link": False,
-        "energy_link_bullet_money": False,
-        "music_room_checks": True,
-        "achievement_checks": False,
-        "completion_type": 1 # Minimum Main Story
-    },
-    "lunatic": {
-        "starting_market": 5, # 5th Market
-        "progressive_stages": False,
-        "progressive_loadout": True,
-        "stage_boss_locations": 2, # Both boss clears and stage clears
-        "disable_challenge_logic": False,
-        "trap_chance": 20,
-        "low_skill_logic": False,
-        "include_gameplay_filler": True,
-        "death_link": True,
-        "death_link_trigger": 0,
-        "death_link_invincibility": False,
-        "energy_link": False,
-        "energy_link_bullet_money": False,
-        "music_room_checks": True,
-        "achievement_checks": False,
-        "completion_type": 3 # All Bosses Defeated
-    },
-    "overdrive": {
-        "starting_market": 8, # Challenge Market
-        "progressive_stages": False,
-        "progressive_loadout": True,
-        "stage_boss_locations": 2, # Both boss clears and stage clears
-        "disable_challenge_logic": False,
-        "trap_chance": 50,
-        "low_skill_logic": False,
-        "include_gameplay_filler": True,
-        "death_link": True,
-        "death_link_trigger": 0,
-        "death_link_invincibility": False,
-        "energy_link": False,
-        "energy_link_bullet_money": False,
-        "music_room_checks": True,
-        "achievement_checks": True,
-        "completion_type": 4 # Full Clear
     }
 }
