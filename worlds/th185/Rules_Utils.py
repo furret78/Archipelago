@@ -89,6 +89,13 @@ def low_skill_check_nitori(world, state: CollectionState) -> bool:
                 return low_skill_check(world, state, STAGE_CHIMATA_ID) and state.has_from_list_unique(STANDARD_STAGE_LIST, world.player, 1)
 
 
+def low_skill_check_encounters(world, state: CollectionState, stage_id: int = 0) -> bool:
+    if stage_id == BOSS_NITORI:
+        return state.has(JUNKO_CARD_NAME, world.player) or low_skill_check_nitori(world, state)
+    else:
+        return state.has(JUNKO_CARD_NAME, world.player) or low_skill_check(world, state, stage_id)
+
+
 def has_equipment_achievement_access(world, state: CollectionState) -> bool:
     # If this passes, Progressive Loadout is active. Should only require getting their respective items.
     match world.options.progressive_loadout:
@@ -247,21 +254,41 @@ def has_lategame_access_item(world, state: CollectionState) -> bool:
             (has_challenge_access_item(world, state) and low_skill_check(world, state, STAGE_CHALLENGE_ID)))
 
 
-# Special access rules.
-def has_nitori_access(world, state: CollectionState) -> bool:
+def has_encounter_access(world, state, condition) -> bool:
+    # Special checks.
+    if condition == BOSS_NITORI:
+        return has_nitori_boss_access(world, state) and low_skill_check_encounters(world, state, BOSS_NITORI)
+    elif condition == BOSS_TAKANE:
+        return has_takane_boss_access(world, state) and low_skill_check_encounters(world, state, BOSS_TAKANE)
+    elif condition == CHALLENGE_NAME:
+        return has_challenge_access_item(world, state, True)
+    # None of the special cases apply.
+    return has_stage_access_item(world, state, condition) and low_skill_check_encounters(world, state, STAGE_NAME_TO_ID[condition])
+
+
+def has_nitori_boss_access(world, state: CollectionState) -> bool:
     if world.options.progressive_stages:
         return (state.has(PROGRESS_ITEM_NAME_FULL, world.player,
-               get_progress_item_requirement(STAGE4_NAME)) and state.has(BLANK_CARD_NAME, world.player) and low_skill_check_nitori(world, state))
+               get_progress_item_requirement(STAGE4_NAME)) and state.has(BLANK_CARD_NAME, world.player))
     else:
-        return state.has_all((STAGE4_NAME_FULL, BLANK_CARD_NAME), world.player) and low_skill_check_nitori(world, state)
+        return state.has_all((STAGE4_NAME_FULL, BLANK_CARD_NAME), world.player)
+
+
+# Special access rules.
+def has_nitori_access(world, state: CollectionState) -> bool:
+    return has_nitori_boss_access(world, state) and low_skill_check_nitori(world, state)
+
+
+def has_takane_boss_access(world, state: CollectionState) -> bool:
+    if world.options.progressive_stages:
+        return (state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE6_NAME))
+                and state.has(NITORI_STORY_CARD_NAME, world.player))
+
+    return state.has_all((STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME), world.player)
 
 
 def has_takane_access(world, state: CollectionState) -> bool:
-    if world.options.progressive_stages:
-        return (state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE6_NAME))
-                and state.has(NITORI_STORY_CARD_NAME, world.player) and low_skill_check(world, state, STAGE6_ID))
-
-    return state.has_all((STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME), world.player) and low_skill_check(world, state, STAGE6_ID)
+    return has_takane_boss_access(world, state) and low_skill_check(world, state, STAGE6_ID)
 
 
 def has_sekibanki_access(world, state: CollectionState) -> bool:

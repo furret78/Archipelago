@@ -64,17 +64,17 @@ def set_boss_location_rules(world):
 
                 # Check if it's Nitori or Takane
                 if boss_name == BOSS_NITORI_NAME:
-                    add_rule(location_encounter, lambda state: has_nitori_access(world, state))
+                    add_rule(location_encounter, lambda state: has_encounter_access(world, state, BOSS_NITORI))
                     add_rule(location_defeat, lambda state: has_nitori_access(world, state))
                     continue
                 elif boss_name == BOSS_TAKANE_NAME:
-                    add_rule(location_encounter, lambda state: has_takane_access(world, state))
+                    add_rule(location_encounter, lambda state: has_encounter_access(world, state, BOSS_TAKANE))
                     add_rule(location_defeat, lambda state: has_takane_access(world, state))
                     continue
 
                 # If it's none of them
                 add_rule(location_encounter,
-                         lambda state, the_name=stage_short_name: has_stage_access_item(world, state, the_name))
+                         lambda state, the_name=stage_short_name: has_encounter_access(world, state, the_name))
                 add_rule(location_defeat,
                          lambda state, the_name=stage_short_name: has_stage_access_item(world, state, the_name))
         # Challenge Market clause.

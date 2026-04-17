@@ -3,7 +3,7 @@ import unittest
 import pymem
 
 from ..Tools import getPointerAddress, get_internal_boss_id_to_client
-from ..variables.address_gameplay import ADDR_LAST_BOSS_MET
+from ..variables.address_gameplay import ADDR_LAST_BOSS_MET, ADDR_CURRENT_STAGE_PTR
 from ..variables.card_const import ADDR_CARD_TO_DEX, MALLET_CARD
 from ..variables.meta_data import DISPLAY_NAME
 from .. import TouhouHBMWorld, FILE_NAME, ADDR_BASE_MENU_PTR
@@ -31,3 +31,9 @@ class PythonTestFunctions(unittest.TestCase):
         last_boss_met_id = self.pm.read_int(addrBossMet)
         if last_boss_met_id < 1 or last_boss_met_id > 28: last_boss_met_id = -1
         print(f"Boss Met: {get_internal_boss_id_to_client(last_boss_met_id)}")
+
+    def test_read_stage_status(self):
+        self.pm = pymem.Pymem(process_name=FILE_NAME)
+        addrStageStatus = self.pm.base_address + ADDR_CURRENT_STAGE_PTR
+        addrUsed = getPointerAddress(self.pm, addrStageStatus, [0xB0])
+        print(f"Stage status: {self.pm.read_int(addrUsed)}")

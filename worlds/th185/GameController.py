@@ -91,7 +91,7 @@ class GameController:
         0x44000 = Finished a stage due to Doremy's card.
         """
         try:
-            game_status = self.getAddressFromPointerCustomBase(self.addrCurrentStage, 0xB0)
+            game_status = self.getAddressFromPointerCustomBase(ADDR_CURRENT_STAGE_PTR, 0xB0)
             return self.pm.read_int(game_status)
         except Exception as e:
             return -1
