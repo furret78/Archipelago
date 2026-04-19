@@ -1,11 +1,24 @@
 # Utils specifically for generation rules.
-from unittest import case
-
-from BaseClasses import CollectionState
+from rule_builder.options import OptionFilter
+from rule_builder.rules import HasAll, HasFromListUnique, True_, False_, Has, HasAny
+from .Options import CompletionType, ProgressiveStages, LowSkillLogic, ProgressiveLoadout, DisableChallengeLogic
 from .Tools import get_progress_item_requirement, clamp, get_card_location_name_str
 from .variables.card_const import *
-from worlds.generic.Rules import add_rule
 
+STANDARD_STAGE_LIST = STAGE_NAME_LIST
+if TUTORIAL_NAME_FULL in STANDARD_STAGE_LIST: STANDARD_STAGE_LIST.remove(TUTORIAL_NAME_FULL)
+if ENDSTAGE_NAME_FULL in STANDARD_STAGE_LIST: STANDARD_STAGE_LIST.remove(ENDSTAGE_NAME_FULL)
+if CHALLENGE_NAME_FULL in STANDARD_STAGE_LIST: STANDARD_STAGE_LIST.remove(CHALLENGE_NAME_FULL)
+non_challenge_stages = STAGE_NAME_LIST
+if CHALLENGE_NAME_FULL in non_challenge_stages: non_challenge_stages.remove(CHALLENGE_NAME_FULL)
+progressive_stages_enabled = OptionFilter(ProgressiveStages, True)
+progressive_stages_disabled = OptionFilter(ProgressiveStages, False)
+progressive_loadout_together = OptionFilter(ProgressiveLoadout, ProgressiveLoadout.option_together)
+progressive_loadout_separate = OptionFilter(ProgressiveLoadout, ProgressiveLoadout.option_separate)
+progressive_loadout_disabled = OptionFilter(ProgressiveLoadout, ProgressiveLoadout.option_none)
+low_skill_scale = OptionFilter(LowSkillLogic, LowSkillLogic.option_scale)
+low_skill_full = OptionFilter(LowSkillLogic, LowSkillLogic.option_full)
+low_skill_none = OptionFilter(LowSkillLogic, LowSkillLogic.option_none)
 
 def get_card_shop_item_names() -> list[str]:
     # Go through both lists and fetch the card names.
@@ -17,130 +30,90 @@ def get_card_shop_item_names() -> list[str]:
     return shop_card_item_names
 
 
-def check_low_skill_logic(world, logic_type: str = "none") -> bool:
-    """
-    Checks if the requested logic type for low skill magic exists in the .yaml.
-    Checks against 0. Disabled if args are left blank.
-    """
-    match logic_type:
-        case "scale":
-            return world.options.low_skill_logic == 1
-        case "full":
-            return world.options.low_skill_logic == 2
-
-    return world.options.low_skill_logic == 0
-
-
-def low_skill_check(world, state: CollectionState, stage_id: int = 0) -> bool:
+def low_skill_check(stage_id: int = 0):
     """
     Runs a proper check on whether the player has all cards needed to satisfy the low skill logic requirements.
     If low skill logic is disabled entirely, this returns True.
     """
-    if check_low_skill_logic(world):
-        return True
-
-    # Stage 6 + Challenge remains basically unchanged.
+    # Stage 6 and Challenge Market remains unchanged.
     if stage_id == STAGE6_ID or stage_id == STAGE_CHALLENGE_ID:
-        return state.has_all(LOW_SKILL_CARD_LIST, world.player)
+        return HasAll(*LOW_SKILL_CARD_LIST) | low_skill_none
     elif stage_id == BOSS_TAKANE:
         TAKANE_CARD_LIST = LOW_SKILL_CARD_LIST + [MIKE_CARD_NAME]
-        return state.has_all(TAKANE_CARD_LIST, world.player)
+        return HasAll(*TAKANE_CARD_LIST) | low_skill_none
 
-    # Adds scaling as an option.
-    if check_low_skill_logic(world, "scale"):
-        if stage_id == STAGE4_ID:
-            return state.has_from_list_unique(LOW_SKILL_CARD_LIST, world.player, 2)
-        elif stage_id == STAGE5_ID:
-            return state.has_from_list_unique(LOW_SKILL_CARD_LIST, world.player, 4)
-        elif stage_id == STAGE_CHIMATA_ID:
-            return state.has_from_list_unique(END_MARKET_CARD_LIST, world.player, 3)
-        else:
-            return True
-    elif check_low_skill_logic(world, "full"):
-        if stage_id == STAGE4_ID or stage_id == STAGE5_ID:
-            return state.has_all(LOW_SKILL_CARD_LIST, world.player)
-        elif stage_id == STAGE_CHIMATA_ID:
-            return state.has_all(END_MARKET_CARD_LIST, world.player)
-        else:
-            return True
-    else:
-        return True
+    has_scaled_low_skill = low_skill_scale & True_()
+    has_full_low_skill = low_skill_full & True_()
 
-def low_skill_check_nitori(world, state: CollectionState) -> bool:
-    match world.options.progressive_loadout:
-        case 1: # Together - this means check for progression item
-            return low_skill_check(world, state, STAGE_CHIMATA_ID) and state.has(PROGRESS_EQUIP_NAME, world.player, 1)
-        case 2: # Separate - this means check only for cards
-            return low_skill_check(world, state, STAGE_CHIMATA_ID) and state.has(PROGRESS_SLOT_NAME, world.player, 1)
-        case _: # Default - check for stages
-            # First check if Progressive Stages is enabled.
-            if world.options.progressive_stages:
-                return low_skill_check(world, state, STAGE_CHIMATA_ID) and state.has(PROGRESS_ITEM_NAME_FULL, world.player, 1)
-            # If it's not, check if at least one stage is available.
-            else:
-                STANDARD_STAGE_LIST = STAGE_NAME_LIST
-                if TUTORIAL_NAME_FULL in STANDARD_STAGE_LIST:
-                    STANDARD_STAGE_LIST.remove(TUTORIAL_NAME_FULL)
-                if ENDSTAGE_NAME_FULL in STANDARD_STAGE_LIST:
-                    STANDARD_STAGE_LIST.remove(ENDSTAGE_NAME_FULL)
-                if CHALLENGE_NAME_FULL in STANDARD_STAGE_LIST:
-                    STANDARD_STAGE_LIST.remove(CHALLENGE_NAME_FULL)
+    # Adds scaling.
+    if stage_id == STAGE4_ID:
+        has_scaled_low_skill = HasFromListUnique(*LOW_SKILL_CARD_LIST, count=2, options=[low_skill_scale])
+        has_full_low_skill = HasAll(*LOW_SKILL_CARD_LIST, options=[low_skill_full])
+    elif stage_id == STAGE5_ID:
+        has_scaled_low_skill = HasFromListUnique(*LOW_SKILL_CARD_LIST, count=4, options=[low_skill_scale])
+        has_full_low_skill = HasAll(*LOW_SKILL_CARD_LIST, options=[low_skill_full])
+    elif stage_id == STAGE_CHIMATA_ID:
+        has_scaled_low_skill = HasFromListUnique(*END_MARKET_CARD_LIST, count=3, options=[low_skill_scale])
+        has_full_low_skill = HasAll(*END_MARKET_CARD_LIST, options=[low_skill_full])
 
-                return low_skill_check(world, state, STAGE_CHIMATA_ID) and state.has_from_list_unique(STANDARD_STAGE_LIST, world.player, 1)
+    # If none of the above cases apply, pass it as True.
+    return has_scaled_low_skill | has_full_low_skill | low_skill_none
+
+def low_skill_check_nitori():
+    loadout_together = progressive_loadout_together & low_skill_check(STAGE_CHIMATA_ID) & Has(PROGRESS_EQUIP_NAME, count=1)
+    loadout_separate = progressive_loadout_separate & low_skill_check(STAGE_CHIMATA_ID) & Has(PROGRESS_SLOT_NAME, count=1)
+    loadout_none = (progressive_loadout_disabled & low_skill_check(STAGE_CHIMATA_ID) &
+                    (Has(PROGRESS_ITEM_NAME_FULL, count=1) | HasFromListUnique(*STANDARD_STAGE_LIST, count=1)))
+
+    return loadout_together | loadout_separate | loadout_none
 
 
-def low_skill_check_encounters(world, state: CollectionState, stage_id: int = 0) -> bool:
+def low_skill_check_encounters(stage_id: int = 0):
     if stage_id == BOSS_NITORI:
-        return state.has(JUNKO_CARD_NAME, world.player) or low_skill_check_nitori(world, state)
-    else:
-        return state.has(JUNKO_CARD_NAME, world.player) or low_skill_check(world, state, stage_id)
+        return Has(JUNKO_CARD_NAME) | low_skill_check_nitori()
+    return Has(JUNKO_CARD_NAME) | low_skill_check(stage_id)
 
 
-def has_equipment_achievement_access(world, state: CollectionState) -> bool:
-    # If this passes, Progressive Loadout is active. Should only require getting their respective items.
-    match world.options.progressive_loadout:
-        case 1:  # Together
-            return state.has(PROGRESS_EQUIP_NAME, world.player, 6)
-        case 2:  # Separate. Only check for Slots since the achievement only tracks that.
-            return state.has(PROGRESS_SLOT_NAME, world.player, 6)
-        case _:  # If it does not, require stage 4 at minimum.
-            return has_stage_access_item_count(world, state, 4)
+def has_equipment_achievement_access():
+    loadout_together = progressive_loadout_together & Has(PROGRESS_EQUIP_NAME, count=6)
+    loadout_separate = progressive_loadout_separate & Has(PROGRESS_SLOT_NAME, count=6)
+    loadout_none = progressive_loadout_disabled & has_stage_access_item_count(4)
+    return loadout_together | loadout_separate | loadout_none
 
 
 # Tutorial stage has 5 exclusive cards.
-def has_tutorial_access_item(world, state: CollectionState) -> bool:
-    if world.options.progressive_stages:
-        return state.has(PROGRESS_ITEM_NAME_FULL, world.player)
-    else:
-        return state.has(TUTORIAL_NAME_FULL, world.player)
+def has_tutorial_access_item():
+    return Has(PROGRESS_ITEM_NAME_FULL) | Has(TUTORIAL_NAME_FULL)
 
 
-def has_challenge_access_item(world, state: CollectionState, is_boss: bool = False) -> bool:
+def has_challenge_access_item(is_boss: bool = False):
     """
     Checks for Challenge Market access. Also checks for Low Skill Logic.
     If generation has turned off Challenge Market in logic (disable_challenge_logic == true),
     this will always return False.
     If doing Progressive Stages, also return False.
     """
-    if world.options.progressive_stages:
-        return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(CHALLENGE_NAME)) and low_skill_check(world, state, STAGE_CHALLENGE_ID)
-    if world.options.disable_challenge_logic and not is_boss:
-        return False
-    else:
-        return state.has(CHALLENGE_NAME_FULL, world.player) and low_skill_check(world, state, STAGE_CHALLENGE_ID)
+    progressive_market = Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(CHALLENGE_NAME), options=[progressive_stages_enabled])
+    nonprogressive_market = (Has(CHALLENGE_NAME_FULL, options=[OptionFilter(DisableChallengeLogic, False)]) |
+                             HasAll(*non_challenge_stages, options=[OptionFilter(DisableChallengeLogic, True)]))
+
+    is_boss_conditional = True_()
+    if not is_boss: is_boss_conditional = False_()
+
+    return (progressive_market | nonprogressive_market) & is_boss_conditional & low_skill_check(STAGE_CHALLENGE_ID)
 
 
 # For specific stages (excludes Challenge Market by default).
-def has_stage_access_item(world, state: CollectionState, short_stage_name: str) -> bool:
+def has_stage_access_item(short_stage_name: str):
     full_stage_name = STAGE_SHORT_TO_FULL_NAME[short_stage_name]
 
-    if world.options.progressive_stages:
-        return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(short_stage_name)) and low_skill_check(world, state, STAGE_NAME_TO_ID[short_stage_name])
-    else:
-        return state.has(full_stage_name, world.player) and low_skill_check(world, state, STAGE_NAME_TO_ID[short_stage_name])
+    progressive_access = Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(short_stage_name), options=[progressive_stages_enabled])
+    nonprogressive_access = Has(full_stage_name)
+
+    return (progressive_access | nonprogressive_access) & low_skill_check(STAGE_NAME_TO_ID[short_stage_name])
 
 
-def has_stage_list_access_item(world, state: CollectionState, stage_name_list: list[str], achieve_check: bool = False) -> bool:
+def has_stage_list_access_item(stage_name_list: list[str], achieve_check: bool = False):
     """
     Checks for whether the player would have any of the stages available.
     When checking for Progressive Market requirements, this will always take the first name on the list.
@@ -151,213 +124,198 @@ def has_stage_list_access_item(world, state: CollectionState, stage_name_list: l
     :param stage_name_list: The full names of the stages.
     :param achieve_check: Whether this is for Achievements or not.
     """
-    if world.options.progressive_stages:
-        return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(stage_name_list[0], True))
-    else:
-        if achieve_check:
-            return state.has_all(stage_name_list, world.player)
-        else:
-            return state.has_any(stage_name_list, world.player)
+
+    progressive_access = Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(stage_name_list[0], True))
+    nonprogressive_access = HasAny(*stage_name_list)
+    if achieve_check: nonprogressive_access = HasAll(*stage_name_list)
+
+    return progressive_access | nonprogressive_access
 
 
-def has_any_stage_access_item(world, state: CollectionState) -> bool:
-    if world.options.progressive_stages:
-        return state.has(PROGRESS_ITEM_NAME_FULL, world.player)
+def has_any_stage_access_item():
+    progress_access = Has(PROGRESS_ITEM_NAME_FULL)
+    nonprogress_access = HasAny(*non_challenge_stages) | has_challenge_access_item()
 
-    non_challenge_stages = STAGE_NAME_LIST
-    if CHALLENGE_NAME_FULL in non_challenge_stages:
-        non_challenge_stages.remove(CHALLENGE_NAME_FULL)
-    return state.has_any(non_challenge_stages, world.player) or has_challenge_access_item(world, state)
+    return progress_access | nonprogress_access
 
 
 # Despite the name, this is actually used for the slot upgrade achievement.
-def has_stage_access_item_count(world, state: CollectionState, stage_count: int) -> bool:
-    if stage_count <= 0: return True
+def has_stage_access_item_count(stage_count: int):
+    if stage_count <= 0: return True_()
 
-    def item_count_stages(used_count: int) -> bool:
+    def item_count_stages(used_count: int):
         non_story_pool = STAGE_NAME_LIST
         if CHALLENGE_NAME_FULL in non_story_pool:
             non_story_pool.remove(CHALLENGE_NAME_FULL)
         if TUTORIAL_NAME_FULL in non_story_pool:
             non_story_pool.remove(TUTORIAL_NAME_FULL)
+        non_stage6_pool = non_story_pool
+        if STAGE6_NAME_FULL in non_stage6_pool:
+            non_stage6_pool.remove(STAGE6_NAME_FULL)
 
-        if world.options.disable_challenge_logic:
-            return state.has_from_list_unique(non_story_pool, world.player, used_count)
-        else:
-            if STAGE6_NAME_FULL in non_story_pool:
-                non_story_pool.remove(STAGE6_NAME_FULL)
-            return (state.has_from_list_unique(non_story_pool, world.player,
-                                               clamp(used_count - 1, 0, len(non_story_pool))) and
-                    state.has_from_list_unique((STAGE6_NAME_FULL, CHALLENGE_NAME_FULL), world.player, 1))
+        local_progress_access = HasFromListUnique(*non_story_pool, count=used_count, options=[OptionFilter(DisableChallengeLogic, True)])
 
-    if world.options.progressive_stages:
-        return state.has(PROGRESS_ITEM_NAME_FULL, world.player, stage_count)
-    return (
-        # The usual.
-            item_count_stages(stage_count) or
-            # The rare case that someone has enough items for the story bosses.
-            (state.has_all(
-                (TUTORIAL_NAME_FULL, STAGE4_NAME_FULL, BLANK_CARD_NAME, STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME,
-                 ENDSTAGE_NAME_FULL), world.player)
-             and item_count_stages(stage_count - 1))
-    )
+        nonprogress_used_count = clamp(used_count - 1, 0, len(non_story_pool))
+        local_nonprogress_access = (HasFromListUnique(*non_stage6_pool, count=nonprogress_used_count) &
+                                    HasFromListUnique(STAGE6_NAME_FULL, CHALLENGE_NAME_FULL, count=1) &
+                                    OptionFilter(DisableChallengeLogic, False))
+
+        return local_progress_access | local_nonprogress_access
+
+    progress_access = Has(PROGRESS_ITEM_NAME_FULL, count=stage_count, options=[progressive_stages_enabled])
+    nonprogress_access = (item_count_stages(stage_count) |
+                          (HasAll(TUTORIAL_NAME_FULL, STAGE4_NAME_FULL, BLANK_CARD_NAME, STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME, ENDSTAGE_NAME_FULL) &
+                           item_count_stages(stage_count - 1))) & progressive_stages_disabled
+
+    return progress_access | nonprogress_access
 
 
 # For more open reward pools. Of course, these all imply Challenge Market clauses as well.
 # Common. Shows up in every stage except Tutorial.
-def has_common_access_item(world, state: CollectionState) -> bool:
-    if world.options.progressive_stages:
-        return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE1_NAME))
-
-    non_challenge_stages = STAGE_NAME_LIST
+def has_common_access_item():
+    every_stage_list = STAGE_NAME_LIST
     if TUTORIAL_NAME_FULL in non_challenge_stages:
-        non_challenge_stages.remove(TUTORIAL_NAME_FULL)
+        every_stage_list.remove(TUTORIAL_NAME_FULL)
     if CHALLENGE_NAME_FULL in non_challenge_stages:
-        non_challenge_stages.remove(CHALLENGE_NAME_FULL)
-    return state.has_any(non_challenge_stages, world.player) or has_challenge_access_item(world, state)
+        every_stage_list.remove(CHALLENGE_NAME_FULL)
+
+    progress_access = Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(STAGE1_NAME),
+                          options=[progressive_stages_enabled])
+    nonprogress_access = (HasAny(*every_stage_list) | has_challenge_access_item()) & progressive_stages_disabled
+
+    return progress_access | nonprogress_access
 
 
 # Very early game (Stage 1+). Does not show up in Stage 5 or End of Market.
-def has_very_early_game_access_item(world, state: CollectionState) -> bool:
-    if world.options.progressive_stages:
-        return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE1_NAME))
-
-    return has_early_game_access_item(world, state) or state.has(STAGE1_NAME_FULL, world.player)
+def has_very_early_game_access_item():
+    progress_access = Has(PROGRESS_ITEM_NAME_FULL, get_progress_item_requirement(STAGE1_NAME), options=[progressive_stages_enabled])
+    nonprogress_access = (has_early_game_access_item() | Has(STAGE1_NAME_FULL)) & progressive_stages_disabled
+    return progress_access | nonprogress_access
 
 
 # Early game (Stage 2+). Does not show up in Stage 5 or End of Market.
-def has_early_game_access_item(world, state: CollectionState) -> bool:
-    if world.options.progressive_stages:
-        return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE2_NAME))
-
-    return has_midgame_access_item(world, state) or state.has(STAGE2_NAME_FULL, world.player)
+def has_early_game_access_item():
+    progress_access = Has(PROGRESS_ITEM_NAME_FULL, get_progress_item_requirement(STAGE2_NAME), options=[progressive_stages_enabled])
+    nonprogress_access = (has_midgame_access_item() | Has(STAGE2_NAME_FULL)) & progressive_stages_disabled
+    return progress_access | nonprogress_access
 
 
 # Midgame (Stage 3+). Does not show up in Stage 5 or End of Market.
-def has_midgame_access_item(world, state: CollectionState) -> bool:
-    if world.options.progressive_stages:
-        return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE3_NAME))
-
-    return (state.has_any((STAGE3_NAME_FULL, STAGE4_NAME_FULL, STAGE6_NAME_FULL), world.player)
-            or has_challenge_access_item(world, state))
+def has_midgame_access_item():
+    progress_access = Has(PROGRESS_ITEM_NAME_FULL, get_progress_item_requirement(STAGE3_NAME), options=[progressive_stages_enabled])
+    nonprogress_access = (has_challenge_access_item() | HasAny(STAGE3_NAME_FULL, STAGE4_NAME_FULL, STAGE6_NAME_FULL)) & progressive_stages_disabled
+    return progress_access | nonprogress_access
 
 
 # Lategame (Stage 4+). Does not show up in End of Market.
 # Low Skill Logic forces the generation to include certain Ability Cards as compulsory.
-def has_lategame_access_item(world, state: CollectionState) -> bool:
-    if world.options.progressive_stages:
-        return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE4_NAME)) and low_skill_check(world, state, STAGE4_NAME)
+def has_lategame_access_item():
+    progress_access = (Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(STAGE4_NAME), options=[progressive_stages_enabled]) &
+                       low_skill_check(STAGE4_ID))
+    nonprogress_access = ((Has(STAGE4_NAME_FULL) & low_skill_check(STAGE4_ID)) |
+                          (Has(STAGE5_NAME_FULL) & low_skill_check(STAGE5_ID)) |
+                          (Has(STAGE6_NAME_FULL) & low_skill_check(STAGE6_ID)) |
+                          (has_challenge_access_item() & low_skill_check(STAGE_CHALLENGE_ID))) & progressive_stages_disabled
+    return progress_access | nonprogress_access
 
-    return ((state.has(STAGE4_NAME_FULL, world.player) and low_skill_check(world, state, STAGE4_ID)) or
-            (state.has(STAGE5_NAME_FULL, world.player) and low_skill_check(world, state, STAGE5_ID)) or
-            (state.has(STAGE6_NAME_FULL, world.player) and low_skill_check(world, state, STAGE6_ID)) or
-            (has_challenge_access_item(world, state) and low_skill_check(world, state, STAGE_CHALLENGE_ID)))
 
-
-def has_encounter_access(world, state, condition) -> bool:
+def has_encounter_access(condition):
     # Special checks.
     if condition == BOSS_NITORI:
-        return has_nitori_boss_access(world, state) and low_skill_check_encounters(world, state, BOSS_NITORI)
+        return has_nitori_boss_access() & low_skill_check_encounters(BOSS_NITORI)
     elif condition == BOSS_TAKANE:
-        return has_takane_boss_access(world, state) and low_skill_check_encounters(world, state, BOSS_TAKANE)
+        return has_takane_boss_access() & low_skill_check_encounters(BOSS_TAKANE)
     elif condition == CHALLENGE_NAME:
-        return has_challenge_access_item(world, state, True)
+        return has_challenge_access_item(True)
     # None of the special cases apply.
-    return has_stage_access_item(world, state, condition) and low_skill_check_encounters(world, state, STAGE_NAME_TO_ID[condition])
+    return has_stage_access_item(condition) & low_skill_check_encounters(STAGE_NAME_TO_ID[condition])
 
 
-def has_nitori_boss_access(world, state: CollectionState) -> bool:
-    if world.options.progressive_stages:
-        return (state.has(PROGRESS_ITEM_NAME_FULL, world.player,
-               get_progress_item_requirement(STAGE4_NAME)) and state.has(BLANK_CARD_NAME, world.player))
-    else:
-        return state.has_all((STAGE4_NAME_FULL, BLANK_CARD_NAME), world.player)
+def has_nitori_boss_access():
+    progress_access = (Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(STAGE4_NAME), options=[progressive_stages_enabled]) &
+                       Has(BLANK_CARD_NAME))
+    nonprogress_access = HasAll(STAGE4_NAME_FULL, BLANK_CARD_NAME)
+    return progress_access | nonprogress_access
 
 
 # Special access rules.
-def has_nitori_access(world, state: CollectionState) -> bool:
-    return has_nitori_boss_access(world, state) and low_skill_check_nitori(world, state)
+def has_nitori_access():
+    return has_nitori_boss_access() & low_skill_check_nitori()
 
 
-def has_takane_boss_access(world, state: CollectionState) -> bool:
-    if world.options.progressive_stages:
-        return (state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE6_NAME))
-                and state.has(NITORI_STORY_CARD_NAME, world.player))
-
-    return state.has_all((STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME), world.player)
-
-
-def has_takane_access(world, state: CollectionState) -> bool:
-    return has_takane_boss_access(world, state) and low_skill_check(world, state, STAGE6_ID)
+def has_takane_boss_access():
+    progress_access = (Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(STAGE6_NAME), options=[progressive_stages_enabled]) &
+                       Has(NITORI_STORY_CARD_NAME))
+    nonprogress_access = HasAll(STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME)
+    return progress_access | nonprogress_access
 
 
-def has_sekibanki_access(world, state: CollectionState) -> bool:
-    if world.options.progressive_stages:
-        return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE2_NAME))
+def has_takane_access():
+    return has_takane_boss_access() & low_skill_check(STAGE6_ID)
 
-    return state.has_any((STAGE2_NAME_FULL, ENDSTAGE_NAME_FULL), world.player) or has_challenge_access_item(world, state)
+
+def has_sekibanki_access():
+    progress_access = Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(STAGE2_NAME), options=[progressive_stages_enabled])
+    nonprogress_access = HasAny(STAGE2_NAME_FULL, ENDSTAGE_NAME_FULL) | has_challenge_access_item()
+    return progress_access | nonprogress_access
 
 
 # Lily White's and Doremy's cards are a little more open.
-def has_lily_white_access(world, state: CollectionState) -> bool:
-    if world.options.progressive_stages:
-        return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE1_NAME))
-
-    return (has_very_early_game_access_item(world, state) or
-            (has_stage_access_item(world, state, STAGE5_NAME) and low_skill_check(world, state, STAGE5_ID)) or
-            has_challenge_access_item(world, state))
+def has_lily_white_access():
+    progress_access = Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(STAGE1_NAME), options=[progressive_stages_enabled])
+    nonprogress_access = (has_very_early_game_access_item() | has_challenge_access_item() |
+                          (has_stage_access_item(STAGE5_NAME) & low_skill_check(STAGE5_ID)))
+    return progress_access | nonprogress_access
 
 
-def has_doremy_access(world, state: CollectionState) -> bool:
-    if world.options.progressive_stages:
-        return state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(STAGE2_NAME))
-
-    return (has_early_game_access_item(world, state) or
-            (has_stage_access_item(world, state, STAGE5_NAME) and low_skill_check(world, state, STAGE5_ID)) or
-            has_challenge_access_item(world, state))
+def has_doremy_access():
+    progress_access = Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(STAGE2_NAME), options=[progressive_stages_enabled])
+    nonprogress_access = (has_early_game_access_item() | has_challenge_access_item() |
+                          (has_stage_access_item(STAGE5_NAME) & low_skill_check(STAGE5_ID)))
+    return progress_access | nonprogress_access
 
 
-def has_nazrin2_access(world, state: CollectionState) -> bool:
-    if world.options.progressive_stages:
-        return state.has(PROGRESS_ITEM_NAME_FULL, world.player)
-
+def has_nazrin2_access():
     black_market_stages = STAGE_NAME_LIST
     if ENDSTAGE_NAME_FULL in black_market_stages:
         black_market_stages.remove(ENDSTAGE_NAME_FULL)
     if CHALLENGE_NAME_FULL in black_market_stages:
         black_market_stages.remove(CHALLENGE_NAME_FULL)
-    return state.has_any(black_market_stages, world.player) or has_challenge_access_item(world, state)
+
+    progress_access = Has(PROGRESS_ITEM_NAME_FULL, options=[progressive_stages_enabled])
+    nonprogress_access = HasAny(*black_market_stages) | has_challenge_access_item()
+    return progress_access | nonprogress_access
 
 
-def all_bosses_access(world, state: CollectionState) -> bool:
+def all_bosses_access():
     """
     Checks if the player can access all bosses outside of Challenge Market.
     This accounts for not only all stage unlocks but also the two special cards.
     """
-    if world.options.progressive_stages:
-        return (state.has(PROGRESS_ITEM_NAME_FULL, world.player, get_progress_item_requirement(ENDSTAGE_NAME)) and
-                state.has_all((BLANK_CARD_NAME, NITORI_STORY_CARD_NAME), world.player) and
-                low_skill_check(world, state, BOSS_TAKANE))
+    progress_access = (
+        progressive_stages_enabled &
+        Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(ENDSTAGE_NAME)) &
+        HasAll(BLANK_CARD_NAME, NITORI_STORY_CARD_NAME) &
+        low_skill_check(BOSS_TAKANE)
+    )
+    nonprogress_access = (
+        HasAll(*non_challenge_stages) &
+        HasAll(NITORI_STORY_CARD_NAME, BLANK_CARD_NAME) &
+        low_skill_check(STAGE6_ID) & low_skill_check(STAGE_CHIMATA_ID)
+    )
+    return progress_access | nonprogress_access
 
-    non_challenge_stages = STAGE_NAME_LIST
-    if ENDSTAGE_NAME_FULL in non_challenge_stages:
-        non_challenge_stages.remove(ENDSTAGE_NAME_FULL)
 
-    return (state.has_all(non_challenge_stages, world.player) and
-            state.has_all((NITORI_STORY_CARD_NAME, BLANK_CARD_NAME), world.player) and
-            low_skill_check(world, state, STAGE6_ID) and low_skill_check(world, state, STAGE_CHIMATA_ID))
-
-
-def all_cards_access(world, state: CollectionState) -> bool:
-    return state.has_all(get_card_shop_item_names(), world.player)
+def all_cards_access():
+    return HasAll(*get_card_shop_item_names())
 
 
 # Access rules for the Ability Card dex entries.
 # Ensures that the player has a way to grind for Funds + the card in the Permanent Card Shop.
 # This will fail if this is a solo game and the player chooses to start with no Markets unlocked.
 # (Hopefully)
-def has_grind_access(world, state: CollectionState, the_card_id: str) -> bool:
-    return state.has(CARD_ID_TO_NAME[the_card_id], world.player) and has_any_stage_access_item(world, state)
+def has_grind_access(the_card_id: str):
+    return Has(CARD_ID_TO_NAME[the_card_id]) & has_any_stage_access_item()
 
 
 def add_generic_access_card_rule(world, card_name_id: str, access_level: int):
@@ -366,14 +324,63 @@ def add_generic_access_card_rule(world, card_name_id: str, access_level: int):
 
     match access_level:
         case 0:  # Common access.
-            add_rule(generic_location_card, lambda state: has_common_access_item(world, state))
+            world.set_rule(generic_location_card, has_common_access_item())
         case 1:  # Stage 1+
-            add_rule(generic_location_card, lambda state: has_very_early_game_access_item(world, state))
+            world.set_rule(generic_location_card, has_very_early_game_access_item())
         case 2:  # Stage 2+
-            add_rule(generic_location_card, lambda state: has_early_game_access_item(world, state))
+            world.set_rule(generic_location_card, has_early_game_access_item())
         case 3:  # Stage 3+
-            add_rule(generic_location_card, lambda state: has_midgame_access_item(world, state))
+            world.set_rule(generic_location_card, has_midgame_access_item())
         case 4:  # Lategame
-            add_rule(generic_location_card, lambda state: has_lategame_access_item(world, state))
+            world.set_rule(generic_location_card, has_lategame_access_item() & low_skill_check(STAGE4_ID))
         case _:
             pass
+
+def get_goal_condition(completion_type: int):
+    def minimum_story_clear():
+        progress_access = (Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(STAGE6_NAME)) &
+                           Has(NITORI_STORY_CARD_NAME) & progressive_stages_enabled)
+        nonprogress_access = (HasAll(NITORI_STORY_CARD_NAME, STAGE6_NAME_FULL) & progressive_stages_disabled)
+        return (progress_access | nonprogress_access) & low_skill_check(BOSS_TAKANE)
+
+    def full_story_clear():
+        progress_access = (
+            Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(ENDSTAGE_NAME)) &
+            HasAll(NITORI_STORY_CARD_NAME, BLANK_CARD_NAME)
+        )
+        nonprogress_access = HasAll(NITORI_STORY_CARD_NAME, BLANK_CARD_NAME, STAGE4_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL)
+
+        return (progress_access | nonprogress_access) & low_skill_check(BOSS_TAKANE) & low_skill_check_nitori()
+
+    # To defeat all bosses, you need all stages to be available except the Challenge Market.
+    # Both instances of Mike Goutokuji are counted.
+    boss_condition_list = STAGE_NAME_LIST
+    if CHALLENGE_NAME_FULL in boss_condition_list: boss_condition_list.remove(CHALLENGE_NAME_FULL)
+
+    def all_bosses_clear():
+        # If Progressive Stages is enabled, this is just straight up Full Story Clear conditions.
+        progress_access = full_story_clear() & progressive_stages_enabled
+        nonprogress_access = (
+            HasAll(NITORI_STORY_CARD_NAME, BLANK_CARD_NAME, *boss_condition_list) &
+            progressive_stages_disabled
+        )
+        return (progress_access | nonprogress_access) & low_skill_check_nitori() & low_skill_check(BOSS_TAKANE)
+
+    def full_clear_rule():
+        progress_access = (HasAll(*get_card_shop_item_names(), options=[progressive_stages_enabled]) &
+                           full_story_clear())
+        nonprogress_access = (
+            HasAll(*get_card_shop_item_names(), *boss_condition_list, options=[progressive_stages_disabled])
+        )
+        return progress_access | nonprogress_access
+
+    if completion_type == CompletionType.option_full:
+        return full_story_clear()
+    elif completion_type == CompletionType.option_min:
+        return minimum_story_clear()
+    elif completion_type == CompletionType.option_cards:
+        return all_cards_access()
+    elif completion_type == CompletionType.option_bosses:
+        return all_bosses_clear()
+    else:
+        return full_clear_rule()

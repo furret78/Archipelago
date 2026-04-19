@@ -7,11 +7,6 @@ class StartingMarket(Choice):
     """
     Choose which stage to have unlocked at the start of the game.
 
-    0. Tutorial
-    1-6. 1st-6th Market.
-    7. End of Market.
-    8. Challenge Market.
-
     If Progressive Markets is enabled:
     - Unlock items for stages preceding the Starting Market will not appear.
     - Any stages preceding the Starting Market will be unlocked.
