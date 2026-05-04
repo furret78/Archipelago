@@ -1,5 +1,6 @@
 from typing import Dict
 
+from .Options import StageBossLocations
 from .Regions import get_regions_dict
 from .variables.card_const import *
 from .variables.meta_data import *
@@ -200,47 +201,45 @@ def create_regular_locations(world):
         # Boss Encounters and Defeats
         if region_name in STAGE_LIST:
             local_stage_id = STAGE_NAME_TO_ID[region_name]
-            if region_name != CHALLENGE_NAME:
-                for boss_name in ALL_BOSSES_LIST[local_stage_id]:
-                    location_encounter_stage: str = get_boss_location_name_str(local_stage_id, boss_name)
-                    location_defeat_stage: str = get_boss_location_name_str(local_stage_id, boss_name, True)
 
-                    boss_encounter_location = TouhouHBMLocation(
-                        world.player,
-                        location_encounter_stage,
-                        world.location_name_to_id[location_encounter_stage],
-                        all_regions_dict[region_name]
-                    )
-                    boss_defeat_location = TouhouHBMLocation(
-                        world.player,
-                        location_defeat_stage,
-                        world.location_name_to_id[location_defeat_stage],
-                        all_regions_dict[region_name]
-                    )
+            # Boss locations
+            for boss_name in ALL_BOSSES_LIST[local_stage_id]:
+                location_encounter_stage_name: str = get_boss_location_name_str(local_stage_id, boss_name)
+                location_defeat_stage_name: str = get_boss_location_name_str(local_stage_id, boss_name, True)
 
-                    all_regions_dict[region_name].locations.append(boss_encounter_location)
-                    all_regions_dict[region_name].locations.append(boss_defeat_location)
-            else:
-                boss_challenge_list = get_boss_names_challenge_list()
-                for challenge_boss in boss_challenge_list:
-                    location_challenge_encounter: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss)
-                    location_challenge_defeat: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss, True)
+                boss_encounter_location = TouhouHBMLocation(
+                    world.player,
+                    location_encounter_stage_name,
+                    world.location_name_to_id[location_encounter_stage_name],
+                    all_regions_dict[region_name]
+                )
+                boss_defeat_location = TouhouHBMLocation(
+                    world.player,
+                    location_defeat_stage_name,
+                    world.location_name_to_id[location_defeat_stage_name],
+                    all_regions_dict[region_name]
+                )
 
-                    boss_encounter_location = TouhouHBMLocation(
-                        world.player,
-                        location_challenge_encounter,
-                        world.location_name_to_id[location_challenge_encounter],
-                        all_regions_dict[CHALLENGE_NAME]
-                    )
-                    boss_defeat_location = TouhouHBMLocation(
-                        world.player,
-                        location_challenge_defeat,
-                        world.location_name_to_id[location_challenge_defeat],
-                        all_regions_dict[CHALLENGE_NAME]
-                    )
+                # If only stage clear locations are allowed,
+                # add no boss locations except for Nitori's and Takane's.
+                if (world.options.stage_boss_locations == StageBossLocations.option_stage_only and
+                    boss_name != BOSS_NITORI_NAME and boss_name != BOSS_TAKANE_NAME): continue
 
-                    all_regions_dict[CHALLENGE_NAME].locations.append(boss_encounter_location)
-                    all_regions_dict[CHALLENGE_NAME].locations.append(boss_defeat_location)
+                all_regions_dict[region_name].locations.append(boss_encounter_location)
+                all_regions_dict[region_name].locations.append(boss_defeat_location)
+
+            # Generic stage clears
+            if world.options.stage_boss_locations != StageBossLocations.option_boss_only:
+                location_stage_clear_name: str = get_stage_clear_location_name_str(local_stage_id)
+
+                stage_clear_location = TouhouHBMLocation(
+                    world.player,
+                    location_stage_clear_name,
+                    world.location_name_to_id[location_stage_clear_name],
+                    all_regions_dict[region_name]
+                )
+
+                all_regions_dict[region_name].locations.append(stage_clear_location)
         # Ability Card as Market Card Rewards
         elif region_name == ENDSTAGE_CHOOSE_NAME:
             for stage_card in ABILITY_CARD_LIST:

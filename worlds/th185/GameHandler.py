@@ -1,5 +1,6 @@
 import random
 import sys
+from unittest import case
 
 from . import MAX_BULLET_MONEY
 from .GameController import GameController
@@ -241,6 +242,28 @@ class GameHandler:
         match type:
             case 0: self.bosses_met[stage_id][boss_id] = value
             case 1: self.bosses_beaten[stage_id][boss_id] = value
+
+    def getFullBossRecordHandler(self, type: int = 0):
+        """
+        Fetches the entire boss record that GameHandler has.
+        Mainly used in the case that there are only stage clear locations.
+        """
+        match type:
+            case 0: # Encounters
+                return self.bosses_met
+            case _: # Defeat
+                return self.bosses_beaten
+
+    def setFullBossRecordHandler(self, type: int, record_data):
+        """
+        Sets the entire boss record that GameHandler has.
+        Mainly used in the case that there are only stage clear locations.
+        """
+        match type:
+            case 0: # Encounters
+                self.bosses_met = record_data
+            case _: # Defeat
+                self.bosses_beaten = record_data
 
     def getBossRecordGame(self, stage_id: int, boss_id: int, type: int = 0) -> bool:
         """

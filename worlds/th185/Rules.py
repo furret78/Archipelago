@@ -3,7 +3,9 @@ try:
     from BaseClasses import CollectionRule
 except ImportError:
     from worlds.generic.Rules import CollectionRule
-from .Tools import get_boss_location_name_str, get_music_location_name_str, get_achievement_location_name_str, get_boss_names_challenge_list
+from .Tools import get_boss_location_name_str, get_music_location_name_str, get_achievement_location_name_str, \
+    get_boss_names_challenge_list, get_stage_clear_location_name_str
+from .Options import StageBossLocations
 from .variables.music_and_achiev import MUSIC_ROOM_NAME_DICT, ACHIEVE_NAME_DICT
 from .Rules_Utils import *
 
@@ -50,6 +52,7 @@ def set_all_entrance_rules(world) -> None:
 
 def set_all_location_rules(world) -> None:
     set_boss_location_rules(world)
+    set_stage_location_rules(world)
     set_market_reward_rules(world)
     set_card_dex_rules(world)
     set_music_rules(world)
@@ -66,6 +69,8 @@ def set_boss_location_rules(world):
         stage_id_from_list = STAGE_NAME_TO_ID[stage_short_name]
         if stage_short_name != CHALLENGE_NAME:
             for boss_name in ALL_BOSSES_LIST[stage_id_from_list]:
+                if (world.options.stage_boss_locations == StageBossLocations.option_stage_only and
+                    boss_name != BOSS_NITORI_NAME and boss_name != BOSS_TAKANE_NAME): continue
                 location_encounter = world.get_location(get_boss_location_name_str(stage_id_from_list, boss_name))
                 location_defeat = world.get_location(get_boss_location_name_str(stage_id_from_list, boss_name, True))
 
@@ -84,11 +89,25 @@ def set_boss_location_rules(world):
                 world.set_rule(location_defeat, has_stage_access_item(stage_short_name))
         # Challenge Market clause.
         else:
+            if world.options.stage_boss_locations == StageBossLocations.option_stage_only: continue
             for challenge_boss in get_boss_names_challenge_list():
                 location_encounter = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss)
                 location_defeat = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss, True)
                 world.set_rule(world.get_location(location_encounter), has_challenge_access_item(True))
                 world.set_rule(world.get_location(location_defeat), has_challenge_access_item(True))
+
+
+def set_stage_location_rules(world):
+    """
+    Location rules for generic stage clears.
+    """
+    if world.options.stage_boss_locations == StageBossLocations.option_boss_only: return
+    for stage_short_name in STAGE_LIST:
+        location_stage_clear = world.get_location(get_stage_clear_location_name_str(STAGE_NAME_TO_ID[stage_short_name]))
+        if stage_short_name != CHALLENGE_NAME:
+            world.set_rule(location_stage_clear, has_stage_access_item(stage_short_name))
+        else:
+            world.set_rule(location_stage_clear, has_challenge_access_item(True))
 
 
 def set_market_reward_rules(world):

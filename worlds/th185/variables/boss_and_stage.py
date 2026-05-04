@@ -32,7 +32,7 @@ BOSS_CHIMATA_NAME = "Chimata Tenkyuu"
 BOSS_NITORI_NAME = "Nitori Kawashiro"
 BOSS_TAKANE_NAME = "Takane Yamashiro"
 
-GENERIC_STAGE_CLEAR_NAME = "Stage Clear"
+GENERIC_STAGE_CLEAR_NAME = "Market Clear"
 
 # Boss IDs
 BOSS_MIKE = 0
