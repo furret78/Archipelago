@@ -1,9 +1,12 @@
 import traceback
 import typing
+from tkinter.ttk import Label
 from typing import Optional
 import asyncio
 import colorama
+import pymem.exception
 
+import Utils
 from CommonClient import (
     CommonContext,
     ClientCommandProcessor,
@@ -13,6 +16,7 @@ from CommonClient import (
     gui_enabled,
 )
 from NetUtils import NetworkItem
+from . import TouhouHBMWorld
 from .GameHandler import *
 from .Items import item_table, ITEM_TABLE_ID_TO_STAGE_NAME, ITEM_TABLE_ID_TO_CARD_ID, \
     PROGRESSIVE_ITEMS_LIST, check_for_game_filler, PROGRESSIVE_COST_LIST
@@ -308,6 +312,12 @@ class TouhouHBMContext(CommonContext):
         self.received_equip_cost: int = 0
         self.received_invinc_cancel: bool = False
 
+        # Client loop error logs
+        self.main_loop_traceback = None
+        self.game_loop_traceback = None
+        self.menu_loop_traceback = None
+        self.deathlink_loop_traceback = None
+
         self.reset()
 
     def reset(self):
@@ -372,7 +382,15 @@ class TouhouHBMContext(CommonContext):
         self.started_card_reset = False
         self.stage_boss_found = False
 
+        self.reset_traceback()
+
         #self.reset_game_data()
+
+    def reset_traceback(self):
+        self.main_loop_traceback = None
+        self.game_loop_traceback = None
+        self.menu_loop_traceback = None
+        self.deathlink_loop_traceback = None
 
     def reset_game_data(self):
         if not self.handler: return
@@ -1122,126 +1140,6 @@ class TouhouHBMContext(CommonContext):
             except Exception as e:
                 await asyncio.sleep(2)
 
-    async def main_loop(self):
-        """
-        Main loop. Responsible for scanning locations for checks and stage updates.
-        """
-        try:
-            await self.update_locations_checked()
-            self.update_stage_list()
-        except Exception as e:
-            self.inError = True
-            logger.error(f"Error in the MAIN loop.")
-            logger.error(traceback.format_exc())
-
-    async def game_loop(self):
-        """
-        Game loop. Checks when to clear out the shop data in order to scan for Market Card Rewards.
-        """
-        try:
-            if not self.handler.isGameInStage(): return
-
-            if self.enable_card_shop_scanning:
-                self.enable_card_shop_scanning = False
-                self.stage_boss_found = False
-                await self.transfer_from_menu_to_stage()
-
-            current_boss = self.handler.getLastBossMet()
-            if current_boss == -1 and self.stage_boss_found:
-                self.stage_boss_found = False
-
-            stage_finish_status = self.handler.isStageFinish()
-
-            # This usually only happens when the player is constantly resetting the stage.
-            if self.enable_card_selection_checking:
-                #logger.info("Checking for Market Card Reward...")
-                if not self.handler.isStageFinish():
-                    #logger.info("Stage restarted.")
-                    self.halt_game_logic = True
-                    self.started_card_reset = True
-                    self.enable_card_selection_checking = False
-                    self.stage_boss_found = False
-                    await self.stage_reset_async()
-            # If card checking is not enabled.
-            else:
-                # If the game is being forced to halt checks, return.
-                if self.halt_game_logic:
-                    #logger.info("Game logic halted.")
-                    return
-
-                current_stage = self.handler.getCurrentStage()
-                black_market_status = self.handler.isBlackMarketOpen()
-
-                # If the last boss hasn't been encountered yet and the stage hasn't been finished yet,
-                # Try to handle the card shop data accordingly.
-                if not self.stage_boss_found and not stage_finish_status:
-                    # If a Black Market is open and the game hasn't swapped cards yet,
-                    # This will swap the cards to the reward type.
-                    if black_market_status and not self.started_card_reset:
-                        #logger.info("Black Market opened. Switching to reward cards.")
-                        self.started_card_reset = True
-                        await self.transfer_from_shop_to_reward()
-
-                    # If a Black Market is not open and the game has already swapped cards,
-                    # This will swap cards back to the shop unlockables.
-                    elif not black_market_status and self.started_card_reset:
-                        #logger.info("Black Market closed. Going back.")
-                        self.started_card_reset = False
-                        await self.transfer_from_reward_to_shop()
-
-                # Boss encounter swap.
-                # This will swap the cards to the reward type.
-                if not self.started_card_reset:
-                    # Normal stages check.
-                    if current_stage != STAGE_CHALLENGE_ID and current_boss != -1:
-                        #logger.info("Boss found. Switching...")
-                        self.stage_boss_found = True
-                        self.started_card_reset = True
-                        await self.transfer_from_shop_to_reward()
-                    # Challenge Market check.
-                    elif current_stage == STAGE_CHALLENGE_ID and BOSS_ID_TO_NAME[current_boss] in ALL_BOSSES_LIST[STAGE6_ID]:
-                        #logger.info("Final Wave boss found. Switching...")
-                        self.stage_boss_found = True
-                        self.started_card_reset = True
-                        await self.transfer_from_shop_to_reward()
-
-                # Stage has been finished.
-                if stage_finish_status:
-                    #logger.info("Stage finished, enabling Market Card Reward checking.")
-                    self.enable_card_selection_checking = True
-                    return
-        except Exception as e:
-            self.inError = True
-            logger.error(f"Error in the GAME loop.")
-            logger.error(traceback.format_exc())
-
-    async def menu_loop(self):
-        """
-        Menu-only loop. Responsible for handling menu-exclusive things.
-        Mainly here to fiddle with the Permanent Card Shop since it has 2 checks in 1,
-        split between the gameplay section and the menu section.
-        """
-        try:
-            if not self.no_card_unlocked:
-                self.handler.unlockNoCard()
-                self.no_card_unlocked = True
-
-            if self.handler.isGameInStage(): return
-
-            # Since the game has returned to the menu, there is no point in halting game logic.
-            if self.halt_game_logic: self.halt_game_logic = False
-
-            # Since the game is in the menu, it should no longer check for Market Card Rewards.
-            if self.enable_card_selection_checking:
-                self.enable_card_selection_checking = False
-            if not self.enable_card_shop_scanning:
-                await self.transfer_from_stage_to_menu()
-                self.enable_card_shop_scanning = True
-        except Exception as e:
-            self.inError = True
-            logger.error(f"Error in the MENU loop.")
-            logger.error(traceback.format_exc())
-
     # Helper functions for some Options
     def is_progressive_equip_together(self):
         """
@@ -1734,63 +1632,6 @@ class TouhouHBMContext(CommonContext):
         await self.send_death(self.player_names[self.slot] + get_random_death_message(self.handler.getCurrentStage(), self.handler.getLastBossMet(), self.lost_final_life))
         #await self.send_death(self.player_names[self.slot] + get_random_death_message(self.lost_final_life))
 
-    async def deathlink_loop(self):
-        # If going back to the menu, the first transition will turn off
-        # both pending Death Link and the "Died to Death Link" flag.
-
-        # If Death Link isn't enabled, return.
-        if not self.deathlink_enabled: return
-        try:
-            player_state_normal_bool: bool = self.handler.checkForPlayerNormal()
-            player_state_dead_bool: bool = self.handler.checkForPlayerDeath()
-            ingame_life: int = self.handler.gameController.getLives()
-
-            # This loop will only run when the game is currently in a stage.
-            # Skip the loop otherwise.
-
-            # If not in a stage, don't do anything here.
-            if not self.handler.isGameInStage(): return
-
-            # If a Death Link had already arrived, it will be stored as a life lost.
-            # Upon entering a stage, immediately deduct 1 Life.
-            if self.pending_life_deduction:
-                self.handler.addLife(-1)
-                self.pending_life_deduction = False
-                return
-
-            if player_state_normal_bool and self.last_recorded_life != ingame_life:
-                self.last_recorded_life = ingame_life
-
-            # There is no need to check for deathbomb since the player has no bombs here anyways.
-            # If the player received a Death Link from the server and they are not dead, try to kill the player.
-            # Then, turn off the Death Link flag.
-            if self.pending_received_deathlink and not self.died_to_deathlink:
-                # If Anti-Death Link Invincibility is enabled, check against invincibility.
-                if self.death_link_check_invincibility(): self.handler.killPlayer()
-                self.died_to_deathlink = True
-                self.pending_received_deathlink = False
-            # In case there is no pending Death Link but the player died due to it before,
-            # monitor them until death/invincibility wears off.
-            elif self.died_to_deathlink:
-                if player_state_normal_bool:
-                    self.died_to_deathlink = False
-            # If the player has not received a Death Link and did not die to Death Link before,
-            # monitor them until their death kicks in.
-            # If a death is registered, send a Death Link.
-            elif player_state_dead_bool:
-                if not self.caused_deathlink:
-                    self.lost_final_life = self.last_recorded_life <= 0
-                    if (self.deathlink_trigger == DEATH_LINK_TRIGGER_LIFE
-                        or (self.deathlink_trigger == DEATH_LINK_TRIGGER_STAGE and self.last_recorded_life <= 0)):
-                        self.caused_deathlink = True
-                        await self.send_deathlink()
-            elif self.caused_deathlink and player_state_normal_bool:
-                self.caused_deathlink = False
-        except Exception as e:
-            self.inError = True
-            logger.error(f"Error in the DEATH LINK loop.")
-            logger.error(traceback.format_exc())
-
     def reset_deathlink_stats(self):
         self.pending_received_deathlink = False
         self.pending_life_deduction = False
@@ -2029,6 +1870,204 @@ class TouhouHBMContext(CommonContext):
             }
         ])
 
+    #
+    # Game loops
+    #
+    async def main_loop(self):
+        """
+        Main loop. Responsible for scanning locations for checks and stage updates.
+        """
+        try:
+            await self.update_locations_checked()
+            self.update_stage_list()
+        except Exception as e:
+            self.inError = True
+            self.main_loop_traceback = "Error in the MAIN loop." + "\n" + traceback.format_exc()
+
+    async def game_loop(self):
+        """
+        Game loop. Checks when to clear out the shop data in order to scan for Market Card Rewards.
+        """
+        try:
+            if not self.handler.isGameInStage(): return
+
+            if self.enable_card_shop_scanning:
+                self.enable_card_shop_scanning = False
+                self.stage_boss_found = False
+                await self.transfer_from_menu_to_stage()
+
+            current_boss = self.handler.getLastBossMet()
+            if current_boss == -1 and self.stage_boss_found:
+                self.stage_boss_found = False
+
+            stage_finish_status = self.handler.isStageFinish()
+
+            # This usually only happens when the player is constantly resetting the stage.
+            if self.enable_card_selection_checking:
+                #logger.info("Checking for Market Card Reward...")
+                if not self.handler.isStageFinish():
+                    #logger.info("Stage restarted.")
+                    self.halt_game_logic = True
+                    self.started_card_reset = True
+                    self.enable_card_selection_checking = False
+                    self.stage_boss_found = False
+                    await self.stage_reset_async()
+            # If card checking is not enabled.
+            else:
+                # If the game is being forced to halt checks, return.
+                if self.halt_game_logic:
+                    #logger.info("Game logic halted.")
+                    return
+
+                current_stage = self.handler.getCurrentStage()
+                black_market_status = self.handler.isBlackMarketOpen()
+
+                # If the last boss hasn't been encountered yet and the stage hasn't been finished yet,
+                # Try to handle the card shop data accordingly.
+                if not self.stage_boss_found and not stage_finish_status:
+                    # If a Black Market is open and the game hasn't swapped cards yet,
+                    # This will swap the cards to the reward type.
+                    if black_market_status and not self.started_card_reset:
+                        #logger.info("Black Market opened. Switching to reward cards.")
+                        self.started_card_reset = True
+                        await self.transfer_from_shop_to_reward()
+
+                    # If a Black Market is not open and the game has already swapped cards,
+                    # This will swap cards back to the shop unlockables.
+                    elif not black_market_status and self.started_card_reset:
+                        #logger.info("Black Market closed. Going back.")
+                        self.started_card_reset = False
+                        await self.transfer_from_reward_to_shop()
+
+                # Boss encounter swap.
+                # This will swap the cards to the reward type.
+                if not self.started_card_reset:
+                    # Normal stages check.
+                    if current_stage != STAGE_CHALLENGE_ID and current_boss != -1:
+                        #logger.info("Boss found. Switching...")
+                        self.stage_boss_found = True
+                        self.started_card_reset = True
+                        await self.transfer_from_shop_to_reward()
+                    # Challenge Market check.
+                    elif current_stage == STAGE_CHALLENGE_ID and BOSS_ID_TO_NAME[current_boss] in ALL_BOSSES_LIST[STAGE6_ID]:
+                        #logger.info("Final Wave boss found. Switching...")
+                        self.stage_boss_found = True
+                        self.started_card_reset = True
+                        await self.transfer_from_shop_to_reward()
+
+                # Stage has been finished.
+                if stage_finish_status:
+                    #logger.info("Stage finished, enabling Market Card Reward checking.")
+                    self.enable_card_selection_checking = True
+                    return
+        except Exception as e:
+            self.inError = True
+            self.game_loop_traceback = "Error in the GAME loop." + "\n" + traceback.format_exc()
+
+    async def menu_loop(self):
+        """
+        Menu-only loop. Responsible for handling menu-exclusive things.
+        Mainly here to fiddle with the Permanent Card Shop since it has 2 checks in 1,
+        split between the gameplay section and the menu section.
+        """
+        try:
+            if not self.no_card_unlocked:
+                self.handler.unlockNoCard()
+                self.no_card_unlocked = True
+
+            if self.handler.isGameInStage(): return
+
+            # Since the game has returned to the menu, there is no point in halting game logic.
+            if self.halt_game_logic: self.halt_game_logic = False
+
+            # Since the game is in the menu, it should no longer check for Market Card Rewards.
+            if self.enable_card_selection_checking:
+                self.enable_card_selection_checking = False
+            if not self.enable_card_shop_scanning:
+                await self.transfer_from_stage_to_menu()
+                self.enable_card_shop_scanning = True
+        except Exception as e:
+            self.inError = True
+            self.menu_loop_traceback = "Error in the MENU loop." + "\n" + traceback.format_exc()
+
+    async def deathlink_loop(self):
+        # If going back to the menu, the first transition will turn off
+        # both pending Death Link and the "Died to Death Link" flag.
+
+        # If Death Link isn't enabled, return.
+        if not self.deathlink_enabled: return
+        try:
+            player_state_normal_bool: bool = self.handler.checkForPlayerNormal()
+            player_state_dead_bool: bool = self.handler.checkForPlayerDeath()
+            ingame_life: int = self.handler.gameController.getLives()
+
+            # This loop will only run when the game is currently in a stage.
+            # Skip the loop otherwise.
+
+            # If not in a stage, don't do anything here.
+            if not self.handler.isGameInStage(): return
+
+            # If a Death Link had already arrived, it will be stored as a life lost.
+            # Upon entering a stage, immediately deduct 1 Life.
+            if self.pending_life_deduction:
+                self.handler.addLife(-1)
+                self.pending_life_deduction = False
+                return
+
+            if player_state_normal_bool and self.last_recorded_life != ingame_life:
+                self.last_recorded_life = ingame_life
+
+            # There is no need to check for deathbomb since the player has no bombs here anyways.
+            # If the player received a Death Link from the server and they are not dead, try to kill the player.
+            # Then, turn off the Death Link flag.
+            if self.pending_received_deathlink and not self.died_to_deathlink:
+                # If Anti-Death Link Invincibility is enabled, check against invincibility.
+                if self.death_link_check_invincibility(): self.handler.killPlayer()
+                self.died_to_deathlink = True
+                self.pending_received_deathlink = False
+            # In case there is no pending Death Link but the player died due to it before,
+            # monitor them until death/invincibility wears off.
+            elif self.died_to_deathlink:
+                if player_state_normal_bool:
+                    self.died_to_deathlink = False
+            # If the player has not received a Death Link and did not die to Death Link before,
+            # monitor them until their death kicks in.
+            # If a death is registered, send a Death Link.
+            elif player_state_dead_bool:
+                if not self.caused_deathlink:
+                    self.lost_final_life = self.last_recorded_life <= 0
+                    if (self.deathlink_trigger == DEATH_LINK_TRIGGER_LIFE
+                        or (self.deathlink_trigger == DEATH_LINK_TRIGGER_STAGE and self.last_recorded_life <= 0)):
+                        self.caused_deathlink = True
+                        await self.send_deathlink()
+            elif self.caused_deathlink and player_state_normal_bool:
+                self.caused_deathlink = False
+        except Exception as e:
+            self.inError = True
+            self.deathlink_loop_traceback = "Error in the DEATH LINK loop." + "\n" + traceback.format_exc()
+
+
+def check_traceback_full(ctx: TouhouHBMContext) -> bool:
+    """
+    Check whether the traceback of all loops are filled.
+    If True, it's most likely that the player closed the game instead of any actual error occurring.
+    """
+    if not ctx.main_loop_traceback:
+        return False
+    if not ctx.game_loop_traceback:
+        return False
+    if not ctx.menu_loop_traceback:
+        return False
+    if not ctx.deathlink_loop_traceback:
+        return False
+
+    return True
+
+
+def print_if_not_empty(logger, traceback_print: str):
+    if not traceback_print: return
+    logger.error(traceback_print)
+
 
 async def game_watcher(ctx: TouhouHBMContext):
     """
@@ -2075,6 +2114,11 @@ async def game_watcher(ctx: TouhouHBMContext):
         if ctx.inError or (
                 ctx.handler.gameController is None and not ctx.exit_event.is_set()) and ctx.retrievedCustomData:
             if ctx.inError:
+                if not check_traceback_full(ctx):
+                    print_if_not_empty(logger, ctx.main_loop_traceback)
+                    print_if_not_empty(logger, ctx.game_loop_traceback)
+                    print_if_not_empty(logger, ctx.menu_loop_traceback)
+                    print_if_not_empty(logger, ctx.deathlink_loop_traceback)
                 logger.info(f"Connection was lost. Attempting reconnection...")
             ctx.handler.gameController = None
             ctx.loadingDataSetup = True
@@ -2088,6 +2132,7 @@ async def game_watcher(ctx: TouhouHBMContext):
         # No connection issues. Start loops.
         if ctx.handler and ctx.handler.gameController:
             ctx.inError = False
+            ctx.reset_traceback()
 
             if not ctx.is_game_running:
                 ctx.is_game_running = ctx.handler.gameController.check_if_in_game()
@@ -2163,6 +2208,8 @@ def launch():
 
     parser = get_base_parser(description=SHORT_NAME + " Client")
     args, _ = parser.parse_known_args()
+
+    Utils.init_logging("HBMClient")
 
     colorama.init()
     asyncio.run(main(args))

@@ -16,13 +16,11 @@
 - Add trap: Lily White Trap
     - Requires figuring out how to run game functions from outside.
 - Add trap: -1 Life
-- Add filler: +500% Shot Attack Strength
 - Add trap loop and turn some traps (max speed trap, freeze trap, etc.) into temporary timed traps.
 
 - Figure out non-horrible handling of Progressive Card Slots.
 
 - Code refactoring for more clarity.
-- Refactoring Rules.py to accommodate Rule Builder.
 - Make the ProcessError log look more pleasant in the client.
 
 - Linux support for the client.
