@@ -1,10 +1,8 @@
 import traceback
 import typing
-from tkinter.ttk import Label
 from typing import Optional
 import asyncio
 import colorama
-import pymem.exception
 
 import Utils
 from CommonClient import (
@@ -16,7 +14,6 @@ from CommonClient import (
     gui_enabled,
 )
 from NetUtils import NetworkItem
-from . import TouhouHBMWorld
 from .GameHandler import *
 from .Items import item_table, ITEM_TABLE_ID_TO_STAGE_NAME, ITEM_TABLE_ID_TO_CARD_ID, \
     PROGRESSIVE_ITEMS_LIST, check_for_game_filler, PROGRESSIVE_COST_LIST
@@ -2047,7 +2044,7 @@ class TouhouHBMContext(CommonContext):
             self.deathlink_loop_traceback = "Error in the DEATH LINK loop." + "\n" + traceback.format_exc()
 
 
-def check_traceback_full(ctx: TouhouHBMContext) -> bool:
+def check_traceback_full(ctx) -> bool:
     """
     Check whether the traceback of all loops are filled.
     If True, it's most likely that the player closed the game instead of any actual error occurring.
