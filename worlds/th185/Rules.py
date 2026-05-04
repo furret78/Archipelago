@@ -114,10 +114,8 @@ def set_market_reward_rules(world):
                 # Tutorial stage has 5 exclusive cards not seen in Challenge Market.
                 if stage_name == TUTORIAL_NAME:
                     world.set_rule(location_card_reward, has_tutorial_access_item())
-                    was_exclusive_card = True
-                    continue
                 # Capitalist's Dilemma requires Blank Card and 4th Market unlock.
-                if card_string_id == NITORI_STORY_CARD:
+                elif card_string_id == NITORI_STORY_CARD:
                     world.set_rule(
                         location_card_reward,
                         has_nitori_access() | has_challenge_access_item()
