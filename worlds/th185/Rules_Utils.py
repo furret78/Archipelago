@@ -100,7 +100,7 @@ def has_challenge_access_item(is_boss: bool = False):
     is_boss_conditional = True_()
     if not is_boss: is_boss_conditional = False_()
 
-    return (progressive_market | nonprogressive_market) & is_boss_conditional & low_skill_check(STAGE_CHALLENGE_ID)
+    return (progressive_market | (nonprogressive_market & is_boss_conditional)) & low_skill_check(STAGE_CHALLENGE_ID)
 
 
 # For specific stages (excludes Challenge Market by default).

@@ -64,8 +64,8 @@ class StageBossLocations(Choice):
     """
 
     option_boss_only = 0
-    option_stage_only = 1
-    option_full = 2
+    # option_stage_only = 1
+    # option_full = 2
 
     default = option_boss_only
 
