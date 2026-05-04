@@ -256,6 +256,7 @@ class TouhouHBMContext(CommonContext):
         # Set to True when scanning the card shop addresses as items.
         # Set to False when in stages.
         self.enable_card_shop_scanning: bool = True
+        # If this is enabled, this means that the card shop data has been reset in favor of market rewards.
         self.started_card_reset: bool = False
         self.stage_boss_found: bool = False
 
@@ -831,7 +832,7 @@ class TouhouHBMContext(CommonContext):
     def try_unlock_card_in_shop(self, card_name: str):
         # The game is currently actively checking for Market Card Rewards.
         # In that case, don't unlock anything.
-        if self.enable_card_selection_checking: return
+        if self.enable_card_selection_checking or self.started_card_reset: return
 
         self.handler.permashop_card_new = self.permashop_cards_new
         self.handler.setCardShopRecordHandler(card_name, True)
@@ -1094,7 +1095,7 @@ class TouhouHBMContext(CommonContext):
         if self.client_received_initial_server_data():
             return
 
-        logger.info("Waiting for connect from server...")
+        logger.info("Waiting for connection from the server...")
         while not self.client_received_initial_server_data() and not self.exit_event.is_set():
             await asyncio.sleep(1)
 
@@ -1153,9 +1154,9 @@ class TouhouHBMContext(CommonContext):
 
             # This usually only happens when the player is constantly resetting the stage.
             if self.enable_card_selection_checking:
-                logger.info("Checking for Market Card Reward...")
+                #logger.info("Checking for Market Card Reward...")
                 if not self.handler.isStageFinish():
-                    logger.info("Stage restarted.")
+                    #logger.info("Stage restarted.")
                     self.halt_game_logic = True
                     self.started_card_reset = True
                     self.enable_card_selection_checking = False
@@ -1165,7 +1166,7 @@ class TouhouHBMContext(CommonContext):
             else:
                 # If the game is being forced to halt checks, return.
                 if self.halt_game_logic:
-                    logger.info("Game logic halted.")
+                    #logger.info("Game logic halted.")
                     return
 
                 current_stage = self.handler.getCurrentStage()
@@ -1177,14 +1178,14 @@ class TouhouHBMContext(CommonContext):
                     # If a Black Market is open and the game hasn't swapped cards yet,
                     # This will swap the cards to the reward type.
                     if black_market_status and not self.started_card_reset:
-                        logger.info("Black Market opened. Switching to reward cards.")
+                        #logger.info("Black Market opened. Switching to reward cards.")
                         self.started_card_reset = True
                         await self.transfer_from_shop_to_reward()
 
                     # If a Black Market is not open and the game has already swapped cards,
                     # This will swap cards back to the shop unlockables.
                     elif not black_market_status and self.started_card_reset:
-                        logger.info("Black Market closed. Going back.")
+                        #logger.info("Black Market closed. Going back.")
                         self.started_card_reset = False
                         await self.transfer_from_reward_to_shop()
 
@@ -1193,20 +1194,20 @@ class TouhouHBMContext(CommonContext):
                 if not self.started_card_reset:
                     # Normal stages check.
                     if current_stage != STAGE_CHALLENGE_ID and current_boss != -1:
-                        logger.info("Boss found. Switching...")
+                        #logger.info("Boss found. Switching...")
                         self.stage_boss_found = True
                         self.started_card_reset = True
                         await self.transfer_from_shop_to_reward()
                     # Challenge Market check.
                     elif current_stage == STAGE_CHALLENGE_ID and BOSS_ID_TO_NAME[current_boss] in ALL_BOSSES_LIST[STAGE6_ID]:
-                        logger.info("Final Wave boss found. Switching...")
+                        #logger.info("Final Wave boss found. Switching...")
                         self.stage_boss_found = True
                         self.started_card_reset = True
                         await self.transfer_from_shop_to_reward()
 
                 # Stage has been finished.
                 if stage_finish_status:
-                    logger.info("Stage finished, enabling Market Card Reward checking.")
+                    #logger.info("Stage finished, enabling Market Card Reward checking.")
                     self.enable_card_selection_checking = True
                     return
         except Exception as e:
