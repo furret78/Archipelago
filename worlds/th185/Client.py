@@ -1383,8 +1383,7 @@ class TouhouHBMContext(CommonContext):
                                 (boss_name not in full_location_name or
                                  boss_name in STORY_BOSSES_LIST)): continue
                             elif (check_if_only_stage_locations() and
-                                  (boss_name == BOSS_NITORI_NAME or boss_name == BOSS_TAKANE_NAME) and
-                                  boss_name not in full_location_name): continue
+                                  (boss_name in STORY_BOSSES_LIST)): continue
                             self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
                             self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
 
