@@ -233,7 +233,6 @@ class GameHandler:
         """
         Sets the stats of a boss in a specific stage in the handler's data.
         Type 0 is for encounters, type 1 for defeat.
-        Challenge Market exclusively has encounter stats, except for the Final Wave bosses.
         """
         if stage_id == STAGE_CHALLENGE_ID and boss_id not in [BOSS_SUIKA, BOSS_MAMIZOU, BOSS_SAKI, BOSS_MOMOYO]:
             self.bosses_met[STAGE_CHALLENGE_ID][boss_id] = value
@@ -281,7 +280,6 @@ class GameHandler:
         """
         Sets the stats of a boss in a specific stage in the game memory itself.
         Type 0 is for encounters, type 1 is for defeat.
-        Challenge Market exclusively has encounter stats, except for Final Wave bosses.
         """
         final_value: int = 0
         if value: final_value = random.randint(1, 255)
@@ -292,6 +290,13 @@ class GameHandler:
         if record_type != DEFEAT_ID: return
         hidden_records = get_boss_and_stage_id(stage_id, boss_id)
         self.gameController.setHiddenBossDefeat(hidden_records[0], hidden_records[1], final_value)
+
+    def autoClearBossRecord(self, stage_id: int, boss_id: int):
+        self.setBossRecordHandler(stage_id=stage_id, boss_id=boss_id, value=True, type=0)
+        self.setBossRecordGame(stage_id=stage_id, boss_id=boss_id, value=True, record_type=0)
+        if stage_id == STAGE_CHALLENGE_ID and BOSS_ID_TO_NAME[boss_id] not in ALL_BOSSES_LIST[STAGE6_ID]: return
+        self.setBossRecordHandler(stage_id=stage_id, boss_id=boss_id, value=True, type=1)
+        self.setBossRecordGame(stage_id=stage_id, boss_id=boss_id, value=True, record_type=1)
 
     def getLastBossMet(self) -> int:
         """

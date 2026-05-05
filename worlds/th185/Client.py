@@ -413,7 +413,6 @@ class TouhouHBMContext(CommonContext):
                     # Special Challenge Market clause
                     challenge_boss_list = get_boss_names_challenge_list()
                     for boss_name in challenge_boss_list:
-                        if boss_name in STORY_BOSSES_LIST: continue
                         self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], False,
                                                        ENCOUNTER_ID)
                         if boss_name not in ALL_BOSSES_LIST[STAGE6_ID]: continue
@@ -622,10 +621,17 @@ class TouhouHBMContext(CommonContext):
             return location_table[get_boss_location_name_str(STAGE6_ID, BOSS_TAKANE_NAME, True)] in self.previous_location_checked
 
         def checkFullStory() -> bool:
+            # Check if Nitori has been defeated.
             if location_table[get_boss_location_name_str(STAGE4_ID, BOSS_NITORI_NAME,
                                           True)] not in self.previous_location_checked: return False
-            if location_table[get_boss_location_name_str(STAGE_CHIMATA_ID, BOSS_CHIMATA_NAME,
+            # Check if Chimata has been defeated.
+            # If only stage clear locations are added, check if End of Market has been cleared instead.
+            if self.options["stage_boss_locations"] == 1:
+                if location_table[get_stage_clear_location_name_str(STAGE_CHIMATA_ID)] not in self.previous_location_checked:
+                    return False
+            elif location_table[get_boss_location_name_str(STAGE_CHIMATA_ID, BOSS_CHIMATA_NAME,
                                           True)] not in self.previous_location_checked: return False
+            # Check if Takane has been defeated.
             if not checkMinimumStory(): return False
 
             return True
@@ -638,10 +644,21 @@ class TouhouHBMContext(CommonContext):
             return True
 
         def checkAllBosses() -> bool:
-            for stage_name in STAGE_LIST:
-                if stage_name == CHALLENGE_NAME: continue
-                for boss_name in ALL_BOSSES_LIST[STAGE_NAME_TO_ID[stage_name]]:
-                    if location_table[get_boss_location_name_str(STAGE_NAME_TO_ID[stage_name], boss_name, True)] not in self.previous_location_checked: return False
+            if self.options["stage_boss_locations"] == 1:
+                # In the case that there are only stage clear checks,
+                # check if all of those except Challenge Market has been cleared.
+                # Check Nitori and Takane clears as well.
+                if not checkFullStory(): return False
+                for stage_name in STAGE_LIST:
+                    if stage_name == CHALLENGE_NAME or stage_name == ENDSTAGE_NAME: continue
+                    if location_table[get_stage_clear_location_name_str(STAGE_NAME_TO_ID[stage_name])] not in self.previous_location_checked:
+                        return False
+            else:
+                for stage_name in STAGE_LIST:
+                    if stage_name == CHALLENGE_NAME: continue
+                    for boss_name in ALL_BOSSES_LIST[STAGE_NAME_TO_ID[stage_name]]:
+                        if location_table[get_boss_location_name_str(STAGE_NAME_TO_ID[stage_name], boss_name, True)] not in self.previous_location_checked:
+                            return False
 
             return True
 
@@ -1191,6 +1208,19 @@ class TouhouHBMContext(CommonContext):
             if obligatory_location_table_check(stage_clear_location_name):
                 new_locations.append(location_table[stage_clear_location_name])
 
+            # Additionally, if there are only stage clear checks,
+            # tick all of the bosses except Nitori and Takane as cleared.
+            if self.options["stage_boss_locations"] != 1: return
+            local_stage_id = STAGE_NAME_TO_ID[short_stage_name]
+            if short_stage_name == CHALLENGE_NAME:
+                for boss_name in get_boss_names_challenge_list():
+                    self.handler.autoClearBossRecord(stage_id=STAGE_CHALLENGE_ID, boss_id=BOSS_NAME_TO_ID[boss_name])
+            else:
+                boss_pool = ALL_BOSSES_LIST[local_stage_id]
+                for boss_name in boss_pool:
+                    if boss_name in STORY_BOSSES_LIST: continue
+                    self.handler.autoClearBossRecord(stage_id=local_stage_id, boss_id=BOSS_NAME_TO_ID[boss_name])
+
         new_locations = []
 
         if self.loadingDataSetup: return
@@ -1219,6 +1249,7 @@ class TouhouHBMContext(CommonContext):
                         locationName: str = get_boss_location_name_str(STAGE_NAME_TO_ID[stage_name], boss_name, True)
                         if obligatory_location_table_check(locationName):
                             new_locations.append(location_table[locationName])
+
                         check_stage_clear_location(stage_name)
             else:
                 # Special Challenge Market clause
@@ -1237,10 +1268,14 @@ class TouhouHBMContext(CommonContext):
                         challenge_defeat: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss_name, True)
                         if obligatory_location_table_check(challenge_defeat):
                             new_locations.append(location_table[challenge_defeat])
+
                         check_stage_clear_location(CHALLENGE_NAME)
 
         # Special check only for non-Final boss defeats in Challenge Market.
-        if stage_exist_status and black_market_status and self.handler.getCurrentStage() == STAGE_CHALLENGE_ID and last_boss_met in BOSS_ID_TO_NAME:
+        if (self.options["stage_boss_locations"] != 1
+            and stage_exist_status and black_market_status
+            and self.handler.getCurrentStage() == STAGE_CHALLENGE_ID
+            and last_boss_met in BOSS_ID_TO_NAME):
             last_boss_defeated = BOSS_ID_TO_NAME[last_boss_met]
             if last_boss_defeated not in ALL_BOSSES_LIST[STAGE6_ID]:
                 self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[last_boss_defeated], True,
@@ -1376,14 +1411,15 @@ class TouhouHBMContext(CommonContext):
                     # Make an exception if it is Nitori or Takane.
                     if stage_name == CHALLENGE_NAME:
                         challenge_boss_list = get_boss_names_challenge_list()
-                        if check_if_only_stage_locations() and GENERIC_STAGE_CLEAR_NAME not in full_location_name: continue
+                        if check_if_only_stage_locations():
+                            if GENERIC_STAGE_CLEAR_NAME in full_location_name:
+                                for boss_name in challenge_boss_list:
+                                    self.handler.autoClearBossRecord(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name])
+                            continue
                         # Special Challenge Market clause
                         for boss_name in challenge_boss_list:
-                            if (not check_if_only_stage_locations() and
-                                (boss_name not in full_location_name or
-                                 boss_name in STORY_BOSSES_LIST)): continue
-                            elif (check_if_only_stage_locations() and
-                                  (boss_name in STORY_BOSSES_LIST)): continue
+                            if check_if_only_stage_locations(): continue
+                            if boss_name not in full_location_name: continue
                             self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
                             self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
 
@@ -1394,16 +1430,7 @@ class TouhouHBMContext(CommonContext):
                         for boss_name in ALL_BOSSES_LIST[STAGE_NAME_TO_ID[stage_name]]:
                             if check_if_only_stage_locations() and boss_name != BOSS_NITORI_NAME and boss_name != BOSS_TAKANE_NAME:
                                 if GENERIC_STAGE_CLEAR_NAME not in full_location_name: continue
-                                self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name],
-                                                                  BOSS_NAME_TO_ID[boss_name],
-                                                                  True, ENCOUNTER_ID)
-                                self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
-                                                               True, ENCOUNTER_ID)
-                                self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name],
-                                                                  BOSS_NAME_TO_ID[boss_name],
-                                                                  True, DEFEAT_ID)
-                                self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
-                                                               True, DEFEAT_ID)
+                                self.handler.autoClearBossRecord(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name])
                             else:
                                 if boss_name not in full_location_name: continue
                                 record_type = ENCOUNTER_ID
