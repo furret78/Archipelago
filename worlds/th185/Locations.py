@@ -203,30 +203,54 @@ def create_regular_locations(world):
             local_stage_id = STAGE_NAME_TO_ID[region_name]
 
             # Boss locations
-            for boss_name in ALL_BOSSES_LIST[local_stage_id]:
-                location_encounter_stage_name: str = get_boss_location_name_str(local_stage_id, boss_name)
-                location_defeat_stage_name: str = get_boss_location_name_str(local_stage_id, boss_name, True)
+            if region_name == CHALLENGE_NAME:
+                boss_challenge_list = get_boss_names_challenge_list()
+                for challenge_boss in boss_challenge_list:
+                    if world.options.stage_boss_locations == StageBossLocations.option_stage_only: continue
+                    location_challenge_encounter_name: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss)
+                    location_challenge_defeat_name: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, challenge_boss,
+                                                                                True)
 
-                boss_encounter_location = TouhouHBMLocation(
-                    world.player,
-                    location_encounter_stage_name,
-                    world.location_name_to_id[location_encounter_stage_name],
-                    all_regions_dict[region_name]
-                )
-                boss_defeat_location = TouhouHBMLocation(
-                    world.player,
-                    location_defeat_stage_name,
-                    world.location_name_to_id[location_defeat_stage_name],
-                    all_regions_dict[region_name]
-                )
+                    location_challenge_encounter = TouhouHBMLocation(
+                        world.player,
+                        location_challenge_encounter_name,
+                        world.location_name_to_id[location_challenge_encounter_name],
+                        all_regions_dict[region_name]
+                    )
+                    location_challenge_defeat = TouhouHBMLocation(
+                        world.player,
+                        location_challenge_defeat_name,
+                        world.location_name_to_id[location_challenge_defeat_name],
+                        all_regions_dict[region_name]
+                    )
 
-                # If only stage clear locations are allowed,
-                # add no boss locations except for Nitori's and Takane's.
-                if (world.options.stage_boss_locations == StageBossLocations.option_stage_only and
-                    boss_name != BOSS_NITORI_NAME and boss_name != BOSS_TAKANE_NAME): continue
+                    all_regions_dict[CHALLENGE_NAME].locations.append(location_challenge_encounter)
+                    all_regions_dict[CHALLENGE_NAME].locations.append(location_challenge_defeat)
+            else:
+                for boss_name in ALL_BOSSES_LIST[local_stage_id]:
+                    location_encounter_stage_name: str = get_boss_location_name_str(local_stage_id, boss_name)
+                    location_defeat_stage_name: str = get_boss_location_name_str(local_stage_id, boss_name, True)
 
-                all_regions_dict[region_name].locations.append(boss_encounter_location)
-                all_regions_dict[region_name].locations.append(boss_defeat_location)
+                    boss_encounter_location = TouhouHBMLocation(
+                        world.player,
+                        location_encounter_stage_name,
+                        world.location_name_to_id[location_encounter_stage_name],
+                        all_regions_dict[region_name]
+                    )
+                    boss_defeat_location = TouhouHBMLocation(
+                        world.player,
+                        location_defeat_stage_name,
+                        world.location_name_to_id[location_defeat_stage_name],
+                        all_regions_dict[region_name]
+                    )
+
+                    # If only stage clear locations are allowed,
+                    # add no boss locations except for Nitori's and Takane's.
+                    if (world.options.stage_boss_locations == StageBossLocations.option_stage_only and
+                        boss_name != BOSS_NITORI_NAME and boss_name != BOSS_TAKANE_NAME): continue
+
+                    all_regions_dict[region_name].locations.append(boss_encounter_location)
+                    all_regions_dict[region_name].locations.append(boss_defeat_location)
 
             # Generic stage clears
             if world.options.stage_boss_locations != StageBossLocations.option_boss_only:
