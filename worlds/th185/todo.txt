@@ -1,4 +1,9 @@
 - Add a separate tab for HBM configs at some point (mainly for scorefile path lol)
+- Tamper with hints to show where cards can be located instead of just Market Card Reward
+- Add shuffling market card reward pools.
+	+ Figure out where ZUN keeps them.
+	+ Create a shuffling algorithm.
+	+ Rewrite rules around the shuffling algorithm.
 
 - Add option: Starting Card Slots (up to 34)
 - Add option: Starting Equip Cost (up to 500%)
