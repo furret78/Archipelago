@@ -63,7 +63,7 @@ def low_skill_check_nitori():
     loadout_together = progressive_loadout_together & low_skill_check(STAGE_CHIMATA_ID) & Has(PROGRESS_EQUIP_NAME, count=1)
     loadout_separate = progressive_loadout_separate & low_skill_check(STAGE_CHIMATA_ID) & Has(PROGRESS_SLOT_NAME, count=1)
     loadout_none = (progressive_loadout_disabled & low_skill_check(STAGE_CHIMATA_ID) &
-                    (Has(PROGRESS_ITEM_NAME_FULL, count=1) | HasFromListUnique(*STANDARD_STAGE_LIST, count=1)))
+                    (Has(PROGRESS_STAGE_ITEM_NAME, count=1) | HasFromListUnique(*STANDARD_STAGE_LIST, count=1)))
 
     return loadout_together | loadout_separate | loadout_none
 
@@ -83,7 +83,7 @@ def has_equipment_achievement_access():
 
 # Tutorial stage has 5 exclusive cards.
 def has_tutorial_access_item():
-    return Has(PROGRESS_ITEM_NAME_FULL) | Has(TUTORIAL_NAME_FULL)
+    return Has(PROGRESS_STAGE_ITEM_NAME) | Has(TUTORIAL_NAME_FULL)
 
 
 def has_challenge_access_item(is_boss: bool = False):
@@ -93,9 +93,9 @@ def has_challenge_access_item(is_boss: bool = False):
     this will always return False.
     If doing Progressive Stages, also return False.
     """
-    progressive_market = Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(CHALLENGE_NAME), options=[progressive_stages_enabled])
+    progressive_market = Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(CHALLENGE_NAME), options=[progressive_stages_enabled])
     nonprogressive_market = (Has(CHALLENGE_NAME_FULL, options=[OptionFilter(DisableChallengeLogic, False)]) |
-                             HasAll(*non_challenge_stages, options=[OptionFilter(DisableChallengeLogic, True)]))
+                             HasAll(*STAGE_NAME_LIST, options=[OptionFilter(DisableChallengeLogic, True)]))
 
     is_boss_conditional = True_()
     if not is_boss: is_boss_conditional = False_()
@@ -107,7 +107,7 @@ def has_challenge_access_item(is_boss: bool = False):
 def has_stage_access_item(short_stage_name: str):
     full_stage_name = STAGE_SHORT_TO_FULL_NAME[short_stage_name]
 
-    progressive_access = Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(short_stage_name), options=[progressive_stages_enabled])
+    progressive_access = Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(short_stage_name), options=[progressive_stages_enabled])
     nonprogressive_access = Has(full_stage_name)
 
     return (progressive_access | nonprogressive_access) & low_skill_check(STAGE_NAME_TO_ID[short_stage_name])
@@ -125,7 +125,7 @@ def has_stage_list_access_item(stage_name_list: list[str], achieve_check: bool =
     :param achieve_check: Whether this is for Achievements or not.
     """
 
-    progressive_access = Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(stage_name_list[0], True))
+    progressive_access = Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(stage_name_list[0], True))
     nonprogressive_access = HasAny(*stage_name_list)
     if achieve_check: nonprogressive_access = HasAll(*stage_name_list)
 
@@ -133,7 +133,7 @@ def has_stage_list_access_item(stage_name_list: list[str], achieve_check: bool =
 
 
 def has_any_stage_access_item():
-    progress_access = Has(PROGRESS_ITEM_NAME_FULL)
+    progress_access = Has(PROGRESS_STAGE_ITEM_NAME)
     nonprogress_access = HasAny(*non_challenge_stages) | has_challenge_access_item()
 
     return progress_access | nonprogress_access
@@ -162,7 +162,7 @@ def has_stage_access_item_count(stage_count: int):
 
         return local_progress_access | local_nonprogress_access
 
-    progress_access = Has(PROGRESS_ITEM_NAME_FULL, count=stage_count, options=[progressive_stages_enabled])
+    progress_access = Has(PROGRESS_STAGE_ITEM_NAME, count=stage_count, options=[progressive_stages_enabled])
     nonprogress_access = (item_count_stages(stage_count) |
                           (HasAll(TUTORIAL_NAME_FULL, STAGE4_NAME_FULL, BLANK_CARD_NAME, STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME, ENDSTAGE_NAME_FULL) &
                            item_count_stages(stage_count - 1))) & progressive_stages_disabled
@@ -179,7 +179,7 @@ def has_common_access_item():
     if CHALLENGE_NAME_FULL in non_challenge_stages:
         every_stage_list.remove(CHALLENGE_NAME_FULL)
 
-    progress_access = Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(STAGE1_NAME),
+    progress_access = Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(STAGE1_NAME),
                           options=[progressive_stages_enabled])
     nonprogress_access = (HasAny(*every_stage_list) | has_challenge_access_item()) & progressive_stages_disabled
 
@@ -188,21 +188,21 @@ def has_common_access_item():
 
 # Very early game (Stage 1+). Does not show up in Stage 5 or End of Market.
 def has_very_early_game_access_item():
-    progress_access = Has(PROGRESS_ITEM_NAME_FULL, get_progress_item_requirement(STAGE1_NAME), options=[progressive_stages_enabled])
+    progress_access = Has(PROGRESS_STAGE_ITEM_NAME, get_progress_item_requirement(STAGE1_NAME), options=[progressive_stages_enabled])
     nonprogress_access = (has_early_game_access_item() | Has(STAGE1_NAME_FULL)) & progressive_stages_disabled
     return progress_access | nonprogress_access
 
 
 # Early game (Stage 2+). Does not show up in Stage 5 or End of Market.
 def has_early_game_access_item():
-    progress_access = Has(PROGRESS_ITEM_NAME_FULL, get_progress_item_requirement(STAGE2_NAME), options=[progressive_stages_enabled])
+    progress_access = Has(PROGRESS_STAGE_ITEM_NAME, get_progress_item_requirement(STAGE2_NAME), options=[progressive_stages_enabled])
     nonprogress_access = (has_midgame_access_item() | Has(STAGE2_NAME_FULL)) & progressive_stages_disabled
     return progress_access | nonprogress_access
 
 
 # Midgame (Stage 3+). Does not show up in Stage 5 or End of Market.
 def has_midgame_access_item():
-    progress_access = Has(PROGRESS_ITEM_NAME_FULL, get_progress_item_requirement(STAGE3_NAME), options=[progressive_stages_enabled])
+    progress_access = Has(PROGRESS_STAGE_ITEM_NAME, get_progress_item_requirement(STAGE3_NAME), options=[progressive_stages_enabled])
     nonprogress_access = (has_challenge_access_item() | HasAny(STAGE3_NAME_FULL, STAGE4_NAME_FULL, STAGE6_NAME_FULL)) & progressive_stages_disabled
     return progress_access | nonprogress_access
 
@@ -210,7 +210,7 @@ def has_midgame_access_item():
 # Lategame (Stage 4+). Does not show up in End of Market.
 # Low Skill Logic forces the generation to include certain Ability Cards as compulsory.
 def has_lategame_access_item():
-    progress_access = (Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(STAGE4_NAME), options=[progressive_stages_enabled]) &
+    progress_access = (Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(STAGE4_NAME), options=[progressive_stages_enabled]) &
                        low_skill_check(STAGE4_ID))
     nonprogress_access = ((Has(STAGE4_NAME_FULL) & low_skill_check(STAGE4_ID)) |
                           (Has(STAGE5_NAME_FULL) & low_skill_check(STAGE5_ID)) |
@@ -232,7 +232,7 @@ def has_encounter_access(condition):
 
 
 def has_nitori_boss_access():
-    progress_access = (Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(STAGE4_NAME), options=[progressive_stages_enabled]) &
+    progress_access = (Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(STAGE4_NAME), options=[progressive_stages_enabled]) &
                        Has(BLANK_CARD_NAME))
     nonprogress_access = HasAll(STAGE4_NAME_FULL, BLANK_CARD_NAME)
     return progress_access | nonprogress_access
@@ -244,7 +244,7 @@ def has_nitori_access():
 
 
 def has_takane_boss_access():
-    progress_access = (Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(STAGE6_NAME), options=[progressive_stages_enabled]) &
+    progress_access = (Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(STAGE6_NAME), options=[progressive_stages_enabled]) &
                        Has(NITORI_STORY_CARD_NAME))
     nonprogress_access = HasAll(STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME)
     return progress_access | nonprogress_access
@@ -255,21 +255,21 @@ def has_takane_access():
 
 
 def has_sekibanki_access():
-    progress_access = Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(STAGE2_NAME), options=[progressive_stages_enabled])
+    progress_access = Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(STAGE2_NAME), options=[progressive_stages_enabled])
     nonprogress_access = HasAny(STAGE2_NAME_FULL, ENDSTAGE_NAME_FULL) | has_challenge_access_item()
     return progress_access | nonprogress_access
 
 
 # Lily White's and Doremy's cards are a little more open.
 def has_lily_white_access():
-    progress_access = Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(STAGE1_NAME), options=[progressive_stages_enabled])
+    progress_access = Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(STAGE1_NAME), options=[progressive_stages_enabled])
     nonprogress_access = (has_very_early_game_access_item() | has_challenge_access_item() |
                           (has_stage_access_item(STAGE5_NAME) & low_skill_check(STAGE5_ID)))
     return progress_access | nonprogress_access
 
 
 def has_doremy_access():
-    progress_access = Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(STAGE2_NAME), options=[progressive_stages_enabled])
+    progress_access = Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(STAGE2_NAME), options=[progressive_stages_enabled])
     nonprogress_access = (has_early_game_access_item() | has_challenge_access_item() |
                           (has_stage_access_item(STAGE5_NAME) & low_skill_check(STAGE5_ID)))
     return progress_access | nonprogress_access
@@ -282,7 +282,7 @@ def has_nazrin2_access():
     if CHALLENGE_NAME_FULL in black_market_stages:
         black_market_stages.remove(CHALLENGE_NAME_FULL)
 
-    progress_access = Has(PROGRESS_ITEM_NAME_FULL, options=[progressive_stages_enabled])
+    progress_access = Has(PROGRESS_STAGE_ITEM_NAME, options=[progressive_stages_enabled])
     nonprogress_access = HasAny(*black_market_stages) | has_challenge_access_item()
     return progress_access | nonprogress_access
 
@@ -294,7 +294,7 @@ def all_bosses_access():
     """
     progress_access = (
         progressive_stages_enabled &
-        Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(ENDSTAGE_NAME)) &
+        Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(ENDSTAGE_NAME)) &
         HasAll(BLANK_CARD_NAME, NITORI_STORY_CARD_NAME) &
         low_skill_check(BOSS_TAKANE)
     )
@@ -338,14 +338,14 @@ def add_generic_access_card_rule(world, card_name_id: str, access_level: int):
 
 def get_goal_condition(completion_type: int):
     def minimum_story_clear():
-        progress_access = (Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(STAGE6_NAME)) &
+        progress_access = (Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(STAGE6_NAME)) &
                            Has(NITORI_STORY_CARD_NAME) & progressive_stages_enabled)
         nonprogress_access = (HasAll(NITORI_STORY_CARD_NAME, STAGE6_NAME_FULL) & progressive_stages_disabled)
         return (progress_access | nonprogress_access) & low_skill_check(BOSS_TAKANE)
 
     def full_story_clear():
         progress_access = (
-            Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(ENDSTAGE_NAME)) &
+            Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(ENDSTAGE_NAME)) &
             HasAll(NITORI_STORY_CARD_NAME, BLANK_CARD_NAME)
         )
         nonprogress_access = HasAll(NITORI_STORY_CARD_NAME, BLANK_CARD_NAME, STAGE4_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL)
@@ -382,5 +382,9 @@ def get_goal_condition(completion_type: int):
         return all_cards_access()
     elif completion_type == CompletionType.option_bosses:
         return all_bosses_clear()
+    elif completion_type == CompletionType.option_challenge:
+        return has_challenge_access_item(True)
+    elif completion_type == CompletionType.option_true_all:
+        return full_clear_rule() & has_challenge_access_item(True)
     else:
         return full_clear_rule()

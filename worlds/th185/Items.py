@@ -110,7 +110,7 @@ def create_all_items(world):
         if progress_items_to_submit > 0:
             progress_item_number = 0
             while progress_item_number < progress_items_to_submit:
-                item_pool.append(world.create_item(PROGRESS_ITEM_NAME_FULL))
+                item_pool.append(world.create_item(PROGRESS_STAGE_ITEM_NAME))
                 progress_item_number += 1
 
     # Ability Cards get added next.
@@ -242,7 +242,7 @@ item_table: Dict[str, TouhouHBMItemData] = {
     "-2000 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 36, ItemClassification.trap),
 
     # Lives Filler and Traps - ID 30
-    "+1 Life": TouhouHBMItemData(CATEGORY_ITEM, 38, ItemClassification.useful, 5),
+    "+1 Life": TouhouHBMItemData(CATEGORY_ITEM, 38, ItemClassification.useful, 8),
     "+2 Lives": TouhouHBMItemData(CATEGORY_ITEM, 39, ItemClassification.useful, 5),
 
     # STAGE FILLER
@@ -295,6 +295,7 @@ item_table: Dict[str, TouhouHBMItemData] = {
     "+20% Movement Speed": TouhouHBMItemData(CATEGORY_FILLER, 90),
     "Extreme Speed Trap": TouhouHBMItemData(CATEGORY_TRAP, 91, ItemClassification.trap),
     "Max Speed Trap": TouhouHBMItemData(CATEGORY_TRAP, 92, ItemClassification.trap),
+    "Freeze Trap": TouhouHBMItemData(CATEGORY_TRAP, 93, ItemClassification.trap),
     # Invincibility Filler and Traps
     "2-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 95), # 120 in int (60 = 1s)
     "5-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 96), # 300 in int
@@ -403,7 +404,7 @@ item_table: Dict[str, TouhouHBMItemData] = {
     TEACUP_MARISA_CARD_NAME: TouhouHBMItemData(CATEGORY_CARD, 282, ItemClassification.progression),
     # PROGRESSIVE ITEMS
     # Stage Progress
-    PROGRESS_ITEM_NAME_FULL: TouhouHBMItemData(CATEGORY_PROGRESS, 290, ItemClassification.progression),
+    PROGRESS_STAGE_ITEM_NAME: TouhouHBMItemData(CATEGORY_PROGRESS, 290, ItemClassification.progression),
     # Equipment Upgrades
     PROGRESS_EQUIP_NAME: TouhouHBMItemData(CATEGORY_PROGRESS, 291, ItemClassification.progression),
     PROGRESS_SLOT_NAME: TouhouHBMItemData(CATEGORY_PROGRESS, 292, ItemClassification.progression),

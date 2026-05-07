@@ -60,7 +60,6 @@ class ProgressiveStages(DefaultOnToggle):
 class StageBossLocations(Choice):
     """
     Whether boss encounters and defeats will count as locations and whether stage clears will count as locations.
-    Currently unimplemented.
     """
 
     option_boss_only = 0
@@ -261,7 +260,9 @@ class CompletionType(Choice):
     option_min = 1
     option_cards = 2
     option_bosses = 3
-    option_all = 4
+    option_challenge = 4
+    option_all = 5
+    option_true_all = 6
 
     default = option_full
 
@@ -275,7 +276,11 @@ class CompletionType(Choice):
             return "All Ability Cards Owned"
         elif value == cls.option_bosses:
             return "All Bosses Defeated"
+        elif value == cls.option_challenge:
+            return "Challenge Market Clear"
         elif value == cls.option_all:
+            return "Clear everything (Except Challenge Market)"
+        elif value == cls.option_true_all:
             return "Clear everything"
         return super().get_option_name(value)
 

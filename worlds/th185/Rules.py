@@ -18,20 +18,15 @@ def set_all_rules(world) -> None:
 
 def set_all_entrance_rules(world) -> None:
     def has_correct_stage_item(given_stage: str):
+        if (given_stage == CHALLENGE_NAME_FULL and world.options.disable_challenge_logic and
+            not world.options.progressive_stages):
+            return HasAll(*STAGE_NAME_LIST)
+
         progress_access = (
             OptionFilter(ProgressiveStages, True) &
-            Has(PROGRESS_ITEM_NAME_FULL, count=get_progress_item_requirement(given_stage, True))
+            Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(given_stage, True))
         )
         nonprogress_access = Has(given_stage, options=[OptionFilter(ProgressiveStages, False)])
-
-        if (given_stage == CHALLENGE_NAME_FULL and
-            world.options.disable_challenge_logic and
-            not world.options.progressive_stages):
-            normal_stages = STAGE_NAME_LIST
-            if CHALLENGE_NAME_FULL in normal_stages:
-                normal_stages.remove(CHALLENGE_NAME_FULL)
-
-            return HasAll(*normal_stages)
         return progress_access | nonprogress_access
 
     origin_to_region_dict = {
@@ -247,14 +242,12 @@ def set_music_rules(world):
                         has_challenge_access_item()
                     )
                 case 6:  # Lunatic Dreamer
-                    world.set_rule(music_track_location,
-                             has_stage_list_access_item([TUTORIAL_NAME_FULL]))
+                    world.set_rule(music_track_location, has_stage_access_item(TUTORIAL_NAME))
                 case 7:  # Lunar Rainbow
                     world.set_rule(music_track_location,
                              has_stage_list_access_item([TUTORIAL_NAME_FULL, ENDSTAGE_NAME_FULL]))
                 case 8:  # Where Is That Bustling Marketplace Now ~ Immemorial Marketeers
-                    world.set_rule(music_track_location,
-                             has_stage_list_access_item([ENDSTAGE_NAME_FULL]))
+                    world.set_rule(music_track_location, has_stage_access_item(ENDSTAGE_NAME_FULL))
                 case 9:  # A Rainbow-Colored World
                     world.set_rule(music_track_location, has_takane_access())
                 case _:

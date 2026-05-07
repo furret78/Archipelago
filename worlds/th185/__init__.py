@@ -58,7 +58,7 @@ class TouhouHBMWorld(World):
 
             progress_items_given = 0
             while progress_items_given < progress_items_to_push:
-                self.push_precollected(self.create_item(PROGRESS_ITEM_NAME_FULL))
+                self.push_precollected(self.create_item(PROGRESS_STAGE_ITEM_NAME))
                 progress_items_given += 1
 
             return
