@@ -13,6 +13,7 @@ The following are now location checks:
 Optionally, the following could also be location checks:
 - All Music Room soundtrack unlocks.
 - All Achievements.
+- All stage clears. If only stage clear locations are generated, upon clearing a stage, all non-hidden bosses will also be cleared.
 
 They may contain items for different games as well as different items from within 100th Black Market.
 
@@ -70,7 +71,7 @@ The items are **visually unchanged**. After collecting an item, a message will s
 When you receive an item, the client will inform you of what you received. Changes will occur as appropriate in the game.
 
 ## Credits
-- **Nepley**: AP implementations for Embodiment of Scarlet Devil, Perfect Cherry Blossom, and Imperishable Night borrowed as a framework for 100th Black Market AP. Anticheat disabling as well.
+- **Nepley**: Their AP implementations for Embodiment of Scarlet Devil, Perfect Cherry Blossom, and Imperishable Night were borrowed as a framework for 100th Black Market AP. Anticheat disabling as well.
 - **CodeGorilla**: Nicer-looking names in Options.
 - **Doremy/Iesua Inane**, Mirage Creators: Playtesting, writing several Death Link messages.
 - **lvcoloredmagic**: Playtesting.
