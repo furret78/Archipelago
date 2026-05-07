@@ -247,7 +247,7 @@ def set_music_rules(world):
                     world.set_rule(music_track_location,
                              has_stage_list_access_item([TUTORIAL_NAME_FULL, ENDSTAGE_NAME_FULL]))
                 case 8:  # Where Is That Bustling Marketplace Now ~ Immemorial Marketeers
-                    world.set_rule(music_track_location, has_stage_access_item(ENDSTAGE_NAME_FULL))
+                    world.set_rule(music_track_location, has_stage_access_item(ENDSTAGE_NAME))
                 case 9:  # A Rainbow-Colored World
                     world.set_rule(music_track_location, has_takane_access())
                 case _:
