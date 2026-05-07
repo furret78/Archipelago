@@ -6,10 +6,10 @@ The player options page for this game contains all the options you need to confi
 
 ## What does randomization do to this game?
 The following are now location checks:
-- All boss encounters and defeats from the _Tutorial_ stage to _End of Market_.
-- All boss encounters in Challenge Market.
+- All boss encounters and defeats from the _Tutorial_ stage to _Challenge Market_.
 - All card unlocks at the end of every run.
 - All card dex unlocks.
+
 Optionally, the following could also be location checks:
 - All Music Room soundtrack unlocks.
 - All Achievements.
@@ -22,12 +22,13 @@ You may choose 1 out of 7 goals to reach for in this implementation.
 - Complete the **minimum story line**. This means only defeating the hidden boss of the 6th Market is necessary.
 - Collect **all Ability Cards**.
 - Defeat **all bosses**. Challenge Market does not count.
-- Both of the above, shown as **Full Clear** in the options page.
+- Both of the above, shown as **Clear everything (except Challenge Market)** in the options page.
 - Clear **Challenge Market - Lunar Rainbow Black Market**.
-- All of the above.
+- All of the above, shown as **Clear everything** in the options page.
 
 ## Which items can be in another player's world?
 ### Stage Unlocks (Progression)
+This can be changed to be **progressive unlocks** instead of stage unlocks in the options page.
 - Tutorial - First Black Market Deal
 - 1st Market - Secret Heaven Cliff
 - 2nd Market - Misty Lake
@@ -37,6 +38,10 @@ You may choose 1 out of 7 goals to reach for in this implementation.
 - 6th Market - Rainbow Dragon Cave
 - End of Market - Lunar Rainbow Market
 - Challenge Market - Lunar Rainbow Black Market
+### Equipment Upgrades (Progression)
+This can be changed to be separate items or not, as well as whether it should be randomized or not.
+- Loadout Card Slots
+- Loadout Equipment Cost
 ### Ability Cards in Card Market (Progression)
 All cards except two of Nazrin's "Money Comes and Goes On Its Own" cards are shuffled. See [here](https://en.touhouwiki.net/wiki/100th_Black_Market/Ability_Cards) for specifics.
 ### Useful/Filler Items
