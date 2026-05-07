@@ -14,10 +14,9 @@ If any issues arise that **cannot be solved by going over this guide**, you may 
 5. Tweak as needed and export Options as a .yaml file.
 6. Get a server running (can skip if someone else is handling this part).
 7. Open Touhou 18.5 client.
-8. Run `/replace_save`.
-9. Connect to the server.
-10. Enter name as written in the .yaml's settings.
-11. Launch the game.
+8. Connect to the server.
+9. Enter name as written in the .yaml's settings. 
+10. Launch the game.
 
 ## Required Software
 

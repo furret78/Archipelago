@@ -54,12 +54,12 @@ class ProgressiveStages(DefaultOnToggle):
     Stages will be unlocked in order as the game progresses.
     """
 
-    display_name = "Progressive Markets"
+    display_name = "Progressive Market"
 
 
 class StageBossLocations(Choice):
     """
-    Whether boss encounters and defeats will count as locations and whether stage clears will count as locations.
+    Whether boss encounters and defeats will count as locations, and whether stage clears will count as locations.
     """
 
     option_boss_only = 0
@@ -73,9 +73,9 @@ class StageBossLocations(Choice):
     @classmethod
     def get_option_name(cls, value: T) -> str:
         if value == cls.option_boss_only:
-            return "Boss Encounters and Defeats Only"
+            return "Boss Locations Only"
         if value == cls.option_stage_only:
-            return "Stage Clear Only"
+            return "Stage Clear Locations Only"
         if value == cls.option_full:
             return "Full Boss and Stage Clear Locations"
         return super().get_option_name(value)
@@ -251,7 +251,9 @@ class CompletionType(Choice):
     2. Minimum Story Clear - Defeat Takane Yamashiro.
     3. All Ability Cards Owned.
     4. All Bosses Defeated - Challenge Market does not count.
-    5. Clear everything.
+    5. Challenge Market Clear.
+    6. Clear everything except Challenge Market.
+    7. Clear everything.
     """
 
     display_name = "Completion Goal"
