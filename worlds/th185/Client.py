@@ -153,18 +153,19 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
         Sets a new path to the save data directory.
         """
 
-        if save_path is not None:
+        if save_path:
             self.ctx.scorefile_path = save_path
-            logger.info(f"Save data directory was changed to: {self.ctx.scorefile_path}")
+            logger.info(f"Save data directory has been changed to: {self.ctx.scorefile_path}")
         else:
             default_appdata_path = os.getenv("APPDATA")
-            if default_appdata_path is None:
+            if not default_appdata_path:
                 self.ctx.scorefile_path = None
             else:
                 self.ctx.scorefile_path = default_appdata_path + APPDATA_PATH
-                self.ctx.write_client_settings()
+            logger.info(f"Save data directory has been reset to default.")
 
-            logger.info(f"Save data directory was reset to default.")
+        self.ctx.client_settings[CLIENT_SCOREFILE_PATH] = self.ctx.scorefile_path
+        self.ctx.write_client_settings()
 
     def _cmd_replace_save(self):
         """
@@ -599,6 +600,7 @@ class TouhouHBMContext(CommonContext):
             self.client_settings[CLIENT_AUTO_REPLACE] = CLIENT_AUTO_REPLACE_DEFAULT
 
     def write_client_settings(self):
+
         write_client_settings(self.client_settings)
 
     #
