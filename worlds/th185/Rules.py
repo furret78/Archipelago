@@ -78,6 +78,11 @@ def set_boss_location_rules(world):
                     world.set_rule(location_encounter, has_encounter_access(BOSS_TAKANE))
                     world.set_rule(location_defeat, has_takane_access())
                     continue
+                # Hidden 4th bosses can only be met if the other bosses have already been defeated.
+                elif boss_name in HIDDEN_BOSSES_LIST:
+                    world.set_rule(location_encounter, has_stage_access_item(stage_short_name))
+                    world.set_rule(location_defeat, has_stage_access_item(stage_short_name))
+                    continue
 
                 # If it's none of them
                 world.set_rule(location_encounter, has_encounter_access(stage_short_name))

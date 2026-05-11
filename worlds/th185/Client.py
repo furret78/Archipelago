@@ -405,18 +405,18 @@ class TouhouHBMContext(CommonContext):
                         # and then append if it is not in previously checked locations.
                         # Encounters
                         self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], False,
-                                                       ENCOUNTER_ID)
+                                                       BossDataType.Encounter)
                         self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], False,
-                                                       DEFEAT_ID)
+                                                       BossDataType.Defeat)
                 else:
                     # Special Challenge Market clause
                     challenge_boss_list = get_boss_names_challenge_list()
                     for boss_name in challenge_boss_list:
                         self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], False,
-                                                       ENCOUNTER_ID)
+                                                       BossDataType.Encounter)
                         if boss_name not in ALL_BOSSES_LIST[STAGE6_ID]: continue
                         self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], False,
-                                                       DEFEAT_ID)
+                                                       BossDataType.Defeat)
 
         reset_boss_records()
 
@@ -667,7 +667,7 @@ class TouhouHBMContext(CommonContext):
 
         def checkChallengeClear() -> bool:
             for boss_name in ALL_BOSSES_LIST[STAGE6_ID]:
-                if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], DEFEAT_ID):
+                if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], BossDataType.Defeat):
                     return True
             return False
 
@@ -1254,7 +1254,7 @@ class TouhouHBMContext(CommonContext):
                     # Defeat
                     if self.handler.getBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], 1):
                         self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
-                                                          True, DEFEAT_ID)
+                                                          True, BossDataType.Defeat)
                         locationName: str = get_boss_location_name_str(STAGE_NAME_TO_ID[stage_name], boss_name, True)
                         if obligatory_location_table_check(locationName):
                             new_locations.append(location_table[locationName])
@@ -1271,9 +1271,9 @@ class TouhouHBMContext(CommonContext):
                             new_locations.append(location_table[challenge_encounter])
                     # Final Wave bosses do leave records. Check those.
                     if boss_name not in ALL_BOSSES_LIST[STAGE6_ID]: continue
-                    if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], DEFEAT_ID):
+                    if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], BossDataType.Defeat):
                         self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True,
-                                                          DEFEAT_ID)
+                                                          BossDataType.Defeat)
                         challenge_defeat: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss_name, True)
                         if obligatory_location_table_check(challenge_defeat):
                             new_locations.append(location_table[challenge_defeat])
@@ -1288,7 +1288,7 @@ class TouhouHBMContext(CommonContext):
             last_boss_defeated = BOSS_ID_TO_NAME[last_boss_met]
             if last_boss_defeated not in ALL_BOSSES_LIST[STAGE6_ID]:
                 self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[last_boss_defeated], True,
-                                                  DEFEAT_ID)
+                                                  BossDataType.Defeat)
                 challenge_defeat: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, last_boss_defeated, True)
                 if obligatory_location_table_check(challenge_defeat):
                     new_locations.append(location_table[challenge_defeat])
@@ -1433,8 +1433,8 @@ class TouhouHBMContext(CommonContext):
                             self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
 
                             if boss_name not in ALL_BOSSES_LIST[STAGE6_ID]: continue
-                            self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True, DEFEAT_ID)
-                            self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True, DEFEAT_ID)
+                            self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True, BossDataType.Defeat)
+                            self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True, BossDataType.Defeat)
                     else:
                         for boss_name in ALL_BOSSES_LIST[STAGE_NAME_TO_ID[stage_name]]:
                             if check_if_only_stage_locations() and boss_name != BOSS_NITORI_NAME and boss_name != BOSS_TAKANE_NAME:
@@ -1442,8 +1442,8 @@ class TouhouHBMContext(CommonContext):
                                 self.handler.autoClearBossRecord(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name])
                             else:
                                 if boss_name not in full_location_name: continue
-                                record_type = ENCOUNTER_ID
-                                if DEFEAT_TYPE_NAME in full_location_name: record_type = DEFEAT_ID
+                                record_type = BossDataType.Encounter
+                                if DEFEAT_TYPE_NAME in full_location_name: record_type = BossDataType.Defeat
                                 self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
                                                                   True, record_type)
                                 self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
@@ -1491,7 +1491,7 @@ class TouhouHBMContext(CommonContext):
 
     # Helper functions for things to do with the menu.
     def get_menu_card_list(self) -> list:
-        menu_card_list = ABILITY_CARD_LIST
+        menu_card_list = duplicate_list(ABILITY_CARD_LIST)
         for invalid_card in ABILITY_CARD_CANNOT_EQUIP:
             if invalid_card in menu_card_list: menu_card_list.remove(invalid_card)
         return menu_card_list

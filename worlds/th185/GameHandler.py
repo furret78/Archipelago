@@ -271,7 +271,7 @@ class GameHandler:
         Challenge Market only stores data for boss defeats of the Final Wave.
         The Final Wave consists of Stage 6 bosses.
         """
-        if type == DEFEAT_ID:
+        if type == BossDataType.Defeat:
             hidden_records = get_boss_and_stage_id(stage_id, boss_id)
             return self.gameController.getHiddenBossDefeat(hidden_records[0], hidden_records[1])
         else: return self.gameController.getBossRecord(stage_id, boss_id, type)
@@ -287,7 +287,7 @@ class GameHandler:
 
         # This part is mainly so that the achievements for stage-exclusive bosses work properly.
         # The all-bosses achievement doesn't do this.
-        if record_type != DEFEAT_ID: return
+        if record_type != BossDataType.Defeat: return
         hidden_records = get_boss_and_stage_id(stage_id, boss_id)
         self.gameController.setHiddenBossDefeat(hidden_records[0], hidden_records[1], final_value)
 

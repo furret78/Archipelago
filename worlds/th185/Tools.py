@@ -1,3 +1,4 @@
+import copy
 import shutil
 import os
 import random
@@ -11,6 +12,10 @@ from .variables.card_const import CARD_ID_TO_NAME
 from .variables.meta_data import *
 from .variables.music_and_achiev import *
 from .variables.string_death_link import *
+
+
+def duplicate_list(original_list):
+    return copy.deepcopy(original_list)
 
 
 def copy_and_replace(directory: str, logger):

@@ -2,15 +2,24 @@
 from rule_builder.options import OptionFilter
 from rule_builder.rules import HasAll, HasFromListUnique, True_, False_, Has, HasAny
 from .Options import CompletionType, ProgressiveStages, LowSkillLogic, ProgressiveLoadout, DisableChallengeLogic
-from .Tools import get_progress_item_requirement, clamp, get_card_location_name_str
+from .Tools import get_progress_item_requirement, clamp, get_card_location_name_str, duplicate_list
 from .variables.card_const import *
 
-STANDARD_STAGE_LIST = STAGE_NAME_LIST
+# commonly used stage lists
+STANDARD_STAGE_LIST = duplicate_list(STAGE_NAME_LIST)
 if TUTORIAL_NAME_FULL in STANDARD_STAGE_LIST: STANDARD_STAGE_LIST.remove(TUTORIAL_NAME_FULL)
 if ENDSTAGE_NAME_FULL in STANDARD_STAGE_LIST: STANDARD_STAGE_LIST.remove(ENDSTAGE_NAME_FULL)
 if CHALLENGE_NAME_FULL in STANDARD_STAGE_LIST: STANDARD_STAGE_LIST.remove(CHALLENGE_NAME_FULL)
-non_challenge_stages = STAGE_NAME_LIST
+non_challenge_stages = duplicate_list(STAGE_NAME_LIST)
 if CHALLENGE_NAME_FULL in non_challenge_stages: non_challenge_stages.remove(CHALLENGE_NAME_FULL)
+
+non_story_pool = duplicate_list(STAGE_NAME_LIST)
+if CHALLENGE_NAME_FULL in non_story_pool: non_story_pool.remove(CHALLENGE_NAME_FULL)
+if TUTORIAL_NAME_FULL in non_story_pool: non_story_pool.remove(TUTORIAL_NAME_FULL)
+non_stage6_pool = duplicate_list(non_story_pool)
+if STAGE6_NAME_FULL in non_stage6_pool: non_stage6_pool.remove(STAGE6_NAME_FULL)
+
+# conditions
 progressive_stages_enabled = OptionFilter(ProgressiveStages, True)
 progressive_stages_disabled = OptionFilter(ProgressiveStages, False)
 progressive_loadout_together = OptionFilter(ProgressiveLoadout, ProgressiveLoadout.option_together)
@@ -144,15 +153,6 @@ def has_stage_access_item_count(stage_count: int):
     if stage_count <= 0: return True_()
 
     def item_count_stages(used_count: int):
-        non_story_pool = STAGE_NAME_LIST
-        if CHALLENGE_NAME_FULL in non_story_pool:
-            non_story_pool.remove(CHALLENGE_NAME_FULL)
-        if TUTORIAL_NAME_FULL in non_story_pool:
-            non_story_pool.remove(TUTORIAL_NAME_FULL)
-        non_stage6_pool = non_story_pool
-        if STAGE6_NAME_FULL in non_stage6_pool:
-            non_stage6_pool.remove(STAGE6_NAME_FULL)
-
         local_progress_access = HasFromListUnique(*non_story_pool, count=used_count, options=[OptionFilter(DisableChallengeLogic, True)])
 
         nonprogress_used_count = clamp(used_count - 1, 0, len(non_story_pool))
@@ -173,15 +173,9 @@ def has_stage_access_item_count(stage_count: int):
 # For more open reward pools. Of course, these all imply Challenge Market clauses as well.
 # Common. Shows up in every stage except Tutorial.
 def has_common_access_item():
-    every_stage_list = STAGE_NAME_LIST
-    if TUTORIAL_NAME_FULL in non_challenge_stages:
-        every_stage_list.remove(TUTORIAL_NAME_FULL)
-    if CHALLENGE_NAME_FULL in non_challenge_stages:
-        every_stage_list.remove(CHALLENGE_NAME_FULL)
-
     progress_access = Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(STAGE1_NAME),
                           options=[progressive_stages_enabled])
-    nonprogress_access = (HasAny(*every_stage_list) | has_challenge_access_item()) & progressive_stages_disabled
+    nonprogress_access = (HasAny(*non_story_pool) | has_challenge_access_item()) & progressive_stages_disabled
 
     return progress_access | nonprogress_access
 
@@ -234,7 +228,7 @@ def has_encounter_access(condition):
 def has_nitori_boss_access():
     progress_access = (Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(STAGE4_NAME), options=[progressive_stages_enabled]) &
                        Has(BLANK_CARD_NAME))
-    nonprogress_access = HasAll(STAGE4_NAME_FULL, BLANK_CARD_NAME)
+    nonprogress_access = HasAll(STAGE4_NAME_FULL, BLANK_CARD_NAME, options=[progressive_stages_disabled])
     return progress_access | nonprogress_access
 
 
@@ -246,7 +240,7 @@ def has_nitori_access():
 def has_takane_boss_access():
     progress_access = (Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(STAGE6_NAME), options=[progressive_stages_enabled]) &
                        Has(NITORI_STORY_CARD_NAME))
-    nonprogress_access = HasAll(STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME)
+    nonprogress_access = HasAll(STAGE6_NAME_FULL, NITORI_STORY_CARD_NAME, options=[progressive_stages_disabled])
     return progress_access | nonprogress_access
 
 
@@ -276,7 +270,7 @@ def has_doremy_access():
 
 
 def has_nazrin2_access():
-    black_market_stages = STAGE_NAME_LIST
+    black_market_stages = duplicate_list(STAGE_NAME_LIST)
     if ENDSTAGE_NAME_FULL in black_market_stages:
         black_market_stages.remove(ENDSTAGE_NAME_FULL)
     if CHALLENGE_NAME_FULL in black_market_stages:
@@ -354,7 +348,7 @@ def get_goal_condition(completion_type: int):
 
     # To defeat all bosses, you need all stages to be available except the Challenge Market.
     # Both instances of Mike Goutokuji are counted.
-    boss_condition_list = STAGE_NAME_LIST
+    boss_condition_list = duplicate_list(STAGE_NAME_LIST)
     if CHALLENGE_NAME_FULL in boss_condition_list: boss_condition_list.remove(CHALLENGE_NAME_FULL)
 
     def all_bosses_clear():
