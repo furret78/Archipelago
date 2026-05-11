@@ -895,6 +895,7 @@ class TouhouHBMContext(CommonContext):
                 case 24: self.received_bullet_money += 1000
                 case 25: self.received_bullet_money += 2000
                 case 26: self.received_bullet_money += 5000
+                case 27: self.received_bullet_money += 8000
                 # Bullet Money Traps
                 case 30: self.received_bullet_money -= 50
                 case 31: self.received_bullet_money -= 100
@@ -1017,6 +1018,7 @@ class TouhouHBMContext(CommonContext):
                 case 5: self.received_funds += 1000
                 case 6: self.received_funds += 2000
                 case 7: self.received_funds += 5000
+                case 8: self.received_funds += 8000
                 # Traps
                 case 10: self.received_funds -= 50
                 case 11: self.received_funds -= 100

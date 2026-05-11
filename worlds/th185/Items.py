@@ -211,11 +211,12 @@ item_table: Dict[str, TouhouHBMItemData] = {
     # Money Filler and Traps - ID 1-29
     "+5 Funds": TouhouHBMItemData(CATEGORY_FILLER, 1),
     "+10 Funds": TouhouHBMItemData(CATEGORY_FILLER, 2),
-    "+200 Funds": TouhouHBMItemData(CATEGORY_ITEM, 3, ItemClassification.useful, 6),
-    "+500 Funds": TouhouHBMItemData(CATEGORY_ITEM, 4, ItemClassification.useful, 5),
-    "+1000 Funds": TouhouHBMItemData(CATEGORY_ITEM, 5, ItemClassification.useful, 3),
+    "+200 Funds": TouhouHBMItemData(CATEGORY_ITEM, 3, ItemClassification.useful, 10),
+    "+500 Funds": TouhouHBMItemData(CATEGORY_ITEM, 4, ItemClassification.useful, 4),
+    "+1000 Funds": TouhouHBMItemData(CATEGORY_ITEM, 5, ItemClassification.useful, 2),
     "+2000 Funds": TouhouHBMItemData(CATEGORY_ITEM, 6, ItemClassification.useful, 2),
-    "+5000 Funds": TouhouHBMItemData(CATEGORY_ITEM, 7, ItemClassification.useful, 1),
+    "+5000 Funds": TouhouHBMItemData(CATEGORY_ITEM, 7, ItemClassification.useful, 2),
+    "+8000 Funds": TouhouHBMItemData(CATEGORY_ITEM, 8, ItemClassification.useful, 1),
 
     "-50 Funds Trap": TouhouHBMItemData(CATEGORY_TRAP, 10, ItemClassification.trap),
     "-100 Funds Trap": TouhouHBMItemData(CATEGORY_TRAP, 11, ItemClassification.trap),
@@ -227,11 +228,12 @@ item_table: Dict[str, TouhouHBMItemData] = {
 
     "+5 Bullet Money": TouhouHBMItemData(CATEGORY_FILLER, 20),
     "+10 Bullet Money": TouhouHBMItemData(CATEGORY_FILLER, 21),
-    "+200 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 22, ItemClassification.useful, 6),
-    "+500 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 23, ItemClassification.useful, 6),
+    "+200 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 22, ItemClassification.useful, 10),
+    "+500 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 23, ItemClassification.useful, 8),
     "+1000 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 24, ItemClassification.useful, 6),
-    "+2000 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 25, ItemClassification.useful, 3),
+    "+2000 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 25, ItemClassification.useful, 4),
     "+5000 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 26, ItemClassification.useful, 2),
+    "+8000 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 27, ItemClassification.useful, 2),
 
     "-50 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 30, ItemClassification.trap),
     "-100 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 31, ItemClassification.trap),
