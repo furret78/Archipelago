@@ -127,7 +127,7 @@ class AntiGrindingItemPlacements(ItemSet):
 
 class DisableChallengeLogic(DefaultOnToggle):
     """
-    Generation logic will consider Challenge Market inaccessible if all other stages are locked.
+    Generation logic will consider Challenge Market inaccessible if all other stages have not been unlocked yet.
     Disable this option to turn off the above handicap.
     """
 
