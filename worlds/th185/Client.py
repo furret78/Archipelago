@@ -2025,9 +2025,9 @@ class TouhouHBMContext(CommonContext):
 
                     # Boss encounter swap.
                     # This will swap the cards to the reward type.
-                    if not self.started_card_reset:
+                    if not self.started_card_reset and current_boss != -1:
                         # Normal stages check.
-                        if current_stage != STAGE_CHALLENGE_ID and current_boss != -1:
+                        if current_stage != STAGE_CHALLENGE_ID:
                             #logger.info("Boss found. Switching...")
                             stage_boss_found = True
                             self.started_card_reset = True

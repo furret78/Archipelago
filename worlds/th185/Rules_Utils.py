@@ -216,6 +216,7 @@ def has_lategame_access_item():
 def has_encounter_access(condition):
     # Special checks.
     if condition == BOSS_NITORI:
+        # Checks if the player has Stage access and the right cards for access.
         return has_nitori_boss_access() & low_skill_check_encounters(BOSS_NITORI)
     elif condition == BOSS_TAKANE:
         return has_takane_boss_access() & low_skill_check_encounters(BOSS_TAKANE)

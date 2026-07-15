@@ -242,6 +242,9 @@ class GameController:
 
     # Functions that control boss records
     def getBossRecord(self, stage: int, boss: int, category: int) -> bool:
+        """
+        Gets Encounter stats.
+        """
         boss_address_list_normal = ADDR_BOSS_ID_TO_PTR[stage][boss]
 
         if stage != STAGE_CHALLENGE_ID:
