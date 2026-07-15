@@ -1465,7 +1465,8 @@ class TouhouHBMContext(CommonContext):
                     self.handler.unconditionalDexUnlock(card_string_id)
 
     def load_save_data_menu(self):
-        if not self.energylink_enabled: self.handler.setMenuFunds(self.menuFunds)
+        if not self.energylink_enabled:
+            self.handler.setMenuFunds(self.menuFunds)
         if self.is_progressive_equip_disabled():
             self.handler.setCardSlots(self.loadout_slots)
             self.handler.setEquipCost(self.equip_cost)
@@ -2244,17 +2245,19 @@ async def game_watcher(ctx: TouhouHBMContext):
                 continue
 
             if ctx.loadingDataSetup:
-                logger.info(f"Found {SHORT_NAME} process! Now loading...")
+                logger.info(f"Found {SHORT_NAME} process! Beginning loading process...")
 
                 if ctx.options["death_link"]:
                     await ctx.update_death_link(True)
                     ctx.deathlink_enabled = True
+                    logger.info(f"GAME INFO - Death Link is enabled for this game.")
 
                 if ctx.options["death_link_trigger"]:
                     ctx.deathlink_trigger = ctx.options["death_link_trigger"]
 
                 if ctx.options["energy_link"]:
                     ctx.energylink_enabled = True
+                    logger.info(f"GAME INFO - Energy Link is enabled for this game. Funds will not be automatically saved.")
                     if ctx.ui:
                         ctx.ui.enable_energy_link()
 
@@ -2266,6 +2269,7 @@ async def game_watcher(ctx: TouhouHBMContext):
 
                 asyncio.create_task(ctx.load_save_data())
                 ctx.loadingDataSetup = False
+                logger.info(f"Loading process finished.")
                 continue
 
             # Start the different loops.
