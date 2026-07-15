@@ -1,6 +1,7 @@
 from Options import *
 from .variables.boss_and_stage import TUTORIAL_NAME_FULL, STAGE1_NAME_FULL, STAGE2_NAME_FULL, STAGE3_NAME_FULL, STAGE4_NAME_FULL, \
     STAGE5_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL, CHALLENGE_NAME_FULL
+from .variables.card_const import YACHIE_CARD_NAME, KAGUYA_CARD_NAME, TAKANE_STORY_CARD_NAME, JUNKO_CARD_NAME
 
 
 class StartingMarket(Choice):
@@ -107,6 +108,21 @@ class ProgressiveLoadout(Choice):
         if value == cls.option_separate:
             return "Separate Equipment Upgrades"
         return super().get_option_name(value)
+
+
+class AntiGrindingItemPlacements(ItemSet):
+    """
+    Which items should be prioritized for placement during early game to reduce grinding as much as possible.
+    """
+
+    display_name = "Anti-Grinding Item Placements"
+    valid_keys = [
+        YACHIE_CARD_NAME,
+        KAGUYA_CARD_NAME,
+        TAKANE_STORY_CARD_NAME,
+        JUNKO_CARD_NAME
+    ]
+    default = valid_keys
 
 
 class DisableChallengeLogic(DefaultOnToggle):
@@ -289,6 +305,7 @@ class CompletionType(Choice):
 
 @dataclass()
 class TouhouHBMDataclass(PerGameCommonOptions):
+    anti_grinding_placements: AntiGrindingItemPlacements
     starting_market: StartingMarket
     progressive_stages: ProgressiveStages
     progressive_loadout: ProgressiveLoadout
@@ -315,7 +332,7 @@ option_groups = [
     ),
     OptionGroup(
         "Generation Options",
-        [StartingMarket, ProgressiveStages, ProgressiveLoadout, StageBossLocations, MusicRoomChecks, AchieveChecks]
+        [AntiGrindingItemPlacements, StartingMarket, StageBossLocations, ProgressiveStages, ProgressiveLoadout, MusicRoomChecks, AchieveChecks]
     ),
     OptionGroup(
         "Logic Options",
@@ -339,6 +356,7 @@ option_presets = {
         "energy_link": False,
         "energy_link_bullet_money": False,
         "music_room_checks": False,
+        "anti_grinding_placements": [],
         "achievement_checks": False,
         "completion_type": 0 # Full Main Story
     }

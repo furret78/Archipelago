@@ -53,6 +53,12 @@ class TouhouHBMWorld(World):
     location_name_groups = Locations.location_groups
 
     def generate_early(self) -> None:
+        # Set early game placements priority here.
+        if self.options.anti_grinding_placements.value:
+            for card_item_name in self.options.anti_grinding_placements.value:
+                self.multiworld.local_early_items[self.player][card_item_name] = 1
+
+        # Push Starting Market items.
         if self.options.progressive_stages:
             progress_items_to_push: int = get_progress_item_count(self.options.starting_market.value)
 
@@ -105,6 +111,7 @@ class TouhouHBMWorld(World):
             "disable_challenge_logic": self.options.disable_challenge_logic.value,
             "trap_chance": self.options.trap_chance.value,
             "low_skill_logic": self.options.low_skill_logic.value,
+            "include_gameplay_filler": self.options.include_gameplay_filler.value,
             "death_link": self.options.death_link.value,
             "death_link_trigger": self.options.death_link_trigger.value,
             "death_link_invincibility": self.options.death_link_invincibility.value,
@@ -112,7 +119,7 @@ class TouhouHBMWorld(World):
             "energy_link_bullet_money": self.options.energy_link_bullet_money.value,
             "music_room_checks": self.options.music_room_checks.value,
             "achievement_checks": self.options.achievement_checks.value,
-            "completion_type": self.options.completion_type.value,
-            "include_gameplay_filler": self.options.include_gameplay_filler.value
+            "anti_grinding_placements": self.options.anti_grinding_placements.value,
+            "completion_type": self.options.completion_type.value
         }
         return data
