@@ -113,6 +113,7 @@ class ProgressiveLoadout(Choice):
 class AntiGrindingItemPlacements(ItemSet):
     """
     Which items should be prioritized for placement during early game to reduce grinding as much as possible.
+    Four cards are on the list by default, but you can choose to remove them.
     """
 
     display_name = "Anti-Grinding Item Placements"
