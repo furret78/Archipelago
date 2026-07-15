@@ -110,10 +110,18 @@ class ProgressiveLoadout(Choice):
         return super().get_option_name(value)
 
 
+class AntiGrindingToggle(Toggle):
+    """
+    Toggles whether generation logic should consider anti-grinding placements.
+    """
+
+    display_name = "Anti-Grinding Item Toggle"
+
+
 class AntiGrindingItemPlacements(ItemSet):
     """
     Which items should be prioritized for placement during early game to reduce grinding as much as possible.
-    Four cards are on the list by default, but you can choose to remove them.
+    Four cards and 1000 Funds are on the list by default, but you can choose to remove them.
     """
 
     display_name = "Anti-Grinding Item Placements"
@@ -121,7 +129,8 @@ class AntiGrindingItemPlacements(ItemSet):
         YACHIE_CARD_NAME,
         KAGUYA_CARD_NAME,
         TAKANE_STORY_CARD_NAME,
-        JUNKO_CARD_NAME
+        JUNKO_CARD_NAME,
+        "+1000 Funds"
     ]
     default = valid_keys
 
@@ -306,6 +315,7 @@ class CompletionType(Choice):
 
 @dataclass()
 class TouhouHBMDataclass(PerGameCommonOptions):
+    anti_grinding_toggle: AntiGrindingToggle
     anti_grinding_placements: AntiGrindingItemPlacements
     starting_market: StartingMarket
     progressive_stages: ProgressiveStages
@@ -333,7 +343,7 @@ option_groups = [
     ),
     OptionGroup(
         "Generation Options",
-        [AntiGrindingItemPlacements, StartingMarket, StageBossLocations, ProgressiveStages, ProgressiveLoadout, MusicRoomChecks, AchieveChecks]
+        [AntiGrindingToggle, AntiGrindingItemPlacements, StartingMarket, StageBossLocations, ProgressiveStages, ProgressiveLoadout, MusicRoomChecks, AchieveChecks]
     ),
     OptionGroup(
         "Logic Options",

@@ -54,7 +54,7 @@ class TouhouHBMWorld(World):
 
     def generate_early(self) -> None:
         # Set early game placements priority here.
-        if self.options.anti_grinding_placements.value:
+        if self.options.anti_grinding_toggle and self.options.anti_grinding_placements.value:
             for card_item_name in self.options.anti_grinding_placements.value:
                 self.multiworld.local_early_items[self.player][card_item_name] = 1
 
@@ -120,6 +120,7 @@ class TouhouHBMWorld(World):
             "music_room_checks": self.options.music_room_checks.value,
             "achievement_checks": self.options.achievement_checks.value,
             "anti_grinding_placements": self.options.anti_grinding_placements.value,
+            "anti_grinding_toggle": self.options.anti_grinding_toggle.value,
             "completion_type": self.options.completion_type.value
         }
         return data
