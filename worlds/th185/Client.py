@@ -190,6 +190,15 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
 
         logger.info(f"Automatic save replacement set to: {self.ctx.client_settings[CLIENT_AUTO_REPLACE]}")
 
+    def _cmd_toggle_debug(self):
+        """
+        Toggles whether the client will actively alert about certain functions.
+        """
+        self.ctx.debug_alerts = not self.ctx.debug_alerts
+        self.ctx.client_settings[CLIENT_DEBUG_ALERTS] = self.ctx.debug_alerts
+        self.ctx.write_client_settings()
+        logger.info(f"Debug alerts set to: {self.ctx.debug_alerts}")
+
 
 class TouhouHBMContext(CommonContext):
     """Touhou 18.5 Game Context"""
@@ -315,6 +324,9 @@ class TouhouHBMContext(CommonContext):
         self.deathlink_loop_traceback = None
         #self.trap_loop_traceback = None
 
+        # Debug
+        self.debug_alerts = False
+
         self.reset()
 
     def reset(self):
@@ -325,7 +337,6 @@ class TouhouHBMContext(CommonContext):
 
         self.inError = False
 
-        self.previous_location_checked = None
         self.is_connected = False
         self.loadingDataSetup = True
 
@@ -405,18 +416,18 @@ class TouhouHBMContext(CommonContext):
                         # and then append if it is not in previously checked locations.
                         # Encounters
                         self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], False,
-                                                       BossDataType.Encounter)
+                                                       BossDataType.Encounter.value)
                         self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], False,
-                                                       BossDataType.Defeat)
+                                                       BossDataType.Defeat.value)
                 else:
                     # Special Challenge Market clause
                     challenge_boss_list = get_boss_names_challenge_list()
                     for boss_name in challenge_boss_list:
                         self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], False,
-                                                       BossDataType.Encounter)
+                                                       BossDataType.Encounter.value)
                         if boss_name not in ALL_BOSSES_LIST[STAGE6_ID]: continue
                         self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], False,
-                                                       BossDataType.Defeat)
+                                                       BossDataType.Defeat.value)
 
         reset_boss_records()
 
@@ -598,9 +609,11 @@ class TouhouHBMContext(CommonContext):
         # Automatic save data replacement.
         if CLIENT_AUTO_REPLACE not in self.client_settings:
             self.client_settings[CLIENT_AUTO_REPLACE] = CLIENT_AUTO_REPLACE_DEFAULT
+        if CLIENT_DEBUG_ALERTS not in self.client_settings:
+            self.client_settings[CLIENT_DEBUG_ALERTS] = False
+        else: self.debug_alerts = self.client_settings[CLIENT_DEBUG_ALERTS]
 
     def write_client_settings(self):
-
         write_client_settings(self.client_settings)
 
     #
@@ -667,7 +680,7 @@ class TouhouHBMContext(CommonContext):
 
         def checkChallengeClear() -> bool:
             for boss_name in ALL_BOSSES_LIST[STAGE6_ID]:
-                if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], BossDataType.Defeat):
+                if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], BossDataType.Defeat.value):
                     return True
             return False
 
@@ -1050,8 +1063,7 @@ class TouhouHBMContext(CommonContext):
             self.handler.addGameFunds(received_funds)
         else:
             self.handler.addMenuFunds(received_funds)
-            if not self.energylink_enabled:
-                await self.save_menu_funds_to_server()
+            await self.save_menu_funds_to_server()
 
         self.received_funds = 0
 
@@ -1096,8 +1108,17 @@ class TouhouHBMContext(CommonContext):
         if len(list_msg_to_send) <= 0: return
         await self.send_msgs(list_msg_to_send)
 
+        if self.debug_alerts:
+            if not self.energylink_enabled:
+                logger.info(f"SAVE - Attempted to save {self.menuFunds} Fund(s) to server.")
+            else: logger.info(f"SAVE - Did not save Fund(s) to server due to Energy Link being active.")
+            if self.is_progressive_equip_disabled():
+                logger.info(f"SAVE - Attempted to save {self.loadout_slots} Loadout Slot(s) and {self.equip_cost}% Equip Cost to server.")
+
     async def save_menu_funds_to_server(self):
-        if self.energylink_enabled: return
+        if self.energylink_enabled:
+            logger.info(f"SAVE - Did not save Fund(s) to server due to Energy Link being active.")
+            return
 
         self.menuFunds = self.handler.getMenuFunds()
 
@@ -1111,6 +1132,9 @@ class TouhouHBMContext(CommonContext):
                 }
             ]
         )
+
+        if self.debug_alerts:
+            logger.info(f"SAVE - Attempted to save {self.menuFunds} Fund(s) to server.")
 
     async def save_last_index_to_server(self):
         self.last_received_item_index_server = len(self.all_received_items)
@@ -1256,7 +1280,7 @@ class TouhouHBMContext(CommonContext):
                     # Defeat
                     if self.handler.getBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], 1):
                         self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
-                                                          True, BossDataType.Defeat)
+                                                          True, BossDataType.Defeat.value)
                         locationName: str = get_boss_location_name_str(STAGE_NAME_TO_ID[stage_name], boss_name, True)
                         if obligatory_location_table_check(locationName):
                             new_locations.append(location_table[locationName])
@@ -1273,9 +1297,9 @@ class TouhouHBMContext(CommonContext):
                             new_locations.append(location_table[challenge_encounter])
                     # Final Wave bosses do leave records. Check those.
                     if boss_name not in ALL_BOSSES_LIST[STAGE6_ID]: continue
-                    if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], BossDataType.Defeat):
+                    if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], BossDataType.Defeat.value):
                         self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True,
-                                                          BossDataType.Defeat)
+                                                          BossDataType.Defeat.value)
                         challenge_defeat: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, boss_name, True)
                         if obligatory_location_table_check(challenge_defeat):
                             new_locations.append(location_table[challenge_defeat])
@@ -1290,7 +1314,7 @@ class TouhouHBMContext(CommonContext):
             last_boss_defeated = BOSS_ID_TO_NAME[last_boss_met]
             if last_boss_defeated not in ALL_BOSSES_LIST[STAGE6_ID]:
                 self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[last_boss_defeated], True,
-                                                  BossDataType.Defeat)
+                                                  BossDataType.Defeat.value)
                 challenge_defeat: str = get_boss_location_name_str(STAGE_CHALLENGE_ID, last_boss_defeated, True)
                 if obligatory_location_table_check(challenge_defeat):
                     new_locations.append(location_table[challenge_defeat])
@@ -1370,7 +1394,8 @@ class TouhouHBMContext(CommonContext):
                 if obligatory_location_table_check(cardLocationName):
                     new_locations.append(location_table[cardLocationName])
 
-            if player_has_purchased_card_bool and not self.energylink_enabled: await self.save_menu_funds_to_server()
+            if player_has_purchased_card_bool:
+                await self.save_menu_funds_to_server()
 
             self.previous_location_checked = self.previous_location_checked + new_locations
             await self.send_msgs([{"cmd": 'LocationChecks', "locations": new_locations}])
@@ -1398,71 +1423,99 @@ class TouhouHBMContext(CommonContext):
 
         self.handler.setLoadMenuIndex(self.options["starting_market"])
 
-        self.load_sava_data_records()
-        self.load_save_data_bosses()
-        self.load_save_data_dex()
-        self.load_save_data_menu()
+        if self.debug_alerts: logger.info(f"LOADING - Attempting to load previous play data...")
 
-        return
+        try:
+            if self.debug_alerts: logger.info(f"(1/4) Loading music room and achievement records.")
+            self.load_sava_data_records()
+            if self.debug_alerts: logger.info(f"(2/4) Loading boss records.")
+            self.load_save_data_bosses()
+            if self.debug_alerts: logger.info(f"(3/4) Loading card dex entries.")
+            self.load_save_data_dex()
+            if self.debug_alerts: logger.info(f"(4/4) Loading other menu data.")
+            self.load_save_data_menu()
+        except Exception as e:
+            if self.debug_alerts:
+                logger.info(f"LOADING - Error occurred during the process.")
+                logger.info(traceback.format_exc())
 
     def load_save_data_bosses(self):
+        challenge_boss_list = get_boss_names_challenge_list()
+
         def check_if_only_stage_locations() -> bool:
             return self.options["stage_boss_locations"] == 1
 
-        # Assume that the game is in 100% locked mode.
-        for location_id in self.previous_location_checked:
-            full_location_name = location_id_to_name[location_id]
-            # Iterate through all shortened stage names.
+        def challenge_market_data():
+            if check_if_only_stage_locations():
+                if GENERIC_STAGE_CLEAR_NAME in full_location_name:
+                    for boss_name in challenge_boss_list:
+                        if self.debug_alerts: logger.info(f"LOADING - [Boss Records] Autoclearing stage: Challenge Market.")
+                        self.handler.autoClearBossRecord(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name])
+            else:
+                for boss_name in challenge_boss_list:
+                    if boss_name not in full_location_name: continue
+                    if self.debug_alerts: logger.info(f"LOADING - [Boss Records] Encountered {boss_name} in Challenge Market.")
+                    self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True,
+                                                      BossDataType.Encounter.value)
+                    self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True,
+                                                   BossDataType.Encounter.value)
+
+                    if boss_name not in ALL_BOSSES_LIST[STAGE6_ID]: continue
+                    if self.debug_alerts:
+                        logger.info(f"LOADING - [Boss Records] Defeated {boss_name} in Challenge Market.")
+                    self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True,
+                                                      BossDataType.Defeat.value)
+                    self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True,
+                                                   BossDataType.Defeat.value)
+
+        def normal_market_data(stage_name: str):
+            for stage_boss_name in ALL_BOSSES_LIST[STAGE_NAME_TO_ID[stage_name]]:
+                if check_if_only_stage_locations() and stage_boss_name != BOSS_NITORI_NAME and stage_boss_name != BOSS_TAKANE_NAME:
+                    if GENERIC_STAGE_CLEAR_NAME not in full_location_name: continue
+                    if self.debug_alerts:
+                        logger.info(f"LOADING - [Boss Records] Autoclearing stage: {stage_name}")
+                    self.handler.autoClearBossRecord(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[stage_boss_name])
+                else:
+                    if stage_boss_name not in full_location_name: continue
+                    record_type = BossDataType.Encounter.value
+                    if DEFEAT_TYPE_NAME in full_location_name: record_type = BossDataType.Defeat.value
+                    if self.debug_alerts: logger.info(f"LOADING - [Boss Records] Recorded {record_type} for {stage_boss_name} in {stage_boss_name}.")
+                    self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[stage_boss_name],
+                                                      True, record_type)
+                    self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[stage_boss_name], True,
+                                                   record_type)
+
+        def process_next_location(location_name: str):
             for stage_name in STAGE_LIST:
                 # If this stage name exists in the location's name, continue.
                 # If not, abort mission.
-                if stage_name in full_location_name:
-                    # If there are only stage clear locations and no boss locations,
-                    # Consider all bosses in that stage defeated.
-                    # Make an exception if it is Nitori or Takane.
-                    if stage_name == CHALLENGE_NAME:
-                        challenge_boss_list = get_boss_names_challenge_list()
-                        if check_if_only_stage_locations():
-                            if GENERIC_STAGE_CLEAR_NAME in full_location_name:
-                                for boss_name in challenge_boss_list:
-                                    self.handler.autoClearBossRecord(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name])
-                            continue
-                        # Special Challenge Market clause
-                        for boss_name in challenge_boss_list:
-                            if check_if_only_stage_locations(): continue
-                            if boss_name not in full_location_name: continue
-                            self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
-                            self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
+                if stage_name not in full_location_name: continue
+                # If there are only stage clear locations and no boss locations,
+                # Consider all bosses in that stage defeated.
+                # Make an exception if it is Nitori or Takane.
+                if stage_name == CHALLENGE_NAME:
+                    challenge_market_data()
+                else:
+                    normal_market_data(stage_name)
 
-                            if boss_name not in ALL_BOSSES_LIST[STAGE6_ID]: continue
-                            self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True, BossDataType.Defeat)
-                            self.handler.setBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True, BossDataType.Defeat)
-                    else:
-                        for boss_name in ALL_BOSSES_LIST[STAGE_NAME_TO_ID[stage_name]]:
-                            if check_if_only_stage_locations() and boss_name != BOSS_NITORI_NAME and boss_name != BOSS_TAKANE_NAME:
-                                if GENERIC_STAGE_CLEAR_NAME not in full_location_name: continue
-                                self.handler.autoClearBossRecord(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name])
-                            else:
-                                if boss_name not in full_location_name: continue
-                                record_type = BossDataType.Encounter
-                                if DEFEAT_TYPE_NAME in full_location_name: record_type = BossDataType.Defeat
-                                self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
-                                                                  True, record_type)
-                                self.handler.setBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
-                                                               True, record_type)
+        # Assume that the game is in 100% locked mode.
+        # Run through all of the locations that have been checked.
+        for location_id in self.previous_location_checked:
+            full_location_name = location_id_to_name[location_id]
+            # Iterate through all shortened stage names.
+            if self.debug_alerts: logger.info(f"DATA - Processing location {location_id}: {full_location_name}")
+            process_next_location(full_location_name)
 
     def load_save_data_dex(self):
         # Assume that the game is in 100% locked mode.
         for location_id in self.previous_location_checked:
             full_location_name = location_id_to_name[location_id]
             # If none of these locations talk about the Card Dex, discard and move on.
-            if CARD_DEX_NAME not in full_location_name:
-                continue
+            if CARD_DEX_NAME not in full_location_name: continue
 
             for card_string_id in ABILITY_CARD_LIST:
                 card_location_name: str = get_card_location_name_str(card_string_id, True)
-                if card_location_name == full_location_name:
-                    self.handler.unconditionalDexUnlock(card_string_id)
+                if card_location_name == full_location_name: self.handler.unconditionalDexUnlock(card_string_id)
 
     def load_save_data_menu(self):
         if not self.energylink_enabled:
@@ -1475,6 +1528,12 @@ class TouhouHBMContext(CommonContext):
             self.set_loadout_slots_in_stage()
 
         self.menu_stats_initialized = True
+
+        if self.debug_alerts:
+            if not self.energylink_enabled:
+                logger.info(f"Loaded {self.menuFunds} Fund(s).")
+            if self.is_progressive_equip_disabled():
+                logger.info(f"Loaded {self.loadout_slots} Loadout Slot(s) and {self.equip_cost}% Equip Cost.")
 
     def load_sava_data_records(self):
         # Assume that the game is in 100% locked mode.
@@ -2127,7 +2186,10 @@ class TouhouHBMContext(CommonContext):
                 # Then, turn off the Death Link flag.
                 if self.pending_received_deathlink and not self.died_to_deathlink:
                     # If Anti-Death Link Invincibility is enabled, check against invincibility.
-                    if self.death_link_check_invincibility(): self.handler.killPlayer()
+                    if self.death_link_check_invincibility():
+                        if self.debug_alerts:
+                            logger.info(f"DEATHLINK - Killing player.")
+                        self.handler.killPlayer()
                     self.died_to_deathlink = True
                     self.pending_received_deathlink = False
                 # In case there is no pending Death Link but the player died due to it before,
@@ -2202,6 +2264,8 @@ async def game_watcher(ctx: TouhouHBMContext):
         else:
             if not ctx.retrievedCustomData:
                 try:
+                    if ctx.debug_alerts:
+                        logger.info(f"LOADING - Retrieving custom data from server.")
                     await ctx.get_custom_data_from_server()
                 except Exception as e:
                     ctx.inError = True
@@ -2245,19 +2309,23 @@ async def game_watcher(ctx: TouhouHBMContext):
                 continue
 
             if ctx.loadingDataSetup:
-                logger.info(f"Found {SHORT_NAME} process! Beginning loading process...")
+                logger.info(f"Found {SHORT_NAME} process!")
+                if ctx.debug_alerts:
+                    logger.info(f"LOADING - Now loading data...")
 
                 if ctx.options["death_link"]:
                     await ctx.update_death_link(True)
                     ctx.deathlink_enabled = True
-                    logger.info(f"GAME INFO - Death Link is enabled for this game.")
+                    if ctx.debug_alerts:
+                        logger.info(f"GAME INFO - Death Link is enabled for this game.")
 
                 if ctx.options["death_link_trigger"]:
                     ctx.deathlink_trigger = ctx.options["death_link_trigger"]
 
                 if ctx.options["energy_link"]:
                     ctx.energylink_enabled = True
-                    logger.info(f"GAME INFO - Energy Link is enabled for this game. Funds will not be automatically saved.")
+                    if ctx.debug_alerts:
+                        logger.info(f"GAME INFO - Energy Link is enabled for this game.")
                     if ctx.ui:
                         ctx.ui.enable_energy_link()
 
@@ -2268,8 +2336,9 @@ async def game_watcher(ctx: TouhouHBMContext):
                     ctx.handler.initGameProgressSlots()
 
                 asyncio.create_task(ctx.load_save_data())
+                if ctx.debug_alerts:
+                    logger.info(f"LOADING - Finished loading process.")
                 ctx.loadingDataSetup = False
-                logger.info(f"Loading process finished.")
                 continue
 
             # Start the different loops.

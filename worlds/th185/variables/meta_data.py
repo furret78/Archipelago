@@ -20,6 +20,7 @@ JSON_SLOT_BOSSES = "bosses"
 CLIENT_DATA_PATH = "data\\th185"
 CLIENT_SCOREFILE_PATH = "scorefile_path"
 CLIENT_AUTO_REPLACE = "auto_replace_save"
+CLIENT_DEBUG_ALERTS = "debug_alerts"
 CLIENT_AUTO_REPLACE_DEFAULT = True
 
 # Various client messages
