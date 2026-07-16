@@ -212,7 +212,7 @@ class GameHandler:
         return self.gameController.getCurrentMarket() - 1
 
     # Other functions
-    def getBossRecordHandler(self, stage_id: int, boss_id: int, type: int = 0):
+    def getBossRecordHandler(self, stage_id: int, boss_id: int, type: BossDataType = BossDataType.Encounter):
         """
         Gets the stats of a boss in a specific stage from the handler.
         Type 0 is checking for encounters, and type 1 is checking for defeat.
@@ -223,13 +223,13 @@ class GameHandler:
             return self.bosses_met[STAGE_CHALLENGE_ID][boss_id]
 
         match type:
-            case 0: # Encounters
+            case BossDataType.Encounter: # Encounters
                 return self.bosses_met[stage_id][boss_id]
-            case 1: # Defeat
+            case BossDataType.Defeat: # Defeat
                 return self.bosses_beaten[stage_id][boss_id]
             case _: return False
 
-    def setBossRecordHandler(self, stage_id: int, boss_id: int, value: bool, type: int = 0) -> None:
+    def setBossRecordHandler(self, stage_id: int, boss_id: int, value: bool, type: BossDataType = BossDataType.Encounter) -> None:
         """
         Sets the stats of a boss in a specific stage in the handler's data.
         Type 0 is for encounters, type 1 for defeat.
@@ -239,16 +239,16 @@ class GameHandler:
             return
 
         match type:
-            case 0: self.bosses_met[stage_id][boss_id] = value
-            case 1: self.bosses_beaten[stage_id][boss_id] = value
+            case BossDataType.Encounter: self.bosses_met[stage_id][boss_id] = value
+            case BossDataType.Defeat: self.bosses_beaten[stage_id][boss_id] = value
 
-    def getFullBossRecordHandler(self, type: int = 0):
+    def getFullBossRecordHandler(self, type: BossDataType = BossDataType.Encounter):
         """
         Fetches the entire boss record that GameHandler has.
         Mainly used in the case that there are only stage clear locations.
         """
         match type:
-            case 0: # Encounters
+            case BossDataType.Encounter: # Encounters
                 return self.bosses_met
             case _: # Defeat
                 return self.bosses_beaten
@@ -259,12 +259,12 @@ class GameHandler:
         Mainly used in the case that there are only stage clear locations.
         """
         match type:
-            case 0: # Encounters
+            case BossDataType.Encounter: # Encounters
                 self.bosses_met = record_data
             case _: # Defeat
                 self.bosses_beaten = record_data
 
-    def getBossRecordGame(self, stage_id: int, boss_id: int, type: int = 0) -> bool:
+    def getBossRecordGame(self, stage_id: int, boss_id: int, type: BossDataType = BossDataType.Encounter) -> bool:
         """
         Gets the stats of a boss in a specific stage from the game itself.
         Type 0 is checking for encounters, and type 1 is checking for defeat.
@@ -274,16 +274,16 @@ class GameHandler:
         if type == BossDataType.Defeat:
             hidden_records = get_boss_and_stage_id(stage_id, boss_id)
             return self.gameController.getHiddenBossDefeat(hidden_records[0], hidden_records[1])
-        else: return self.gameController.getBossRecord(stage_id, boss_id, type)
+        else: return self.gameController.getBossRecord(stage_id, boss_id, type.value)
 
-    def setBossRecordGame(self, stage_id: int, boss_id: int, value: bool, record_type: int = 0) -> None:
+    def setBossRecordGame(self, stage_id: int, boss_id: int, value: bool, record_type: BossDataType = BossDataType.Encounter) -> None:
         """
         Sets the stats of a boss in a specific stage in the game memory itself.
         Type 0 is for encounters, type 1 is for defeat.
         """
         final_value: int = 0
         if value: final_value = random.randint(1, 255)
-        self.gameController.setBossRecord(stage_id, boss_id, final_value, record_type)
+        self.gameController.setBossRecord(stage_id, boss_id, final_value, record_type.value)
 
         # This part is mainly so that the achievements for stage-exclusive bosses work properly.
         # The all-bosses achievement doesn't do this.
