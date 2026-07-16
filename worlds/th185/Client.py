@@ -1272,15 +1272,13 @@ class TouhouHBMContext(CommonContext):
                     # and then append if it is not in previously checked locations.
                     # Encounters
                     if self.handler.getBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name]):
-                        self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
-                                                          True)
+                        self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], True)
                         locationName: str = get_boss_location_name_str(STAGE_NAME_TO_ID[stage_name], boss_name)
                         if obligatory_location_table_check(locationName):
                             new_locations.append(location_table[locationName])
                     # Defeat
                     if self.handler.getBossRecordGame(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], BossDataType.Defeat):
-                        self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name],
-                                                          True, BossDataType.Defeat)
+                        self.handler.setBossRecordHandler(STAGE_NAME_TO_ID[stage_name], BOSS_NAME_TO_ID[boss_name], True, BossDataType.Defeat)
                         locationName: str = get_boss_location_name_str(STAGE_NAME_TO_ID[stage_name], boss_name, True)
                         if obligatory_location_table_check(locationName):
                             new_locations.append(location_table[locationName])

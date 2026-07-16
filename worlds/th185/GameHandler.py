@@ -292,11 +292,11 @@ class GameHandler:
         self.gameController.setHiddenBossDefeat(hidden_records[0], hidden_records[1], final_value)
 
     def autoClearBossRecord(self, stage_id: int, boss_id: int):
-        self.setBossRecordHandler(stage_id=stage_id, boss_id=boss_id, value=True, type=0)
-        self.setBossRecordGame(stage_id=stage_id, boss_id=boss_id, value=True, record_type=0)
+        self.setBossRecordHandler(stage_id=stage_id, boss_id=boss_id, value=True)
+        self.setBossRecordGame(stage_id=stage_id, boss_id=boss_id, value=True)
         if stage_id == STAGE_CHALLENGE_ID and BOSS_ID_TO_NAME[boss_id] not in ALL_BOSSES_LIST[STAGE6_ID]: return
-        self.setBossRecordHandler(stage_id=stage_id, boss_id=boss_id, value=True, type=1)
-        self.setBossRecordGame(stage_id=stage_id, boss_id=boss_id, value=True, record_type=1)
+        self.setBossRecordHandler(stage_id=stage_id, boss_id=boss_id, value=True, type=BossDataType.Defeat)
+        self.setBossRecordGame(stage_id=stage_id, boss_id=boss_id, value=True, record_type=BossDataType.Defeat)
 
     def getLastBossMet(self) -> int:
         """
