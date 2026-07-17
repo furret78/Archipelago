@@ -625,7 +625,7 @@ class TouhouHBMContext(CommonContext):
     #
     # Victory conditions
     #
-    def checkVictory(self) -> bool:
+    def check_victory_conditions(self) -> bool:
         """
         Check if the player has won the game.
         """
@@ -1217,6 +1217,8 @@ class TouhouHBMContext(CommonContext):
         Check if any locations has been checked since this was last called.
         If there is, send a message and update the checked location list.
         """
+        challenge_boss_pool = get_boss_names_challenge_list()
+
         def obligatory_location_table_check(given_location_name: str) -> bool:
             """
             Obligatory location table check function.
@@ -1248,13 +1250,13 @@ class TouhouHBMContext(CommonContext):
             if self.options["stage_boss_locations"] != 1: return
             local_stage_id = STAGE_NAME_TO_ID[short_stage_name]
             if short_stage_name == CHALLENGE_NAME:
-                for boss_name in get_boss_names_challenge_list():
-                    self.handler.autoClearBossRecord(stage_id=STAGE_CHALLENGE_ID, boss_id=BOSS_NAME_TO_ID[boss_name])
+                for challenge_boss_name in challenge_boss_pool:
+                    self.handler.autoClearBossRecord(stage_id=STAGE_CHALLENGE_ID, boss_id=BOSS_NAME_TO_ID[challenge_boss_name])
             else:
                 boss_pool = ALL_BOSSES_LIST[local_stage_id]
-                for boss_name in boss_pool:
-                    if boss_name in STORY_BOSSES_LIST: continue
-                    self.handler.autoClearBossRecord(stage_id=local_stage_id, boss_id=BOSS_NAME_TO_ID[boss_name])
+                for stage_boss_name in boss_pool:
+                    if stage_boss_name in STORY_BOSSES_LIST: continue
+                    self.handler.autoClearBossRecord(stage_id=local_stage_id, boss_id=BOSS_NAME_TO_ID[stage_boss_name])
 
         new_locations = []
 
@@ -1286,7 +1288,7 @@ class TouhouHBMContext(CommonContext):
                         check_stage_clear_location(stage_name)
             else:
                 # Special Challenge Market clause
-                for boss_name in get_boss_names_challenge_list():
+                for boss_name in challenge_boss_pool:
                     # There are mostly only encounters. Check those.
                     if self.handler.getBossRecordGame(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name]):
                         self.handler.setBossRecordHandler(STAGE_CHALLENGE_ID, BOSS_NAME_TO_ID[boss_name], True)
@@ -1398,7 +1400,7 @@ class TouhouHBMContext(CommonContext):
             self.previous_location_checked = self.previous_location_checked + new_locations
             await self.send_msgs([{"cmd": 'LocationChecks', "locations": new_locations}])
 
-        if self.checkVictory() and not self.finished_game:
+        if self.check_victory_conditions() and not self.finished_game:
             self.finished_game = True
             await self.send_msgs([{"cmd": 'StatusUpdate', "status": 30}])
 
