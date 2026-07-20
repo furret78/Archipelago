@@ -167,11 +167,18 @@ BOSS_ID_TO_NAME = {
 }
 
 # Special progressive item name
-# Having one is equivalent to having access to the Tutorial
-PROGRESS_STAGE_ITEM_NAME = "Progressive Market"
 PROGRESS_EQUIP_NAME = "Progressive Equipment"
 PROGRESS_SLOT_NAME = "Progressive Initial Cards"
 PROGRESS_COST_NAME = "Progressive Equipment Cost"
+# Having one is equivalent to having access to the Tutorial
+PROGRESS_STAGE_ITEM_NAME = "Progressive Market"
+# Permanent upgrade item names
+PERMA_ITEM_TAG = " (Starting Upgrade)"
+PERMA_LIFE_NAME = "+1 Life" + PERMA_ITEM_TAG
+PERMA_BM_NAME = "+50 Bullet Money" + PERMA_ITEM_TAG
+PERMA_POWER_NAME = "+1 Power" + PERMA_ITEM_TAG
+PERMA_ATK_NAME = "+5% Shot Attack" + PERMA_ITEM_TAG
+PERMA_MAGIC_ATK_NAME = "+5% Magic Circle Attack" + PERMA_ITEM_TAG
 
 # Shortened stage names
 TUTORIAL_NAME = "Tutorial"

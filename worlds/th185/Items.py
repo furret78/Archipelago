@@ -12,6 +12,7 @@ CATEGORY_STAGE = "Stages"
 CATEGORY_TRAP = "Traps"
 CATEGORY_CARD = "Ability Cards"
 CATEGORY_PROGRESS = "Stage Progress"
+CATEGORY_PERMA = "Permanent Upgrades"
 
 
 class TouhouHBMItem(Item):
@@ -93,6 +94,11 @@ def create_all_items(world):
     """
     Generates an item pool to submit to AP.
     """
+    def get_remaining_locations(the_pool: list[Item]):
+        number_of_items = len(the_pool)
+        number_of_unfilled_locations = len(world.multiworld.get_unfilled_locations(world.player))
+        return number_of_unfilled_locations - number_of_items
+
     # Initialization
     item_pool: list[Item] = []
 
@@ -141,11 +147,28 @@ def create_all_items(world):
                 item_pool.append(world.create_item(PROGRESS_COST_NAME))
 
     # Now that all the important stuff is added, check if there's any spots left.
-    number_of_items = len(item_pool)
-    number_of_unfilled_locations = len(world.multiworld.get_unfilled_locations(world.player))
-    remaining_locations = number_of_unfilled_locations - number_of_items
+    remaining_locations = get_remaining_locations(item_pool)
 
     # If there are any left, pad out the pool with filler items.
+    # First of all are the permanent upgrade items. Check if the option for them is enabled.
+    # If not, skip over to true fillers.
+    if world.options.perma_upgrade_toggle:
+        # A limit has been set.
+        perma_item_dict = get_perma_upgrade_counts(world)
+        perma_remain_index = 0
+        # Iterate through all five permanent upgrade items.
+        # As long as the index does not reach the limit, keep adding.
+        # If the index does not reach the limit by the time we finish adding upgrade items... Great success!
+        for upgrade_name, upgrade_count in perma_item_dict.items():
+            if perma_remain_index >= remaining_locations: break
+            for perma_item_count in range(upgrade_count):
+                if perma_remain_index >= remaining_locations: break
+                item_pool.append(world.create_item(upgrade_name))
+                perma_remain_index += 1
+
+        # Once this is done, check for remaining locations again.
+        remaining_locations = get_remaining_locations(item_pool)
+
     # Useful and filler are the same here, but useful has limits.
     # Initialize a dictionary for checking useful limits, while there is no need for filler.
     # The default value is set to max, subtracted every time the filler has been added.
@@ -177,7 +200,7 @@ def create_all_items(world):
 def get_item_groups() -> dict[str, set[str]]:
     item_groups: Dict[str, set[str]] = {}
 
-    item_group_list = [CATEGORY_CARD, CATEGORY_STAGE, CATEGORY_PROGRESS, CATEGORY_TRAP, CATEGORY_ITEM, CATEGORY_FILLER]
+    item_group_list = [CATEGORY_CARD, CATEGORY_STAGE, CATEGORY_PROGRESS, CATEGORY_PERMA, CATEGORY_TRAP, CATEGORY_ITEM, CATEGORY_FILLER]
 
     for category in item_group_list:
         category_dict = get_items_by_category(category)
@@ -202,6 +225,18 @@ def check_for_nonmoney_filler(given_item_id: int):
     If True, it's not money filler.
     """
     return given_item_id > 26
+
+def get_perma_upgrade_counts(world):
+    """
+    Returns a dictionary consisting of five permanent upgrade items and their counts as given in options.
+    """
+    return {
+        PERMA_LIFE_NAME: world.options.perma_upgrade_life,
+        PERMA_BM_NAME: world.options.perma_upgrade_bm,
+        PERMA_POWER_NAME: world.options.perma_upgrade_power,
+        PERMA_ATK_NAME: world.options.perma_upgrade_atk,
+        PERMA_MAGIC_ATK_NAME: world.options.perma_upgrade_magic_atk,
+    }
 
 # An Item table documenting every Item and its data.
 # If anything new is added, add it to Client.py under give_item()
@@ -244,8 +279,8 @@ item_table: Dict[str, TouhouHBMItemData] = {
     "-2000 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 36, ItemClassification.trap),
 
     # Lives Filler and Traps - ID 30
-    "+1 Life": TouhouHBMItemData(CATEGORY_ITEM, 38, ItemClassification.useful, 8),
-    "+2 Lives": TouhouHBMItemData(CATEGORY_ITEM, 39, ItemClassification.useful, 5),
+    "+1 Bonus Life": TouhouHBMItemData(CATEGORY_ITEM, 38, ItemClassification.useful, 8),
+    "+2 Bonus Lives": TouhouHBMItemData(CATEGORY_ITEM, 39, ItemClassification.useful, 5),
 
     # STAGE FILLER
     # Shot Attack Filler and Traps - ID 40-49
@@ -306,7 +341,7 @@ item_table: Dict[str, TouhouHBMItemData] = {
     # Trap
     "Invincibility Cancel Trap": TouhouHBMItemData(CATEGORY_TRAP, 99, ItemClassification.trap),
 
-    # DEBILITATING TRAPS - ID 300+
+    # DEBILITATING TRAPS - ID 400+
     # Receiving any of these means a reset of the current stage.
 
     # STAGE UNLOCKS
@@ -411,6 +446,12 @@ item_table: Dict[str, TouhouHBMItemData] = {
     PROGRESS_EQUIP_NAME: TouhouHBMItemData(CATEGORY_PROGRESS, 291, ItemClassification.progression),
     PROGRESS_SLOT_NAME: TouhouHBMItemData(CATEGORY_PROGRESS, 292, ItemClassification.progression),
     PROGRESS_COST_NAME: TouhouHBMItemData(CATEGORY_PROGRESS, 293, ItemClassification.progression),
+    # PERMANENT UPGRADES - IDs 300-399
+    PERMA_LIFE_NAME: TouhouHBMItemData(CATEGORY_PERMA, 301, ItemClassification.useful),
+    PERMA_BM_NAME: TouhouHBMItemData(CATEGORY_PERMA, 302, ItemClassification.useful),
+    PERMA_POWER_NAME: TouhouHBMItemData(CATEGORY_PERMA, 303, ItemClassification.useful),
+    PERMA_ATK_NAME: TouhouHBMItemData(CATEGORY_PERMA, 304, ItemClassification.useful),
+    PERMA_MAGIC_ATK_NAME: TouhouHBMItemData(CATEGORY_PERMA, 305, ItemClassification.useful),
 }
 
 ITEM_TABLE_ID_TO_STAGE_NAME: Dict[int, str] = {

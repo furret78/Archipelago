@@ -325,8 +325,8 @@ class CompletionType(Choice):
 
 class PermaUpgradeToggle(Toggle):
     """
-    Whether items for permanently upgrading player stats (starting lives, starting shot attack, etc.) will appear.
-    These permanent upgrades were never part of the original game, and will not be strictly required for progression.
+    Whether items for permanently upgrading player initial stats (starting lives, starting shot attack, etc.) will appear.
+    These permanent upgrades were never part of the original game, and will not be required for progression.
     However, they will be prioritized for filler before other filler items can be placed (e.g. Funds filler, one-time Shot Attack bonuses).
     """
 
@@ -371,26 +371,26 @@ class PermaShotPower(Range):
 
 class PermaShotStrength(Range):
     """
-    How many upgrades for additional starting shot attack? Each upgrade is worth 10%.
+    How many upgrades for additional starting shot attack? Each upgrade is worth 5%.
     Note that you begin with 100% shot attack by default in every stage.
     """
     range_start = 0
-    range_end = 20
+    range_end = 8
     default = range_start
 
-    display_name = "Starting Upgrades: Shot Strength (10%/upgrade)"
+    display_name = "Starting Upgrades: Shot Attack (5%/upgrade)"
 
 
 class PermaMagicStrength(Range):
     """
-    How many upgrades for additional starting magic circle strength? Each upgrade is worth 10%.
+    How many upgrades for additional starting magic circle strength? Each upgrade is worth 5%.
     Note that you begin with 100% magic circle strength by default in every stage.
     """
     range_start = 0
-    range_end = 20
+    range_end = 10
     default = range_start
 
-    display_name = "Starting Upgrades: Magic Circle Strength (10%/upgrade)"
+    display_name = "Starting Upgrades: Magic Circle Attack (5%/upgrade)"
 
 
 @dataclass()

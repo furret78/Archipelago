@@ -111,6 +111,7 @@ class TouhouHBMWorld(World):
             "disable_challenge_logic": self.options.disable_challenge_logic.value,
             "trap_chance": self.options.trap_chance.value,
             "low_skill_logic": self.options.low_skill_logic.value,
+            "low_skill_stats": self.options.low_skill_stats.value,
             "include_gameplay_filler": self.options.include_gameplay_filler.value,
             "death_link": self.options.death_link.value,
             "death_link_trigger": self.options.death_link_trigger.value,
@@ -121,6 +122,12 @@ class TouhouHBMWorld(World):
             "achievement_checks": self.options.achievement_checks.value,
             "anti_grinding_placements": self.options.anti_grinding_placements.value,
             "anti_grinding_toggle": self.options.anti_grinding_toggle.value,
+            "perma_upgrade_toggle": self.options.perma_upgrade_toggle.value,
+            "perma_upgrade_life": self.options.perma_upgrade_life.value,
+            "perma_upgrade_bm": self.options.perma_upgrade_bm.value,
+            "perma_upgrade_power": self.options.perma_upgrade_power.value,
+            "perma_upgrade_atk": self.options.perma_upgrade_atk.value,
+            "perma_upgrade_magic_atk": self.options.perma_upgrade_magic_atk.value,
             "completion_type": self.options.completion_type.value
         }
         return data
