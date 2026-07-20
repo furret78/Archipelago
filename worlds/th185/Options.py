@@ -323,6 +323,76 @@ class CompletionType(Choice):
         return super().get_option_name(value)
 
 
+class PermaUpgradeToggle(Toggle):
+    """
+    Whether items for permanently upgrading player stats (starting lives, starting shot attack, etc.) will appear.
+    These permanent upgrades were never part of the original game, and will not be strictly required for progression.
+    However, they will be prioritized for filler before other filler items can be placed (e.g. Funds filler, one-time Shot Attack bonuses).
+    """
+
+    display_name = "Allow Permanent Player Upgrades"
+
+
+class PermaLifeCount(Range):
+    """
+    How many upgrades for additional starting lives? Cannot exceed 3 upgrades (4 starting lives).
+    Note that you begin with 1 life by default in every stage.
+    """
+    range_start = 0
+    range_end = 3
+    default = range_start
+
+    display_name = "Starting Upgrades: Lives"
+
+
+class PermaBulletMoney(Range):
+    """
+    How many upgrades for additional starting Bullet Money? Each upgrade is worth 50 Bullet Money.
+    Note that you begin with 0 Bullet Money by default in every stage.
+    """
+    range_start = 0
+    range_end = 6
+    default = range_start
+
+    display_name = "Starting Upgrades: Bullet Money (50 Bullet Money/upgrade)"
+
+
+class PermaShotPower(Range):
+    """
+    How many upgrades for additional starting Power? Cannot exceed 7 upgrades (8 starting Power).
+    Note that you begin with 1 Power by default in every stage.
+    """
+    range_start = 0
+    range_end = 7
+    default = range_start
+
+    display_name = "Starting Upgrades: Power"
+
+
+class PermaShotStrength(Range):
+    """
+    How many upgrades for additional starting shot attack? Each upgrade is worth 10%.
+    Note that you begin with 100% shot attack by default in every stage.
+    """
+    range_start = 0
+    range_end = 20
+    default = range_start
+
+    display_name = "Starting Upgrades: Shot Strength (10%/upgrade)"
+
+
+class PermaMagicStrength(Range):
+    """
+    How many upgrades for additional starting magic circle strength? Each upgrade is worth 10%.
+    Note that you begin with 100% magic circle strength by default in every stage.
+    """
+    range_start = 0
+    range_end = 20
+    default = range_start
+
+    display_name = "Starting Upgrades: Magic Circle Strength (10%/upgrade)"
+
+
 @dataclass()
 class TouhouHBMDataclass(PerGameCommonOptions):
     anti_grinding_toggle: AntiGrindingToggle
@@ -345,6 +415,12 @@ class TouhouHBMDataclass(PerGameCommonOptions):
     achievement_checks: AchieveChecks
     completion_type: CompletionType
     start_inventory_from_pool: StartInventoryPool
+    perma_upgrade_toggle: PermaUpgradeToggle
+    perma_upgrade_life: PermaLifeCount
+    perma_upgrade_bm: PermaBulletMoney
+    perma_upgrade_power: PermaShotPower
+    perma_upgrade_atk: PermaShotStrength
+    perma_upgrade_magic_atk: PermaMagicStrength
 
 
 option_groups = [
@@ -354,7 +430,11 @@ option_groups = [
     ),
     OptionGroup(
         "Generation Options",
-        [AntiGrindingToggle, AntiGrindingItemPlacements, StartingMarket, StageBossLocations, ProgressiveStages, ProgressiveLoadout, MusicRoomChecks, AchieveChecks]
+        [StartingMarket, StageBossLocations, ProgressiveStages, ProgressiveLoadout, MusicRoomChecks, AchieveChecks]
+    ),
+    OptionGroup(
+        "Handicap Options",
+        [AntiGrindingToggle, AntiGrindingItemPlacements, PermaUpgradeToggle, PermaLifeCount, PermaBulletMoney, PermaShotPower, PermaShotStrength, PermaMagicStrength]
     ),
     OptionGroup(
         "Logic Options",
