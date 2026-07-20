@@ -192,6 +192,16 @@ class LowSkillLogic(Choice):
         return super().get_option_name(value)
 
 
+class LowSkillStats(Toggle):
+    """
+    Whether generation logic should also consider placing itemized equipment upgrades before late-game stages.
+    This only works if "Itemize Equipment Upgrades" and "Recommended Loadout in Logic" are enabled.
+    This will scale based on "Recommended Loadout in Logic".
+    """
+
+    display_name = "Recommended Equipment Upgrades in Logic"
+
+
 class IncludeGameplayFiller(DefaultOnToggle):
     """
     Whether filler items that are not Funds or Bullet Money will appear during generation.
@@ -324,6 +334,7 @@ class TouhouHBMDataclass(PerGameCommonOptions):
     disable_challenge_logic: DisableChallengeLogic
     trap_chance: TrapChance
     low_skill_logic: LowSkillLogic
+    low_skill_stats: LowSkillStats
     include_gameplay_filler: IncludeGameplayFiller
     death_link: DeathLink
     death_link_trigger: DeathLinkTrigger
@@ -347,7 +358,7 @@ option_groups = [
     ),
     OptionGroup(
         "Logic Options",
-        [DisableChallengeLogic, LowSkillLogic, CompletionType]
+        [DisableChallengeLogic, LowSkillLogic, LowSkillStats, CompletionType]
     )
 ]
 

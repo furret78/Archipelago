@@ -1,7 +1,8 @@
 # Utils specifically for generation rules.
 from rule_builder.options import OptionFilter
-from rule_builder.rules import HasAll, HasFromListUnique, True_, False_, Has, HasAny
-from .Options import CompletionType, ProgressiveStages, LowSkillLogic, ProgressiveLoadout, DisableChallengeLogic
+from rule_builder.rules import HasAll, HasFromListUnique, True_, False_, Has, HasAny, HasAllCounts
+from .Options import CompletionType, ProgressiveStages, LowSkillLogic, ProgressiveLoadout, DisableChallengeLogic, \
+    LowSkillStats
 from .Tools import get_progress_item_requirement, clamp, get_card_location_name_str, duplicate_list
 from .variables.card_const import *
 
@@ -28,6 +29,7 @@ progressive_loadout_disabled = OptionFilter(ProgressiveLoadout, ProgressiveLoado
 low_skill_scale = OptionFilter(LowSkillLogic, LowSkillLogic.option_scale)
 low_skill_full = OptionFilter(LowSkillLogic, LowSkillLogic.option_full)
 low_skill_none = OptionFilter(LowSkillLogic, LowSkillLogic.option_none)
+low_skill_stats_on = OptionFilter(LowSkillStats, True)
 
 def get_card_shop_item_names() -> list[str]:
     # Go through both lists and fetch the card names.
@@ -44,26 +46,51 @@ def low_skill_check(stage_id: int = 0):
     Runs a proper check on whether the player has all cards needed to satisfy the low skill logic requirements.
     If low skill logic is disabled entirely, this returns True.
     """
+    def get_low_skill_loadout(is_scaled: bool = False, card_count: int = 1):
+        """
+        Filters to False by default if Low Skill Logic is not enabled.
+        """
+        if is_scaled:
+            return HasFromListUnique(*LOW_SKILL_CARD_LIST, count=card_count, options=[low_skill_scale])
+        else:
+            return HasAll(*LOW_SKILL_CARD_LIST, options=[low_skill_full])
+
+    def get_low_skill_stats(is_scaled: bool = False, stat_count: int = 6):
+        """
+        Filters to True if Low Skill Stats is not enabled.
+        Should only be used in conjunction with Low Skill Logic.
+        """
+        if is_scaled:
+            return (Has(PROGRESS_EQUIP_NAME, count=clamp(stat_count, 0, 6), options=[low_skill_stats_on, progressive_loadout_together])
+                    | (Has(PROGRESS_SLOT_NAME, count=clamp(stat_count, 0, 6), options=[low_skill_stats_on, progressive_loadout_separate])
+                       & Has(PROGRESS_COST_NAME, count=clamp(stat_count, 0, 5), options=[low_skill_stats_on, progressive_loadout_separate]))
+                    | (progressive_loadout_disabled & True_()))
+        else:
+            return (Has(PROGRESS_EQUIP_NAME, count=6, options=[low_skill_stats_on, progressive_loadout_together])
+                    | (Has(PROGRESS_SLOT_NAME, count=6, options=[low_skill_stats_on, progressive_loadout_separate])
+                       & Has(PROGRESS_COST_NAME, count=5, options=[low_skill_stats_on, progressive_loadout_separate]))
+                    | (progressive_loadout_disabled & True_()))
+
     # Stage 6 and Challenge Market remains unchanged.
     if stage_id == STAGE6_ID or stage_id == STAGE_CHALLENGE_ID:
-        return HasAll(*LOW_SKILL_CARD_LIST) | low_skill_none
+        return (HasAll(*LOW_SKILL_CARD_LIST) & get_low_skill_stats()) | low_skill_none
     elif stage_id == BOSS_TAKANE:
         TAKANE_CARD_LIST = LOW_SKILL_CARD_LIST + [MIKE_CARD_NAME]
-        return HasAll(*TAKANE_CARD_LIST) | low_skill_none
+        return (HasAll(*TAKANE_CARD_LIST) & get_low_skill_stats()) | low_skill_none
 
     has_scaled_low_skill = low_skill_scale & True_()
     has_full_low_skill = low_skill_full & True_()
 
     # Adds scaling.
     if stage_id == STAGE4_ID:
-        has_scaled_low_skill = HasFromListUnique(*LOW_SKILL_CARD_LIST, count=2, options=[low_skill_scale])
-        has_full_low_skill = HasAll(*LOW_SKILL_CARD_LIST, options=[low_skill_full])
+        has_scaled_low_skill = get_low_skill_loadout(True, 2) & get_low_skill_stats(True, 2)
+        has_full_low_skill = get_low_skill_loadout() & get_low_skill_stats()
     elif stage_id == STAGE5_ID:
-        has_scaled_low_skill = HasFromListUnique(*LOW_SKILL_CARD_LIST, count=4, options=[low_skill_scale])
-        has_full_low_skill = HasAll(*LOW_SKILL_CARD_LIST, options=[low_skill_full])
+        has_scaled_low_skill = get_low_skill_loadout(True, 4) & get_low_skill_stats(True, 4)
+        has_full_low_skill = get_low_skill_loadout() & get_low_skill_stats()
     elif stage_id == STAGE_CHIMATA_ID:
-        has_scaled_low_skill = HasFromListUnique(*END_MARKET_CARD_LIST, count=3, options=[low_skill_scale])
-        has_full_low_skill = HasAll(*END_MARKET_CARD_LIST, options=[low_skill_full])
+        has_scaled_low_skill = HasFromListUnique(*END_MARKET_CARD_LIST, count=3, options=[low_skill_scale]) & get_low_skill_stats(True, 5)
+        has_full_low_skill = HasAll(*END_MARKET_CARD_LIST, options=[low_skill_full]) & get_low_skill_stats()
 
     # If none of the above cases apply, pass it as True.
     return has_scaled_low_skill | has_full_low_skill | low_skill_none
