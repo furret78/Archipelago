@@ -58,7 +58,10 @@ def get_random_filler_item_name(world) -> str:
     # Check if it should be a trap instead.
     trap_item_list = []
     for name in get_items_by_category(CATEGORY_TRAP).keys():
-        if not world.options.include_gameplay_filler and check_for_nonmoney_filler(item_table[name].code): continue
+        given_item_code = item_table[name].code
+        if not world.options.include_gameplay_filler and check_for_nonmoney_filler(given_item_code): continue
+        if not world.options.include_enduring_traps and check_for_enduring_trap_filler(given_item_code): continue
+        if not world.options.include_extreme_traps and check_for_extreme_trap_filler(given_item_code): continue
         trap_item_list.append(name)
     if world.random.randint(0, 99) < world.options.trap_chance:
         final_item_name = world.random.choice(trap_item_list).__str__()
@@ -224,7 +227,20 @@ def check_for_nonmoney_filler(given_item_id: int):
     """
     If True, it's not money filler.
     """
-    return given_item_id > 26
+    return given_item_id > 36
+
+def check_for_enduring_trap_filler(given_item_id: int):
+    """
+    If True, it's an Enduring Trap.
+    """
+    return 400 <= given_item_id < 500
+
+
+def check_for_extreme_trap_filler(given_item_id: int):
+    """
+    If True, it's an Extreme Trap.
+    """
+    return given_item_id >= 500
 
 def get_perma_upgrade_counts(world):
     """
@@ -355,6 +371,7 @@ item_table: Dict[str, TouhouHBMItemData] = {
     EVIL_TRAP_TAG + "0% Magic Circle Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 503, ItemClassification.trap),
     EVIL_TRAP_TAG + "0% Magic Circle Size Trap": TouhouHBMItemData(CATEGORY_TRAP, 504, ItemClassification.trap),
     EVIL_TRAP_TAG + "1000% Magic Circle Duration Trap": TouhouHBMItemData(CATEGORY_TRAP, 505, ItemClassification.trap),
+    EVIL_TRAP_TAG + "Shot Power Reset Trap": TouhouHBMItemData(CATEGORY_TRAP, 506, ItemClassification.trap),
 
     # STAGE UNLOCKS
     TUTORIAL_NAME_FULL: TouhouHBMItemData(CATEGORY_STAGE, 100, ItemClassification.progression),
