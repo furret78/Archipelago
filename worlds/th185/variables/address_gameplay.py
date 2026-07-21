@@ -40,3 +40,8 @@ ADDR_CIRCLE_SIZE = 0x000D1090
 ADDR_CIRCLE_DURATION = 0x000D1098
 ADDR_CIRCLE_GRAZE_RANGE = 0x000D10A0
 ADDR_MOVEMENT_SPEED = 0x000D10AC
+
+# 4-bytes. Does not do anything besides getting reset to 0 at the start of a stage.
+ADDR_STAGE_RESET_CHECKSUM = 0x000D1140
+# 4-bytes. N*100 for Power. Starts at 0 for 1 Power, caps at 900 for 10 Power.
+ADDR_SHOT_POWER = 0x000D1078

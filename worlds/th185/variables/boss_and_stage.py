@@ -175,7 +175,7 @@ PROGRESS_STAGE_ITEM_NAME = "Progressive Market"
 # Permanent upgrade item names
 PERMA_ITEM_TAG = " (Starting Upgrade)"
 PERMA_LIFE_NAME = "+1 Life" + PERMA_ITEM_TAG
-PERMA_BM_NAME = "+50 Bullet Money" + PERMA_ITEM_TAG
+PERMA_BM_NAME = "+70 Bullet Money" + PERMA_ITEM_TAG
 PERMA_POWER_NAME = "+1 Power" + PERMA_ITEM_TAG
 PERMA_ATK_NAME = "+5% Shot Attack" + PERMA_ITEM_TAG
 PERMA_MAGIC_ATK_NAME = "+5% Magic Circle Attack" + PERMA_ITEM_TAG

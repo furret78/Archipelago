@@ -347,23 +347,23 @@ class PermaLifeCount(Range):
 
 class PermaBulletMoney(Range):
     """
-    How many upgrades for additional starting Bullet Money? Each upgrade is worth 50 Bullet Money.
+    How many upgrades for additional starting Bullet Money? Each upgrade is worth 70 Bullet Money.
     Note that you begin with 0 Bullet Money by default in every stage.
     """
     range_start = 0
-    range_end = 6
+    range_end = 8
     default = range_start
 
-    display_name = "Starting Upgrades: Bullet Money (50 Bullet Money/upgrade)"
+    display_name = "Starting Upgrades: Bullet Money (70 Bullet Money/upgrade)"
 
 
 class PermaShotPower(Range):
     """
-    How many upgrades for additional starting Power? Cannot exceed 7 upgrades (8 starting Power).
+    How many upgrades for additional starting Power? Cannot exceed 3 upgrades (4 starting Power).
     Note that you begin with 1 Power by default in every stage.
     """
     range_start = 0
-    range_end = 7
+    range_end = 3
     default = range_start
 
     display_name = "Starting Upgrades: Power"

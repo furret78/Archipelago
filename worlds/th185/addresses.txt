@@ -2,10 +2,6 @@ th185.exe+48686
 Amount of Starting Lives
 Byte only, ideally between 7 and 0
 
-th185.exe+D1140
-This does fuck all but it consistently gets reset to 0 if whenever a stage begins/restarts
-Set it to some fuckass number like 78 to check if a stage was restarted or not
-
 SavaDataStruct_1 + 0x26420 (pointer + offset)
 Where Ability Cards in the loadout slots are kept
 Only when saved, apparently

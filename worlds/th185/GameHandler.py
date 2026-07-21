@@ -420,3 +420,16 @@ class GameHandler:
 
     def killPlayer(self):
         self.gameController.setPlayerDeath()
+
+    # Stage reset checking
+    def checkForStageReset(self) -> bool:
+        """
+        If this returns True, the stage has started anew/been restarted.
+        """
+        return self.gameController.getStageResetChecksum() == 0
+
+    def writeStageReset(self):
+        """
+        When a stage reset has been detected, use this to turn that off.
+        """
+        self.gameController.writeStageResetChecksum()

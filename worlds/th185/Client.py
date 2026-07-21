@@ -16,7 +16,7 @@ from CommonClient import (
 from NetUtils import NetworkItem
 from .GameHandler import *
 from .Items import item_table, ITEM_TABLE_ID_TO_STAGE_NAME, ITEM_TABLE_ID_TO_CARD_ID, \
-    PROGRESSIVE_ITEMS_LIST, check_for_game_filler, PROGRESSIVE_COST_LIST
+    PROGRESSIVE_ITEMS_LIST, check_for_game_filler, PROGRESSIVE_COST_LIST, STARTING_UPGRADE_LIST
 from .Locations import *
 from .Tools import *
 from .variables.music_and_achiev import MUSIC_ROOM_UNLOCK_STR, ACHIEVE_UNLOCK_STR
@@ -252,6 +252,7 @@ class TouhouHBMContext(CommonContext):
         self.unlocked_stages: list = []
         self.progressive_stage_list: list[int] = []
         self.progressive_cost_list: list[int] = []
+        self.starting_upgrade_list: list[int] = []
         # Dex dictionary does not exist. Use the list of acquired checks for that.
         # Owning a card and unlocking its dex entry is one and the same,
         # but it is separate for the player.
@@ -303,6 +304,15 @@ class TouhouHBMContext(CommonContext):
         self.energylink_enabled: bool = False
         self.energylink_bulletmoney_enabled: bool = False
 
+        # Starting upgrades.
+        # When this is False, only starting upgrades should be added.
+        self.stage_started_properly: bool = False
+        self.starting_lives: int = 0
+        self.starting_bullet_money: int = 0
+        self.starting_shot_power: int = 0
+        self.starting_shot_attack: int = 0
+        self.starting_circle_atk: int = 0
+
         # Item reception stuff. This gets resets within the same function they are used.
         self.received_funds: int = 0
         self.received_bullet_money: int = 0
@@ -347,6 +357,7 @@ class TouhouHBMContext(CommonContext):
         self.permashop_cards = []
         self.unlocked_stages = []
         self.progressive_stage_list = []
+        self.starting_upgrade_list = []
 
         self.enable_card_selection_checking = False
         self.enable_card_shop_scanning = True
@@ -371,6 +382,13 @@ class TouhouHBMContext(CommonContext):
 
         self.energylink_enabled = False
         self.energylink_bulletmoney_enabled = False
+
+        self.stage_started_properly = False
+        self.starting_lives = 0
+        self.starting_bullet_money = 0
+        self.starting_shot_power = 0
+        self.starting_shot_attack = 0
+        self.starting_circle_atk = 0
 
         self.received_funds = 0
         self.received_bullet_money = 0
@@ -779,12 +797,15 @@ class TouhouHBMContext(CommonContext):
         stage_unlock_list = []
         progress_item_list = []
         cost_item_list = []
+        starting_upgrade_list = []
 
         for network_item in network_item_list:
             if network_item.item in ITEM_TABLE_ID_TO_STAGE_NAME:
                 stage_unlock_list.append(ITEM_TABLE_ID_TO_STAGE_NAME[network_item.item])
             elif network_item.item in ITEM_TABLE_ID_TO_CARD_ID:
                 ability_card_unlock_list.append(ITEM_TABLE_ID_TO_CARD_ID[network_item.item])
+            elif network_item.item in STARTING_UPGRADE_LIST:
+                starting_upgrade_list.append(network_item.item)
             # Item ID for progressive stages.
             # There is really no need to check for this option here since generation realistically will never
             # give Progressive Markets in non-Progressive worlds.
@@ -803,9 +824,12 @@ class TouhouHBMContext(CommonContext):
             self.progressive_stage_list += progress_item_list
         if len(cost_item_list) > 0:
             self.progressive_cost_list += cost_item_list
+        if len(starting_upgrade_list) > 0:
+            self.starting_upgrade_list += starting_upgrade_list
 
         self.handle_progressive_stages(self.progressive_stage_list)
         self.handle_progressive_cost(self.progressive_cost_list)
+        self.handle_starting_upgrades(self.starting_upgrade_list)
 
     def handle_ability_cards(self, filtered_list):
         if len(filtered_list) <= 0: return
@@ -865,6 +889,17 @@ class TouhouHBMContext(CommonContext):
             if separate_cost_count <= 0: return
             self.handler.setEquipCost(100 + (50 * separate_cost_count))
 
+    def handle_starting_upgrades(self, filtered_list):
+        # If the toggle is off, no need to process this.
+        if not self.options["perma_upgrade_toggle"]: return
+        self.starting_lives = clamp(filtered_list.count(item_table[PERMA_LIFE_NAME].code), 0, 3)
+        self.starting_bullet_money = clamp(filtered_list.count(item_table[PERMA_BM_NAME].code), 0, 8)
+        self.starting_shot_power = clamp(filtered_list.count(item_table[PERMA_POWER_NAME].code), 0, 3)
+        self.starting_shot_attack = clamp(filtered_list.count(item_table[PERMA_ATK_NAME].code), 0, 8)
+        self.starting_circle_atk = clamp(filtered_list.count(item_table[PERMA_MAGIC_ATK_NAME].code), 0, 10)
+        return
+
+    # Non-save data items.
     def handle_filler_items(self, filtered_list):
         if len(filtered_list) <= 0: return
 
@@ -873,6 +908,7 @@ class TouhouHBMContext(CommonContext):
             if item_id in ITEM_TABLE_ID_TO_STAGE_NAME: continue
             if item_id in ITEM_TABLE_ID_TO_CARD_ID: continue
             if item_id in PROGRESSIVE_ITEMS_LIST: continue
+            if item_id in STARTING_UPGRADE_LIST: continue
             if check_for_game_filler(item_id):
                 self.gameItemQueue.append(item_id)
                 continue
@@ -895,7 +931,7 @@ class TouhouHBMContext(CommonContext):
         # Properly handle the items only meant for stages here.
         # This does not get to run if the queue is empty,
         # or the game is not running, or the game is not in a stage.
-        while not self.handler.isGameInStage() or not self.is_game_running:
+        while not self.handler.isGameInStage() or not self.is_game_running or not self.stage_started_properly:
             await asyncio.sleep(0.5)
 
         for item_id in self.gameItemQueue:
@@ -1551,6 +1587,28 @@ class TouhouHBMContext(CommonContext):
                     if achievement_name not in full_location_name: continue
                     self.handler.setAchievementStatus(achievement_id, True)
 
+    # Big function for dealing with starting stats.
+    # Lives, Bullet Money, etc.
+    def set_starting_stage_stats(self):
+        # If the toggle was never on in the first place, no need to process this.
+        if not self.options["perma_upgrade_toggle"]: return
+        # Otherwise, process as usual.
+        if self.debug_alerts:
+            logger.info(f"Starting stage with the following upgrades: {self.starting_lives + 1} lives, {self.starting_bullet_money * 70} Bullet Money, {self.starting_shot_power} Power, {self.starting_shot_attack * 5}% Shot Attack, {self.starting_circle_atk * 5}% Magic Circle Attack.")
+
+        if self.starting_lives > 0:
+            self.handler.addLife(self.starting_lives)
+        if self.starting_bullet_money > 0:
+            self.handler.addBulletMoney(self.starting_bullet_money * 70)
+        if self.starting_shot_power > 0:
+            self.handler.gameController.addShotPower(self.starting_shot_power)
+        if self.starting_shot_attack > 0:
+            self.handler.gameController.addShotAttack(self.starting_shot_attack * 5)
+        if self.starting_circle_atk > 0:
+            self.handler.gameController.addMagicCircleAttack(self.starting_circle_atk * 5)
+
+        return
+
     # Helper functions for things to do with the menu.
     def get_menu_card_list(self) -> list:
         menu_card_list = duplicate_list(ABILITY_CARD_LIST)
@@ -2046,16 +2104,28 @@ class TouhouHBMContext(CommonContext):
 
                 stage_finish_status = self.handler.isStageFinish()
 
+                # If the Stage Reset function returns True, the stage has been reset.
+                self.stage_started_properly = not self.handler.checkForStageReset()
+                if not self.stage_started_properly:
+                    if self.debug_alerts:
+                        logger.info("Stage was restarted.")
+                    self.set_starting_stage_stats()
+                    self.handler.writeStageReset()
+                    self.halt_game_logic = True
+                    self.started_card_reset = True
+                    self.enable_card_selection_checking = False
+                    self.stage_started_properly = False
+                    stage_boss_found = False
+                    await self.stage_reset_async()
+                    self.stage_started_properly = True
+                    continue
+
                 # This usually only happens when the player is constantly resetting the stage.
                 if self.enable_card_selection_checking:
                     #logger.info("Checking for Market Card Reward...")
                     if not self.handler.isStageFinish():
-                        #logger.info("Stage restarted.")
-                        self.halt_game_logic = True
-                        self.started_card_reset = True
                         self.enable_card_selection_checking = False
-                        stage_boss_found = False
-                        await self.stage_reset_async()
+                        self.halt_game_logic = True
                 # If card checking is not enabled.
                 else:
                     # If the game is being forced to halt checks, return.

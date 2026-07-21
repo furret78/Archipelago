@@ -28,12 +28,15 @@ class GameController:
         self.addrLastBossMet = self.pm.base_address+ADDR_LAST_BOSS_MET
         self.addrCurrentStageNumber = self.pm.base_address+ADDR_CURRENT_STAGE_NUM
 
+        self.addrShotPower = self.pm.base_address+ADDR_SHOT_POWER
         self.addrShotAttack = self.pm.base_address+ADDR_SHOT_ATTACK
         self.addrMagicCircleAttack = self.pm.base_address+ADDR_CIRCLE_ATTACK
         self.addrMagicCircleSize = self.pm.base_address+ADDR_CIRCLE_SIZE
         self.addrMagicCircleDuration = self.pm.base_address+ADDR_CIRCLE_DURATION
         self.addrMagicCircleGraze = self.pm.base_address+ADDR_CIRCLE_GRAZE_RANGE
         self.addrMoveSpeed = self.pm.base_address+ADDR_MOVEMENT_SPEED
+
+        self.addrStageResetChecksum = self.pm.base_address+ADDR_STAGE_RESET_CHECKSUM
 
         # Menu and record-keeping.
         # These use pointers.
@@ -148,6 +151,11 @@ class GameController:
     def getInvincibility(self) -> int:
         addrInvincInt = self.getAddressFromPointerCustomBase(ADDR_GAMEPLAY_BASE_PTR, ADDR_INVINC_OFFSET_INT)
         return self.pm.read_int(addrInvincInt)
+
+    # Shot Power (N*100)
+    def addShotPower(self, value):
+        newValue = clamp(self.pm.read_int(self.addrShotPower) + (value * 100), 0, 900)
+        self.pm.write_int(self.addrShotPower, newValue)
 
     # Shot Attack %
     def addShotAttack(self, value):
@@ -374,3 +382,15 @@ class GameController:
     def setPlayerDeath(self):
         addrPlayerState = self.getAddressFromPointerCustomBase(ADDR_GAMEPLAY_BASE_PTR, ADDR_PLAYER_STATUS_OFFSET)
         self.pm.write_bytes(addrPlayerState, bytes([0x04]), 1)
+
+    # There exists 3 fields that the game sets to 0 upon starting a stage.
+    # These 3 fields are also used for absolutely nothing for the rest of the game.
+    # They can be constantly monitored for signs of a stage restart.
+    def getStageResetChecksum(self):
+        """
+        If this returns 0, it means the stage has been reset.
+        """
+        return self.pm.read_int(self.addrStageResetChecksum)
+
+    def writeStageResetChecksum(self, value: int = 78):
+        self.pm.write_int(self.addrStageResetChecksum, value)
