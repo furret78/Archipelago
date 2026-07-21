@@ -908,7 +908,6 @@ class TouhouHBMContext(CommonContext):
             if item_id in ITEM_TABLE_ID_TO_STAGE_NAME: continue
             if item_id in ITEM_TABLE_ID_TO_CARD_ID: continue
             if item_id in PROGRESSIVE_ITEMS_LIST: continue
-            if item_id in STARTING_UPGRADE_LIST: continue
             if check_for_game_filler(item_id):
                 self.gameItemQueue.append(item_id)
                 continue
