@@ -1,3 +1,10 @@
+- Add option: Starting Card Slots (up to 34)
+    + Implement this into rules
+    + Fix client handling
+- Add option: Starting Equip Cost (up to 500%)
+    + Implement this into rules
+    + Fix client handling
+
 - Make old traps actually temporary
 - Restore old perma traps as new traps
 - Add evil traps functionality
@@ -8,9 +15,6 @@
 	+ Figure out where ZUN keeps them.
 	+ Create a shuffling algorithm.
 	+ Rewrite rules around the shuffling algorithm.
-
-- Add option: Starting Card Slots (up to 34)
-- Add option: Starting Equip Cost (up to 500%)
 
 - Implement full game data reset upon disconnect. (if needed)
 - Figure out seamless room switching while the game is running.

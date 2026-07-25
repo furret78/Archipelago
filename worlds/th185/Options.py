@@ -85,6 +85,7 @@ class StageBossLocations(Choice):
 class ProgressiveLoadout(Choice):
     """
     Whether starting card slots and equip cost will be upgraded according to the number of bosses defeated or via items received.
+    The game begins with 1 starting card slot and 100% equip cost.
 
     1. Disabled - Slots and cost will be unlocked according to the number of bosses defeated.
     2. Simultaneous - Both slots and cost will be upgraded at the same time.
@@ -108,6 +109,44 @@ class ProgressiveLoadout(Choice):
         if value == cls.option_separate:
             return "Separate Equipment Upgrades"
         return super().get_option_name(value)
+
+
+class ProgressiveLoadoutCount(Range):
+    """
+    Only used if "Itemize Equipment Upgrades" is set to simultaneous.
+    This will determine how many of them will be in the item pool.
+    Starting card slots will max out at 34 and equip cost at 1600%.
+    """
+    range_start = 0
+    range_end = 33
+    default = 6
+
+    display_name = "Simultaneous - Equipment Upgrades Count"
+
+
+class ProgressiveSlotCount(Range):
+    """
+    Only used if "Itemize Equipment Upgrades" is set to separate.
+    This determines how many starting card slot upgrades will be in the item pool.
+    """
+    range_start = 0
+    range_end = 33
+    default = 6
+
+    display_name = "Separate - Starting Card Slot Upgrades Count"
+
+
+class ProgressiveCostCount(Range):
+    """
+    Only used if "Itemize Equipment Upgrades" is set to separate.
+    This will determine how many equip cost upgrades will be in the item pool.
+    Equip cost maxes out at 1000%, and each upgrade is worth 50%.
+    """
+    range_start = 0
+    range_end = 12
+    default = 6
+
+    display_name = "Separate - Equip Cost Upgrades Count"
 
 
 class AntiGrindingToggle(Toggle):
@@ -416,6 +455,9 @@ class TouhouHBMDataclass(PerGameCommonOptions):
     starting_market: StartingMarket
     progressive_stages: ProgressiveStages
     progressive_loadout: ProgressiveLoadout
+    progressive_loadout_count: ProgressiveLoadoutCount
+    progressive_cost_count: ProgressiveCostCount
+    progressive_slot_count: ProgressiveSlotCount
     stage_boss_locations: StageBossLocations
     disable_challenge_logic: DisableChallengeLogic
     trap_chance: TrapChance
@@ -448,7 +490,11 @@ option_groups = [
     ),
     OptionGroup(
         "Generation Options",
-        [StartingMarket, StageBossLocations, ProgressiveStages, ProgressiveLoadout, MusicRoomChecks, AchieveChecks]
+        [StartingMarket, StageBossLocations, ProgressiveStages, MusicRoomChecks, AchieveChecks]
+    ),
+    OptionGroup(
+        "Equipment Upgrade Options",
+        [ProgressiveLoadout, ProgressiveLoadoutCount, ProgressiveSlotCount, ProgressiveCostCount]
     ),
     OptionGroup(
         "Handicap Options",
