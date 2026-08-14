@@ -872,16 +872,14 @@ class TouhouHBMContext(CommonContext):
         if self.is_progressive_equip_together():
             combined_cost_count = progress_cost_list.count(item_table[PROGRESS_EQUIP_NAME].code)
             if combined_cost_count <= 0: return
-            # TODO: Make this not hardcoded at some point.
             final_cost_bonus = 0
 
-            match combined_cost_count:
-                case 1: final_cost_bonus = 50
-                case 2: final_cost_bonus = 50 * 2
-                case 3: final_cost_bonus = 50 * 3
-                case 4: final_cost_bonus = 50 * 4
-                case 5: final_cost_bonus = 50 * 4
-                case 6: final_cost_bonus = 50 * 5
+            if combined_cost_count == 5:
+                final_cost_bonus = 50 * 4
+            elif combined_cost_count < 5:
+                final_cost_bonus = 50 * combined_cost_count
+            else:
+                final_cost_bonus = 50 * (combined_cost_count - 1)
 
             self.handler.setEquipCost(100 + final_cost_bonus)
         elif self.is_progressive_equip_separate():
@@ -1638,6 +1636,9 @@ class TouhouHBMContext(CommonContext):
         if received_slot_count <= 0: return
 
         self.handler.setCardSlots(1 + received_slot_count)
+
+        if self.debug_alerts:
+            logger.info(f"Loaded {1 + received_slot_count} Loadout Slot(s).")
 
     async def transfer_from_menu_to_stage(self):
         """

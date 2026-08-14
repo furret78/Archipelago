@@ -141,12 +141,12 @@ def create_all_items(world):
     # If it's disabled, nothing happens here.
     match world.options.progressive_loadout:
         case 1: # Upgrades go hand-in-hand.
-            for prog_item_num in range(6):
+            for prog_item_num in range(world.options.progressive_loadout_count):
                 item_pool.append(world.create_item(PROGRESS_EQUIP_NAME))
         case 2: # Upgrades go separately.
-            for i in range(6):
+            for i in range(world.options.progressive_slot_count):
                 item_pool.append(world.create_item(PROGRESS_SLOT_NAME))
-            for i in range(5):
+            for i in range(world.options.progressive_cost_count):
                 item_pool.append(world.create_item(PROGRESS_COST_NAME))
 
     # Now that all the important stuff is added, check if there's any spots left.
@@ -583,3 +583,4 @@ ITEM_TABLE_ID_TO_CARD_ID: Dict[int, str] = {
 
 PROGRESSIVE_ITEMS_LIST = [290, 291, 292, 293, 301, 302, 303, 304, 305]
 PROGRESSIVE_COST_LIST = [291, 293]
+STARTING_UPGRADE_LIST = [301, 302, 303, 304, 305]

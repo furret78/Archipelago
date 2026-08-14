@@ -378,7 +378,7 @@ class GameHandler:
         return self.gameController.getEquipCost()
 
     def setEquipCost(self, value: int):
-        self.gameController.setEquipCost(value)
+        self.gameController.setEquipCost(clamp(value, 0, 1000))
 
     # Music Room and Achievements
     def getMusicRecord(self, track_id: int) -> bool:
