@@ -60,8 +60,6 @@ def get_random_filler_item_name(world) -> str:
     for name in get_items_by_category(CATEGORY_TRAP).keys():
         given_item_code = item_table[name].code
         if not world.options.include_gameplay_filler and check_for_nonmoney_filler(given_item_code): continue
-        if not world.options.include_enduring_traps and check_for_enduring_trap_filler(given_item_code): continue
-        if not world.options.include_extreme_traps and check_for_extreme_trap_filler(given_item_code): continue
         trap_item_list.append(name)
     if world.random.randint(0, 99) < world.options.trap_chance:
         final_item_name = world.random.choice(trap_item_list).__str__()
@@ -276,102 +274,97 @@ item_table: Dict[str, TouhouHBMItemData] = {
     "-500 Funds Trap": TouhouHBMItemData(CATEGORY_TRAP, 14, ItemClassification.trap),
     "-1000 Funds Trap": TouhouHBMItemData(CATEGORY_TRAP, 15, ItemClassification.trap),
     "-2000 Funds Trap": TouhouHBMItemData(CATEGORY_TRAP, 16, ItemClassification.trap),
+    "-3000 Funds Trap": TouhouHBMItemData(CATEGORY_TRAP, 17, ItemClassification.trap),
 
-    TEMP_ITEM_TAG + "+5 Bullet Money": TouhouHBMItemData(CATEGORY_FILLER, 20),
-    TEMP_ITEM_TAG + "+10 Bullet Money": TouhouHBMItemData(CATEGORY_FILLER, 21),
-    TEMP_ITEM_TAG + "+200 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 22, ItemClassification.useful, 10),
-    TEMP_ITEM_TAG + "+500 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 23, ItemClassification.useful, 8),
-    TEMP_ITEM_TAG + "+1000 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 24, ItemClassification.useful, 6),
-    TEMP_ITEM_TAG + "+2000 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 25, ItemClassification.useful, 4),
-    TEMP_ITEM_TAG + "+5000 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 26, ItemClassification.useful, 2),
-    TEMP_ITEM_TAG + "+8000 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 27, ItemClassification.useful, 2),
+    ONCE_ITEM_TAG + "+5 Bullet Money": TouhouHBMItemData(CATEGORY_FILLER, 20),
+    ONCE_ITEM_TAG + "+10 Bullet Money": TouhouHBMItemData(CATEGORY_FILLER, 21),
+    ONCE_ITEM_TAG + "+200 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 22, ItemClassification.useful, 10),
+    ONCE_ITEM_TAG + "+500 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 23, ItemClassification.useful, 8),
+    ONCE_ITEM_TAG + "+1000 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 24, ItemClassification.useful, 6),
+    ONCE_ITEM_TAG + "+2000 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 25, ItemClassification.useful, 4),
+    ONCE_ITEM_TAG + "+5000 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 26, ItemClassification.useful, 2),
+    ONCE_ITEM_TAG + "+8000 Bullet Money": TouhouHBMItemData(CATEGORY_ITEM, 27, ItemClassification.useful, 2),
 
-    TEMP_ITEM_TAG + "-50 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 30, ItemClassification.trap),
-    TEMP_ITEM_TAG + "-100 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 31, ItemClassification.trap),
-    TEMP_ITEM_TAG + "-200 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 32, ItemClassification.trap),
-    TEMP_ITEM_TAG + "-300 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 33, ItemClassification.trap),
-    TEMP_ITEM_TAG + "-500 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 34, ItemClassification.trap),
-    TEMP_ITEM_TAG + "-1000 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 35, ItemClassification.trap),
-    TEMP_ITEM_TAG + "-2000 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 36, ItemClassification.trap),
+    ONCE_ITEM_TAG + "-50 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 30, ItemClassification.trap),
+    ONCE_ITEM_TAG + "-100 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 31, ItemClassification.trap),
+    ONCE_ITEM_TAG + "-200 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 32, ItemClassification.trap),
+    ONCE_ITEM_TAG + "-300 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 33, ItemClassification.trap),
+    ONCE_ITEM_TAG + "-500 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 34, ItemClassification.trap),
+    ONCE_ITEM_TAG + "-1000 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 35, ItemClassification.trap),
+    ONCE_ITEM_TAG + "-2000 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 36, ItemClassification.trap),
+    ONCE_ITEM_TAG + "-5000 Bullet Money Trap": TouhouHBMItemData(CATEGORY_TRAP, 37, ItemClassification.trap),
 
     # Lives Filler and Traps - ID 30
-    TEMP_ITEM_TAG + "+1 Life": TouhouHBMItemData(CATEGORY_ITEM, 38, ItemClassification.useful, 8),
-    TEMP_ITEM_TAG + "+2 Lives": TouhouHBMItemData(CATEGORY_ITEM, 39, ItemClassification.useful, 5),
+    ONCE_ITEM_TAG + "+1 Life": TouhouHBMItemData(CATEGORY_ITEM, 38, ItemClassification.useful, 8),
+    ONCE_ITEM_TAG + "+2 Lives": TouhouHBMItemData(CATEGORY_ITEM, 39, ItemClassification.useful, 5),
 
     # STAGE FILLER
     # Shot Attack Filler and Traps - ID 40-49
-    TEMP_ITEM_TAG + "+15% Shot Attack": TouhouHBMItemData(CATEGORY_FILLER, 40),
-    TEMP_ITEM_TAG + "+30% Shot Attack": TouhouHBMItemData(CATEGORY_FILLER, 41),
-    TEMP_ITEM_TAG + "+45% Shot Attack": TouhouHBMItemData(CATEGORY_ITEM, 42, ItemClassification.useful, 5),
-    TEMP_ITEM_TAG + "+60% Shot Attack": TouhouHBMItemData(CATEGORY_ITEM, 43, ItemClassification.useful, 4),
-    TEMP_ITEM_TAG + "+100% Shot Attack": TouhouHBMItemData(CATEGORY_ITEM, 44, ItemClassification.useful, 3),
-    TEMP_ITEM_TAG + "+200% Shot Attack": TouhouHBMItemData(CATEGORY_ITEM, 45, ItemClassification.useful, 2),
-    TEMP_ITEM_TAG + "+300% Shot Attack": TouhouHBMItemData(CATEGORY_ITEM, 46, ItemClassification.useful, 1),
-    TEMP_ITEM_TAG + "+400% Shot Attack": TouhouHBMItemData(CATEGORY_ITEM, 47, ItemClassification.useful, 1),
-    TEMP_ITEM_TAG + "-30% Shot Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 48, ItemClassification.trap),
-    TEMP_ITEM_TAG + "-60% Shot Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 49, ItemClassification.trap),
+    ONCE_ITEM_TAG + "+15% Shot Attack": TouhouHBMItemData(CATEGORY_FILLER, 40),
+    ONCE_ITEM_TAG + "+30% Shot Attack": TouhouHBMItemData(CATEGORY_FILLER, 41),
+    ONCE_ITEM_TAG + "+45% Shot Attack": TouhouHBMItemData(CATEGORY_ITEM, 42, ItemClassification.useful, 5),
+    ONCE_ITEM_TAG + "+60% Shot Attack": TouhouHBMItemData(CATEGORY_ITEM, 43, ItemClassification.useful, 4),
+    ONCE_ITEM_TAG + "+100% Shot Attack": TouhouHBMItemData(CATEGORY_ITEM, 44, ItemClassification.useful, 3),
+    ONCE_ITEM_TAG + "+200% Shot Attack": TouhouHBMItemData(CATEGORY_ITEM, 45, ItemClassification.useful, 2),
+    ONCE_ITEM_TAG + "+300% Shot Attack": TouhouHBMItemData(CATEGORY_ITEM, 46, ItemClassification.useful, 1),
+    ONCE_ITEM_TAG + "+400% Shot Attack": TouhouHBMItemData(CATEGORY_ITEM, 47, ItemClassification.useful, 1),
+    TEMP_TRAP_TAG + "-30% Shot Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 48, ItemClassification.trap),
+    TEMP_TRAP_TAG + "-60% Shot Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 49, ItemClassification.trap),
     # Magic Circle Attack Filler and Traps - ID 50-59
-    TEMP_ITEM_TAG + "+30% Magic Circle Attack": TouhouHBMItemData(CATEGORY_FILLER, 50),
-    TEMP_ITEM_TAG + "+60% Magic Circle Attack": TouhouHBMItemData(CATEGORY_FILLER, 51),
-    TEMP_ITEM_TAG + "+90% Magic Circle Attack": TouhouHBMItemData(CATEGORY_FILLER, 52),
-    TEMP_ITEM_TAG + "+120% Magic Circle Attack": TouhouHBMItemData(CATEGORY_FILLER, 53),
-    TEMP_ITEM_TAG + "-15% Magic Circle Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 54, ItemClassification.trap),
-    TEMP_ITEM_TAG + "-30% Magic Circle Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 55, ItemClassification.trap),
-    TEMP_ITEM_TAG + "-45% Magic Circle Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 56, ItemClassification.trap),
-    TEMP_ITEM_TAG + "-60% Magic Circle Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 57, ItemClassification.trap),
+    ONCE_ITEM_TAG + "+30% Magic Circle Attack": TouhouHBMItemData(CATEGORY_FILLER, 50),
+    ONCE_ITEM_TAG + "+60% Magic Circle Attack": TouhouHBMItemData(CATEGORY_FILLER, 51),
+    ONCE_ITEM_TAG + "+90% Magic Circle Attack": TouhouHBMItemData(CATEGORY_FILLER, 52),
+    ONCE_ITEM_TAG + "+120% Magic Circle Attack": TouhouHBMItemData(CATEGORY_FILLER, 53),
+    TEMP_TRAP_TAG + "-15% Magic Circle Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 54, ItemClassification.trap),
+    TEMP_TRAP_TAG + "-30% Magic Circle Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 55, ItemClassification.trap),
+    TEMP_TRAP_TAG + "-45% Magic Circle Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 56, ItemClassification.trap),
+    TEMP_TRAP_TAG + "-60% Magic Circle Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 57, ItemClassification.trap),
     # Magic Circle Size Filler and Traps - ID 60-69
-    TEMP_ITEM_TAG + "+10% Magic Circle Size": TouhouHBMItemData(CATEGORY_FILLER, 60),
-    TEMP_ITEM_TAG + "+20% Magic Circle Size": TouhouHBMItemData(CATEGORY_FILLER, 61),
-    TEMP_ITEM_TAG + "+30% Magic Circle Size": TouhouHBMItemData(CATEGORY_FILLER, 62),
-    TEMP_ITEM_TAG + "+50% Magic Circle Size": TouhouHBMItemData(CATEGORY_FILLER, 63),
-    TEMP_ITEM_TAG + "-10% Magic Circle Size Trap": TouhouHBMItemData(CATEGORY_TRAP, 64, ItemClassification.trap),
-    TEMP_ITEM_TAG + "-20% Magic Circle Size Trap": TouhouHBMItemData(CATEGORY_TRAP, 65, ItemClassification.trap),
-    TEMP_ITEM_TAG + "-30% Magic Circle Size Trap": TouhouHBMItemData(CATEGORY_TRAP, 66, ItemClassification.trap),
-    TEMP_ITEM_TAG + "-50% Magic Circle Size Trap": TouhouHBMItemData(CATEGORY_TRAP, 67, ItemClassification.trap),
+    ONCE_ITEM_TAG + "+10% Magic Circle Size": TouhouHBMItemData(CATEGORY_FILLER, 60),
+    ONCE_ITEM_TAG + "+20% Magic Circle Size": TouhouHBMItemData(CATEGORY_FILLER, 61),
+    ONCE_ITEM_TAG + "+30% Magic Circle Size": TouhouHBMItemData(CATEGORY_FILLER, 62),
+    ONCE_ITEM_TAG + "+50% Magic Circle Size": TouhouHBMItemData(CATEGORY_FILLER, 63),
+    TEMP_TRAP_TAG + "-10% Magic Circle Size Trap": TouhouHBMItemData(CATEGORY_TRAP, 64, ItemClassification.trap),
+    TEMP_TRAP_TAG + "-20% Magic Circle Size Trap": TouhouHBMItemData(CATEGORY_TRAP, 65, ItemClassification.trap),
+    TEMP_TRAP_TAG + "-30% Magic Circle Size Trap": TouhouHBMItemData(CATEGORY_TRAP, 66, ItemClassification.trap),
+    TEMP_TRAP_TAG + "-50% Magic Circle Size Trap": TouhouHBMItemData(CATEGORY_TRAP, 67, ItemClassification.trap),
     # Magic Circle Duration Filler and Traps - ID 70-79
-    TEMP_ITEM_TAG + "+5% Magic Circle Duration": TouhouHBMItemData(CATEGORY_FILLER, 70),
-    TEMP_ITEM_TAG + "+10% Magic Circle Duration": TouhouHBMItemData(CATEGORY_FILLER, 71),
-    TEMP_ITEM_TAG + "+100% Magic Circle Duration Trap": TouhouHBMItemData(CATEGORY_TRAP, 72, ItemClassification.trap),
-    TEMP_ITEM_TAG + "+200% Magic Circle Duration Trap": TouhouHBMItemData(CATEGORY_TRAP, 73, ItemClassification.trap),
+    ONCE_ITEM_TAG + "+5% Magic Circle Duration": TouhouHBMItemData(CATEGORY_FILLER, 70),
+    ONCE_ITEM_TAG + "+10% Magic Circle Duration": TouhouHBMItemData(CATEGORY_FILLER, 71),
+    TEMP_TRAP_TAG + "+100% Magic Circle Duration Trap": TouhouHBMItemData(CATEGORY_TRAP, 72, ItemClassification.trap),
+    TEMP_TRAP_TAG + "+200% Magic Circle Duration Trap": TouhouHBMItemData(CATEGORY_TRAP, 73, ItemClassification.trap),
     # Magic Circle Graze Range Filler and Traps - ID 80-89
-    TEMP_ITEM_TAG + "+20% Magic Circle Graze Range": TouhouHBMItemData(CATEGORY_FILLER, 80),
-    TEMP_ITEM_TAG + "+40% Magic Circle Graze Range": TouhouHBMItemData(CATEGORY_FILLER, 81),
-    TEMP_ITEM_TAG + "+60% Magic Circle Graze Range": TouhouHBMItemData(CATEGORY_FILLER, 82),
-    TEMP_ITEM_TAG + "+80% Magic Circle Graze Range": TouhouHBMItemData(CATEGORY_FILLER, 83),
-    TEMP_ITEM_TAG + "+100% Magic Circle Graze Range": TouhouHBMItemData(CATEGORY_FILLER, 84),
-    TEMP_ITEM_TAG + "-15% Magic Circle Graze Range Trap": TouhouHBMItemData(CATEGORY_TRAP, 85, ItemClassification.trap),
-    TEMP_ITEM_TAG + "-30% Magic Circle Graze Range Trap": TouhouHBMItemData(CATEGORY_TRAP, 86, ItemClassification.trap),
-    TEMP_ITEM_TAG + "-45% Magic Circle Graze Range Trap": TouhouHBMItemData(CATEGORY_TRAP, 87, ItemClassification.trap),
-    TEMP_ITEM_TAG + "-60% Magic Circle Graze Range Trap": TouhouHBMItemData(CATEGORY_TRAP, 88, ItemClassification.trap),
-    TEMP_ITEM_TAG + "-75% Magic Circle Graze Range Trap": TouhouHBMItemData(CATEGORY_TRAP, 89, ItemClassification.trap),
+    ONCE_ITEM_TAG + "+20% Magic Circle Graze Range": TouhouHBMItemData(CATEGORY_FILLER, 80),
+    ONCE_ITEM_TAG + "+40% Magic Circle Graze Range": TouhouHBMItemData(CATEGORY_FILLER, 81),
+    ONCE_ITEM_TAG + "+60% Magic Circle Graze Range": TouhouHBMItemData(CATEGORY_FILLER, 82),
+    ONCE_ITEM_TAG + "+80% Magic Circle Graze Range": TouhouHBMItemData(CATEGORY_FILLER, 83),
+    ONCE_ITEM_TAG + "+100% Magic Circle Graze Range": TouhouHBMItemData(CATEGORY_FILLER, 84),
+    TEMP_TRAP_TAG + "-15% Magic Circle Graze Range Trap": TouhouHBMItemData(CATEGORY_TRAP, 85, ItemClassification.trap),
+    TEMP_TRAP_TAG + "-30% Magic Circle Graze Range Trap": TouhouHBMItemData(CATEGORY_TRAP, 86, ItemClassification.trap),
+    TEMP_TRAP_TAG + "-45% Magic Circle Graze Range Trap": TouhouHBMItemData(CATEGORY_TRAP, 87, ItemClassification.trap),
+    TEMP_TRAP_TAG + "-60% Magic Circle Graze Range Trap": TouhouHBMItemData(CATEGORY_TRAP, 88, ItemClassification.trap),
+    TEMP_TRAP_TAG + "-75% Magic Circle Graze Range Trap": TouhouHBMItemData(CATEGORY_TRAP, 89, ItemClassification.trap),
     # Movement Speed Filler and Traps
-    TEMP_ITEM_TAG + "+20% Movement Speed": TouhouHBMItemData(CATEGORY_FILLER, 90),
-    TEMP_ITEM_TAG + "Extreme Speed Trap": TouhouHBMItemData(CATEGORY_TRAP, 91, ItemClassification.trap),
-    TEMP_ITEM_TAG + "Max Speed Trap": TouhouHBMItemData(CATEGORY_TRAP, 92, ItemClassification.trap),
-    TEMP_ITEM_TAG + "Freeze Trap": TouhouHBMItemData(CATEGORY_TRAP, 93, ItemClassification.trap),
+    ONCE_ITEM_TAG + "+20% Movement Speed": TouhouHBMItemData(CATEGORY_FILLER, 90),
+    TEMP_TRAP_TAG + "Extreme Speed Trap": TouhouHBMItemData(CATEGORY_TRAP, 91, ItemClassification.trap),
+    TEMP_TRAP_TAG + "Magic Circle Disable Trap": TouhouHBMItemData(CATEGORY_TRAP, 92, ItemClassification.trap),
+    TEMP_TRAP_TAG + "Freeze Trap": TouhouHBMItemData(CATEGORY_TRAP, 93, ItemClassification.trap),
+    TEMP_TRAP_TAG + "Powerless Shot Trap": TouhouHBMItemData(CATEGORY_TRAP, 94, ItemClassification.trap),
     # Invincibility Filler and Traps
-    TEMP_ITEM_TAG + "2-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 95), # 120 in int (60 = 1s)
-    TEMP_ITEM_TAG + "5-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 96), # 300 in int
-    TEMP_ITEM_TAG + "7-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 97), # 420
-    TEMP_ITEM_TAG + "10-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 98), # 600
-    # Trap
-    TEMP_ITEM_TAG + "Invincibility Cancel Trap": TouhouHBMItemData(CATEGORY_TRAP, 99, ItemClassification.trap),
-
-    # DEBILITATING TRAPS - ID 400-499
-    # Restart the stage at this point.
-    BAD_TRAP_TAG + "Aya Speed Trap": TouhouHBMItemData(CATEGORY_TRAP, 400, ItemClassification.trap),
-    BAD_TRAP_TAG + "Freeze Trap": TouhouHBMItemData(CATEGORY_TRAP, 401, ItemClassification.trap),
-    BAD_TRAP_TAG + "No Graze Trap": TouhouHBMItemData(CATEGORY_TRAP, 402, ItemClassification.trap),
+    ONCE_ITEM_TAG + "2-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 95), # 120 in int (60 = 1s)
+    ONCE_ITEM_TAG + "5-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 96), # 300 in int
+    ONCE_ITEM_TAG + "7-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 97), # 420
+    ONCE_ITEM_TAG + "10-second Invincibility": TouhouHBMItemData(CATEGORY_FILLER, 98), # 600
+    TEMP_TRAP_TAG + "Invincibility Cancel Trap": TouhouHBMItemData(CATEGORY_TRAP, 99, ItemClassification.trap),
 
     # EVIL TRAPS - ID 500+
-    # Massively screws you over.
-    EVIL_TRAP_TAG + "Funds Reset Trap": TouhouHBMItemData(CATEGORY_TRAP, 500, ItemClassification.trap),
-    EVIL_TRAP_TAG + "Bullet Money Reset Trap": TouhouHBMItemData(CATEGORY_TRAP, 501, ItemClassification.trap),
-    EVIL_TRAP_TAG + "0% Shot Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 502, ItemClassification.trap),
-    EVIL_TRAP_TAG + "0% Magic Circle Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 503, ItemClassification.trap),
-    EVIL_TRAP_TAG + "0% Magic Circle Size Trap": TouhouHBMItemData(CATEGORY_TRAP, 504, ItemClassification.trap),
-    EVIL_TRAP_TAG + "1000% Magic Circle Duration Trap": TouhouHBMItemData(CATEGORY_TRAP, 505, ItemClassification.trap),
-    EVIL_TRAP_TAG + "Shot Power Reset Trap": TouhouHBMItemData(CATEGORY_TRAP, 506, ItemClassification.trap),
+    # Massively screws you over. One-and-done. Reset stage here.
+    ONCE_ITEM_TAG + "Funds Reset Trap": TouhouHBMItemData(CATEGORY_TRAP, 500, ItemClassification.trap),
+    ONCE_ITEM_TAG + "Bullet Money Reset Trap": TouhouHBMItemData(CATEGORY_TRAP, 501, ItemClassification.trap),
+    ONCE_ITEM_TAG + "0% Shot Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 502, ItemClassification.trap),
+    ONCE_ITEM_TAG + "0% Magic Circle Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 503, ItemClassification.trap),
+    ONCE_ITEM_TAG + "1000% Magic Circle Duration Trap": TouhouHBMItemData(CATEGORY_TRAP, 505, ItemClassification.trap),
+    ONCE_ITEM_TAG + "Shot Power Reset Trap": TouhouHBMItemData(CATEGORY_TRAP, 506, ItemClassification.trap),
 
     # STAGE UNLOCKS
     TUTORIAL_NAME_FULL: TouhouHBMItemData(CATEGORY_STAGE, 100, ItemClassification.progression),

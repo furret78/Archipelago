@@ -327,12 +327,21 @@ class TouhouHBMContext(CommonContext):
         self.received_equip_cost: int = 0
         self.received_invinc_cancel: bool = False
 
+        # Temporary traps.
+        self.received_traps: dict[str, int] = {
+            "aya_speed": 0,
+            "circle_disable": 0,
+            "freeze": 0,
+            "powerless": 0
+        }
+        self.reset_all_traps: bool = False
+
         # Client loop error logs
         self.main_loop_traceback = None
         self.game_loop_traceback = None
         self.menu_loop_traceback = None
         self.deathlink_loop_traceback = None
-        #self.trap_loop_traceback = None
+        self.trap_loop_traceback = None
 
         # Debug
         self.debug_alerts = False
@@ -415,7 +424,7 @@ class TouhouHBMContext(CommonContext):
         self.game_loop_traceback = None
         self.menu_loop_traceback = None
         self.deathlink_loop_traceback = None
-        #self.trap_loop_traceback = None
+        self.trap_loop_traceback = None
 
     def reset_game_data(self):
         if not self.handler: return
@@ -2211,12 +2220,22 @@ class TouhouHBMContext(CommonContext):
         """
         Loop that handles stage-exclusive traps.
         If the game is not in a stage, this gets skipped.
+        If the game was generated with 0% Trap Chance, this loop does not get to run.
         """
+        if self.options["trap_chance"] <= 0: return
         try:
+            # Setup
+            # Freeze Trap
+            freeze_trap_bool = False
             freeze_trap_timer = 0
+
+
             while self.should_run_loop():
                 await asyncio.sleep(1)
-                if self.handler.isGameInStage(): continue
+                if self.handler.isGameInStage():
+                    freeze_trap_timer = 0
+                    continue
+                if freeze_trap_timer > 0: freeze_trap_timer -= 1
         except Exception as e:
             self.inError = True
             self.trap_loop_traceback = "Error in the TRAP loop." + "\n" + traceback.format_exc()
@@ -2295,6 +2314,8 @@ def check_traceback_full(ctx) -> bool:
         return False
     if not ctx.menu_loop_traceback:
         return False
+    if not ctx.trap_loop_traceback:
+        return False
     if not ctx.deathlink_loop_traceback:
         return False
 
@@ -2357,6 +2378,7 @@ async def game_watcher(ctx: TouhouHBMContext):
                     print_if_not_empty(logger, ctx.main_loop_traceback)
                     print_if_not_empty(logger, ctx.game_loop_traceback)
                     print_if_not_empty(logger, ctx.menu_loop_traceback)
+                    print_if_not_empty(logger, ctx.trap_loop_traceback)
                     print_if_not_empty(logger, ctx.deathlink_loop_traceback)
                 logger.info(f"Connection was lost. Attempting reconnection...")
             ctx.handler.gameController = None
@@ -2416,6 +2438,7 @@ async def game_watcher(ctx: TouhouHBMContext):
             loops.append(asyncio.create_task(ctx.main_loop()))
             loops.append(asyncio.create_task(ctx.menu_loop()))
             loops.append(asyncio.create_task(ctx.game_loop()))
+            loops.append(asyncio.create_task(ctx.trap_loop()))
             if ctx.deathlink_enabled:
                 loops.append(asyncio.create_task(ctx.deathlink_loop()))
 

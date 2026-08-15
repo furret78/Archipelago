@@ -195,22 +195,6 @@ class TrapChance(Range):
     default = 10
 
 
-class IncludeEnduringTraps(DefaultOnToggle):
-    """
-    Whether Traps that last during a stage run will appear.
-    """
-
-    display_name = "Include Enduring Traps"
-
-
-class IncludeExtremeTraps(Toggle):
-    """
-    Whether Traps considered to be far too extreme will appear.
-    """
-
-    display_name = "Include Extreme Traps"
-
-
 class LowSkillLogic(Choice):
     """
     Whether the generation logic should include certain Ability Cards as compulsory before challenging late-game stages.
@@ -461,8 +445,6 @@ class TouhouHBMDataclass(PerGameCommonOptions):
     stage_boss_locations: StageBossLocations
     disable_challenge_logic: DisableChallengeLogic
     trap_chance: TrapChance
-    include_enduring_traps: IncludeEnduringTraps
-    include_extreme_traps: IncludeExtremeTraps
     low_skill_logic: LowSkillLogic
     low_skill_stats: LowSkillStats
     include_gameplay_filler: IncludeGameplayFiller

@@ -173,9 +173,9 @@ PROGRESS_COST_NAME = "Progressive Equipment Cost"
 # Having one is equivalent to having access to the Tutorial
 PROGRESS_STAGE_ITEM_NAME = "Progressive Market"
 # Permanent upgrade item names
-TEMP_ITEM_TAG = "Temporary: "
-BAD_TRAP_TAG = "Enduring: "
-EVIL_TRAP_TAG = "Extreme: "
+ONCE_ITEM_TAG = "One-time: "
+TEMP_TRAP_TAG = "Temporary: "
+BAD_TRAP_TAG = "No-expiry: "
 PERMA_ITEM_TAG = " (Starting Upgrade)"
 PERMA_LIFE_NAME = "+1 Life" + PERMA_ITEM_TAG
 PERMA_BM_NAME = "+70 Bullet Money" + PERMA_ITEM_TAG
