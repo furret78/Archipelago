@@ -1,6 +1,6 @@
 from Options import *
 from .variables.boss_and_stage import TUTORIAL_NAME_FULL, STAGE1_NAME_FULL, STAGE2_NAME_FULL, STAGE3_NAME_FULL, STAGE4_NAME_FULL, \
-    STAGE5_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL, CHALLENGE_NAME_FULL
+    STAGE5_NAME_FULL, STAGE6_NAME_FULL, ENDSTAGE_NAME_FULL, CHALLENGE_NAME_FULL, ONCE_ITEM_TAG
 from .variables.card_const import YACHIE_CARD_NAME, KAGUYA_CARD_NAME, TAKANE_STORY_CARD_NAME, JUNKO_CARD_NAME
 
 
@@ -193,6 +193,24 @@ class TrapChance(Range):
     range_start = 0
     range_end = 100
     default = 10
+
+
+class TrapBlacklist(ItemSet):
+    """
+    Which Trap items will not be generated if Trap Chance is higher than 0.
+    Remove any of these entries if you want those traps to appear.
+    """
+    from .Items import get_items_by_category, CATEGORY_TRAP
+    valid_keys = get_items_by_category(CATEGORY_TRAP).keys()
+    default = [
+        ONCE_ITEM_TAG + "Funds Reset Trap",
+        ONCE_ITEM_TAG + "Bullet Money Reset Trap",
+        ONCE_ITEM_TAG + "0% Shot Attack Trap",
+        ONCE_ITEM_TAG + "0% Magic Circle Attack Trap",
+        ONCE_ITEM_TAG + "1000% Magic Circle Duration Trap",
+        ONCE_ITEM_TAG + "Shot Power Reset Trap"
+    ]
+    display_name = "Trap Blacklist"
 
 
 class LowSkillLogic(Choice):
@@ -445,6 +463,7 @@ class TouhouHBMDataclass(PerGameCommonOptions):
     stage_boss_locations: StageBossLocations
     disable_challenge_logic: DisableChallengeLogic
     trap_chance: TrapChance
+    trap_blacklist: TrapBlacklist
     low_skill_logic: LowSkillLogic
     low_skill_stats: LowSkillStats
     include_gameplay_filler: IncludeGameplayFiller
@@ -468,7 +487,7 @@ class TouhouHBMDataclass(PerGameCommonOptions):
 option_groups = [
     OptionGroup(
         "Game Options",
-        [DeathLinkTrigger, InvincAgainstDeathLink, EnergyLink, EnergyLinkBulletMoney]
+        [TrapBlacklist, DeathLinkTrigger, InvincAgainstDeathLink, EnergyLink, EnergyLinkBulletMoney]
     ),
     OptionGroup(
         "Generation Options",

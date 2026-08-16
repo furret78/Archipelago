@@ -113,6 +113,7 @@ class TouhouHBMWorld(World):
             "stage_boss_locations": self.options.stage_boss_locations.value,
             "disable_challenge_logic": self.options.disable_challenge_logic.value,
             "trap_chance": self.options.trap_chance.value,
+            "trap_blacklist": self.options.trap_blacklist.value,
             "low_skill_logic": self.options.low_skill_logic.value,
             "low_skill_stats": self.options.low_skill_stats.value,
             "include_gameplay_filler": self.options.include_gameplay_filler.value,

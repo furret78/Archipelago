@@ -154,8 +154,10 @@ class GameController:
 
     # Shot Power (N*100)
     def addShotPower(self, value):
-        newValue = clamp(self.pm.read_int(self.addrShotPower) + (value * 100), 0, 900)
-        self.pm.write_int(self.addrShotPower, newValue)
+        self.setShotPower(self.pm.read_int(self.addrShotPower) + (value * 100))
+
+    def setShotPower(self, value):
+        self.pm.write_int(self.addrShotPower, clamp(value, 0, 900))
 
     # Shot Attack %
     def getShotAttack(self):
@@ -170,8 +172,10 @@ class GameController:
 
     # Magic Circle Attack %
     def addMagicCircleAttack(self, value):
-        newValue = clamp(self.pm.read_short(self.addrMagicCircleAttack) + value, 0, 1000)
-        self.pm.write_short(self.addrMagicCircleAttack, newValue)
+        self.setMagicCircleAttack(self.pm.read_short(self.addrMagicCircleAttack) + value)
+
+    def setMagicCircleAttack(self, atk_value):
+        self.pm.write_short(self.addrMagicCircleAttack, clamp(atk_value, 0, 1000))
 
     # Magic Circle Size %
     def addMagicCircleSize(self, value):
@@ -180,8 +184,10 @@ class GameController:
 
     # Magic Circle Duration %
     def addMagicCircleDuration(self, value):
-        newValue = clamp(self.pm.read_short(self.addrMagicCircleDuration) + value, 0, 1000)
-        self.pm.write_short(self.addrMagicCircleDuration, newValue)
+        self.setMagicCircleDuration(self.pm.read_short(self.addrMagicCircleDuration) + value)
+
+    def setMagicCircleDuration(self, value):
+        self.pm.write_short(self.addrMagicCircleDuration, clamp(value, 0, 1000))
 
     # Magic Circle Graze Range %
     def addMagicCircleGraze(self, value):
@@ -189,7 +195,7 @@ class GameController:
         self.pm.write_short(self.addrMagicCircleGraze, newValue)
 
     def directSetMagicCircleStats(self, atk_value, size_value, graze_value):
-        self.pm.write_short(self.addrMagicCircleAttack, clamp(atk_value, 0, 1000))
+        self.setMagicCircleAttack(atk_value)
         self.pm.write_short(self.addrMagicCircleSize, clamp(size_value, 0, 1000))
         self.pm.write_short(self.addrMagicCircleGraze, clamp(graze_value, 0, 1000))
 

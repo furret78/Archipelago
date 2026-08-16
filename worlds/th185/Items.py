@@ -60,6 +60,7 @@ def get_random_filler_item_name(world) -> str:
     for name in get_items_by_category(CATEGORY_TRAP).keys():
         given_item_code = item_table[name].code
         if not world.options.include_gameplay_filler and check_for_nonmoney_filler(given_item_code): continue
+        if name in world.options.trap_blacklist: continue
         trap_item_list.append(name)
     if world.random.randint(0, 99) < world.options.trap_chance:
         final_item_name = world.random.choice(trap_item_list).__str__()
@@ -358,13 +359,15 @@ item_table: Dict[str, TouhouHBMItemData] = {
     TEMP_TRAP_TAG + "Invincibility Cancel Trap": TouhouHBMItemData(CATEGORY_TRAP, 99, ItemClassification.trap),
 
     # EVIL TRAPS - ID 500+
-    # Massively screws you over. One-and-done. Reset stage here.
+    # Massively screws you over. One-and-done.
+    # It is still possible to finish the stage as it is, but it will be greatly difficult.
+    # Can override temporary traps.
     ONCE_ITEM_TAG + "Funds Reset Trap": TouhouHBMItemData(CATEGORY_TRAP, 500, ItemClassification.trap),
     ONCE_ITEM_TAG + "Bullet Money Reset Trap": TouhouHBMItemData(CATEGORY_TRAP, 501, ItemClassification.trap),
-    ONCE_ITEM_TAG + "0% Shot Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 502, ItemClassification.trap),
+    ONCE_ITEM_TAG + "20% Shot Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 502, ItemClassification.trap),
     ONCE_ITEM_TAG + "0% Magic Circle Attack Trap": TouhouHBMItemData(CATEGORY_TRAP, 503, ItemClassification.trap),
-    ONCE_ITEM_TAG + "1000% Magic Circle Duration Trap": TouhouHBMItemData(CATEGORY_TRAP, 505, ItemClassification.trap),
-    ONCE_ITEM_TAG + "Shot Power Reset Trap": TouhouHBMItemData(CATEGORY_TRAP, 506, ItemClassification.trap),
+    ONCE_ITEM_TAG + "1000% Magic Circle Duration Trap": TouhouHBMItemData(CATEGORY_TRAP, 504, ItemClassification.trap),
+    ONCE_ITEM_TAG + "Shot Power Reset Trap": TouhouHBMItemData(CATEGORY_TRAP, 505, ItemClassification.trap),
 
     # STAGE UNLOCKS
     TUTORIAL_NAME_FULL: TouhouHBMItemData(CATEGORY_STAGE, 100, ItemClassification.progression),

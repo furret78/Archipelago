@@ -1044,6 +1044,16 @@ class TouhouHBMContext(CommonContext):
                 case 97: self.received_stats["invinc"] += 420
                 case 98: self.received_stats["invinc"] += 600
                 case 99: self.received_stats["invinc_cancel"] = True
+                # Some of the most evil shit I've written lmao
+                case 501: self.handler.gameController.setBulletMoney(0)
+                case 502:
+                    self.trap_old_values["shot_atk"] = 20
+                    self.handler.gameController.directSetShotAttack(20)
+                case 503:
+                    self.trap_old_values["magic"]["atk"] = 0
+                    self.handler.gameController.setMagicCircleAttack(0)
+                case 504: self.handler.gameController.setMagicCircleDuration(1000)
+                case 505: self.handler.gameController.setShotPower(0)
                 # Default
                 case _:
                     logger.info(f"Ignoring unknown game item (ID {item_id}).")
@@ -1092,6 +1102,8 @@ class TouhouHBMContext(CommonContext):
                 case 15: self.received_stats["funds"] -= 1000
                 case 16: self.received_stats["funds"] -= 2000
                 case 17: self.received_stats["funds"] -= 3000
+                # This one is fucking evil.
+                case 500: asyncio.create_task(self.deleteFundsInGame())
                 # Default
                 case _:
                     logger.info(f"Ignoring unknown item (ID {item_id}).")
@@ -1100,7 +1112,6 @@ class TouhouHBMContext(CommonContext):
 
         if self.received_stats["funds"] != 0:
             asyncio.create_task(self.addFundsToGame(self.received_stats["funds"]))
-            self.received_stats["funds"] = 0
 
         return
 
@@ -1114,7 +1125,20 @@ class TouhouHBMContext(CommonContext):
             self.handler.addMenuFunds(received_funds)
             await self.save_menu_funds_to_server()
 
-        self.received_funds = 0
+        self.received_stats["funds"] = 0
+
+    async def deleteFundsInGame(self):
+        """
+        Should only be used for the Reset Funds Trap.
+        """
+        while not self.menu_stats_initialized:
+            await asyncio.sleep(0.5)
+
+        if self.handler.isGameInStage():
+            self.handler.gameController.setGameFunds(0)
+        else:
+            self.handler.gameController.setMenuFunds(0)
+            await self.save_menu_funds_to_server()
 
     #
     # Functions for saving custom data to server.
@@ -2305,6 +2329,8 @@ class TouhouHBMContext(CommonContext):
                         trap_active_dict[key_name] = False
                     for key_name in trap_timer_dict.keys():
                         trap_timer_dict[key_name] = 0
+                    if self.debug_alerts:
+                        logger.info(f"All Traps have been reset.")
                     continue
 
                 # Handle the actual traps here.
