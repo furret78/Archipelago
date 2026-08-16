@@ -433,3 +433,22 @@ class GameHandler:
         When a stage reset has been detected, use this to turn that off.
         """
         self.gameController.writeStageResetChecksum()
+
+    # Trap functionalities
+    # Aya Speed Trap (sets Speed to 500%) and Freeze Trap (sets Speed to 0%).
+    def setPlayerSpeed(self, new_speed: int = 0):
+        self.gameController.directSetSpeed(new_speed)
+
+    # Magic Circle Disabling Trap (sets Magic Circle Attack, Size and Graze to 0%).
+    def setMagicCircleTrap(self):
+        self.gameController.directSetMagicCircleStats(0, 0, 0)
+
+    def removeMagicCircleTrap(self, old_atk: int, old_size: int, old_graze: int):
+        self.gameController.directSetMagicCircleStats(old_atk, old_size, old_graze)
+
+    # Powerless Shot Trap (sets Shot Attack % to 0).
+    def setPowerlessTrap(self):
+        self.gameController.directSetShotAttack(0)
+
+    def removePowerlessTrap(self, old_value: int):
+        self.gameController.directSetShotAttack(old_value)

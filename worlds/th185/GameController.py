@@ -158,9 +158,15 @@ class GameController:
         self.pm.write_int(self.addrShotPower, newValue)
 
     # Shot Attack %
+    def getShotAttack(self):
+        return self.pm.read_int(self.addrShotAttack)
+
     def addShotAttack(self, value):
         newValue = clamp(self.pm.read_short(self.addrShotAttack) + value, 0, 1000)
         self.pm.write_short(self.addrShotAttack, newValue)
+
+    def directSetShotAttack(self, value):
+        self.pm.write_short(self.addrShotAttack, clamp(value, 0, 1000))
 
     # Magic Circle Attack %
     def addMagicCircleAttack(self, value):
@@ -182,10 +188,31 @@ class GameController:
         newValue = clamp(self.pm.read_short(self.addrMagicCircleGraze) + value, 0, 1000)
         self.pm.write_short(self.addrMagicCircleGraze, newValue)
 
+    def directSetMagicCircleStats(self, atk_value, size_value, graze_value):
+        self.pm.write_short(self.addrMagicCircleAttack, clamp(atk_value, 0, 1000))
+        self.pm.write_short(self.addrMagicCircleSize, clamp(size_value, 0, 1000))
+        self.pm.write_short(self.addrMagicCircleGraze, clamp(graze_value, 0, 1000))
+
+    def getMagicCircleStats(self):
+        """
+        Returns the Attack %, Size %, and Graze % of the Magic Circle in that order as a List.
+        """
+        return [
+            self.pm.read_int(self.addrMagicCircleAttack),
+            self.pm.read_int(self.addrMagicCircleSize),
+            self.pm.read_int(self.addrMagicCircleGraze)
+        ]
+
     # Movement Speed %
+    def readSpeed(self):
+        return self.pm.read_int(self.addrMoveSpeed)
+
     def addSpeed(self, value):
         newValue = clamp(self.pm.read_short(self.addrMoveSpeed) + value, 0, 1000)
         self.pm.write_short(self.addrMoveSpeed, newValue)
+
+    def directSetSpeed(self, value):
+        self.pm.write_short(self.addrMoveSpeed, clamp(value, 0, 1000))
 
     # Recordkeeping starts here.
     # Funds (menu) functions

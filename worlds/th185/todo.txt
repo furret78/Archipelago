@@ -1,7 +1,3 @@
-- Make old traps actually temporary
-- Restore old perma traps as new traps
-- Add evil traps functionality
-
 - Add a separate tab for HBM configs at some point (mainly for scorefile path lol)
 - Tamper with hints to show where cards can be located instead of just Market Card Reward
 - Add shuffling market card reward pools.

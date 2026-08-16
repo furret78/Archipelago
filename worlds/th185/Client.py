@@ -1,6 +1,6 @@
 import traceback
 import typing
-from typing import Optional
+from typing import Optional, Any
 import asyncio
 import colorama
 
@@ -307,25 +307,28 @@ class TouhouHBMContext(CommonContext):
         # Starting upgrades.
         # When this is False, only starting upgrades should be added.
         self.stage_started_properly: bool = False
-        self.starting_lives: int = 0
-        self.starting_bullet_money: int = 0
-        self.starting_shot_power: int = 0
-        self.starting_shot_attack: int = 0
-        self.starting_circle_atk: int = 0
+        self.starting_stats: dict[str, Any] = {
+            "lives": 0,
+            "bullet_money": 0,
+            "shot_power": 0,
+            "shot_attack": 0,
+            "circle_atk": 0
+        }
 
         # Item reception stuff. This gets resets within the same function they are used.
-        self.received_funds: int = 0
-        self.received_bullet_money: int = 0
-        self.received_lives: int = 0
-        self.received_shot_attack: int = 0
-        self.received_circle_atk: int = 0
-        self.received_circle_size: int = 0
-        self.received_circle_duration: int = 0
-        self.received_circle_graze: int = 0
-        self.received_speed: int = 0
-        self.received_invincibility: int = 0
-        self.received_equip_cost: int = 0
-        self.received_invinc_cancel: bool = False
+        self.received_stats: dict[str, Any] = {
+            "funds": 0,
+            "bullet_money": 0,
+            "lives": 0,
+            "shot_attack": 0,
+            "circle_atk": 0,
+            "circle_size": 0,
+            "circle_duration": 0,
+            "circle_graze": 0,
+            "speed": 0,
+            "invinc": 0,
+            "invinc_cancel": False
+        }
 
         # Temporary traps.
         self.received_traps: dict[str, int] = {
@@ -334,7 +337,22 @@ class TouhouHBMContext(CommonContext):
             "freeze": 0,
             "powerless": 0
         }
-        self.reset_all_traps: bool = False
+        # In seconds.
+        self.trap_duration_limit: dict[str, int] = {
+            "aya_speed": 5,
+            "circle_disable": 15,
+            "freeze": 3,
+            "powerless": 6
+        }
+        self.trap_old_values: dict[str, Any] = {
+            "speed": 0,
+            "magic": {
+                "atk": 0,
+                "size": 0,
+                "graze": 0
+            },
+            "shot_atk": 0
+        }
 
         # Client loop error logs
         self.main_loop_traceback = None
@@ -393,24 +411,34 @@ class TouhouHBMContext(CommonContext):
         self.energylink_bulletmoney_enabled = False
 
         self.stage_started_properly = False
-        self.starting_lives = 0
-        self.starting_bullet_money = 0
-        self.starting_shot_power = 0
-        self.starting_shot_attack = 0
-        self.starting_circle_atk = 0
+        self.starting_stats = {
+            "lives": 0,
+            "bullet_money": 0,
+            "shot_power": 0,
+            "shot_attack": 0,
+            "circle_atk": 0
+        }
 
-        self.received_funds = 0
-        self.received_bullet_money = 0
-        self.received_lives = 0
-        self.received_shot_attack = 0
-        self.received_circle_atk = 0
-        self.received_circle_size = 0
-        self.received_circle_duration = 0
-        self.received_circle_graze = 0
-        self.received_speed = 0
-        self.received_invincibility = 0
-        self.received_equip_cost = 0
-        self.received_invinc_cancel = False
+        self.received_stats = {
+            "funds": 0,
+            "bullet_money": 0,
+            "lives": 0,
+            "shot_attack": 0,
+            "circle_atk": 0,
+            "circle_size": 0,
+            "circle_duration": 0,
+            "circle_graze": 0,
+            "speed": 0,
+            "invinc": 0,
+            "invinc_cancel": False
+        }
+
+        self.received_traps = {
+            "aya_speed": 0,
+            "circle_disable": 0,
+            "freeze": 0,
+            "powerless": 0
+        }
 
         self.halt_game_logic = False
         self.started_card_reset = False
@@ -899,11 +927,11 @@ class TouhouHBMContext(CommonContext):
     def handle_starting_upgrades(self, filtered_list):
         # If the toggle is off, no need to process this.
         if not self.options["perma_upgrade_toggle"]: return
-        self.starting_lives = clamp(filtered_list.count(item_table[PERMA_LIFE_NAME].code), 0, 3)
-        self.starting_bullet_money = clamp(filtered_list.count(item_table[PERMA_BM_NAME].code), 0, 8)
-        self.starting_shot_power = clamp(filtered_list.count(item_table[PERMA_POWER_NAME].code), 0, 3)
-        self.starting_shot_attack = clamp(filtered_list.count(item_table[PERMA_ATK_NAME].code), 0, 8)
-        self.starting_circle_atk = clamp(filtered_list.count(item_table[PERMA_MAGIC_ATK_NAME].code), 0, 10)
+        self.starting_stats["lives"] = clamp(filtered_list.count(item_table[PERMA_LIFE_NAME].code), 0, 3)
+        self.starting_stats["bullet_money"] = clamp(filtered_list.count(item_table[PERMA_BM_NAME].code), 0, 8)
+        self.starting_stats["shot_power"] = clamp(filtered_list.count(item_table[PERMA_POWER_NAME].code), 0, 3)
+        self.starting_stats["shot_attack"] = clamp(filtered_list.count(item_table[PERMA_ATK_NAME].code), 0, 8)
+        self.starting_stats["circle_atk"] = clamp(filtered_list.count(item_table[PERMA_MAGIC_ATK_NAME].code), 0, 10)
         return
 
     # Non-save data items.
@@ -943,121 +971,102 @@ class TouhouHBMContext(CommonContext):
         for item_id in self.gameItemQueue:
             match item_id:
                 # Bullet Money
-                case 20: self.received_bullet_money += 5
-                case 21: self.received_bullet_money += 10
-                case 22: self.received_bullet_money += 200
-                case 23: self.received_bullet_money += 500
-                case 24: self.received_bullet_money += 1000
-                case 25: self.received_bullet_money += 2000
-                case 26: self.received_bullet_money += 5000
-                case 27: self.received_bullet_money += 8000
+                case 20: self.received_stats["bullet_money"] += 5
+                case 21: self.received_stats["bullet_money"] += 10
+                case 22: self.received_stats["bullet_money"] += 200
+                case 23: self.received_stats["bullet_money"] += 500
+                case 24: self.received_stats["bullet_money"] += 1000
+                case 25: self.received_stats["bullet_money"] += 2000
+                case 26: self.received_stats["bullet_money"] += 5000
+                case 27: self.received_stats["bullet_money"] += 8000
                 # Bullet Money Traps
-                case 30: self.received_bullet_money -= 50
-                case 31: self.received_bullet_money -= 100
-                case 32: self.received_bullet_money -= 200
-                case 33: self.received_bullet_money -= 300
-                case 34: self.received_bullet_money -= 500
-                case 35: self.received_bullet_money -= 1000
-                case 36: self.received_bullet_money -= 2000
+                case 30: self.received_stats["bullet_money"] -= 50
+                case 31: self.received_stats["bullet_money"] -= 100
+                case 32: self.received_stats["bullet_money"] -= 200
+                case 33: self.received_stats["bullet_money"] -= 300
+                case 34: self.received_stats["bullet_money"] -= 500
+                case 35: self.received_stats["bullet_money"] -= 1000
+                case 36: self.received_stats["bullet_money"] -= 2000
+                case 37: self.received_stats["bullet_money"] -= 3000
                 # Lives
-                case 38: self.received_lives += 1
-                case 39: self.received_lives += 2
+                case 38: self.received_stats["lives"] += 1
+                case 39: self.received_stats["lives"] += 2
                 # Shot Attack
-                case 40: self.received_shot_attack += 15
-                case 41: self.received_shot_attack += 30
-                case 42: self.received_shot_attack += 45
-                case 43: self.received_shot_attack += 60
-                case 44: self.received_shot_attack += 100
-                case 45: self.received_shot_attack += 200
-                case 46: self.received_shot_attack += 300
-                case 47: self.received_shot_attack += 400
-                case 48: self.received_shot_attack -= 30
-                case 49: self.received_shot_attack -= 60
+                case 40: self.received_stats["shot_attack"] += 15
+                case 41: self.received_stats["shot_attack"] += 30
+                case 42: self.received_stats["shot_attack"] += 45
+                case 43: self.received_stats["shot_attack"] += 60
+                case 44: self.received_stats["shot_attack"] += 100
+                case 45: self.received_stats["shot_attack"] += 200
+                case 46: self.received_stats["shot_attack"] += 300
+                case 47: self.received_stats["shot_attack"] += 400
+                case 48: self.received_stats["shot_attack"] -= 30
+                case 49: self.received_stats["shot_attack"] -= 60
                 # Magic Circle Attack
-                case 50: self.received_circle_atk += 30
-                case 51: self.received_circle_atk += 60
-                case 52: self.received_circle_atk += 90
-                case 53: self.received_circle_atk += 120
-                case 54: self.received_circle_atk -= 15
-                case 55: self.received_circle_atk -= 30
-                case 56: self.received_circle_atk -= 45
-                case 57: self.received_circle_atk -= 60
+                case 50: self.received_stats["circle_atk"] += 30
+                case 51: self.received_stats["circle_atk"] += 60
+                case 52: self.received_stats["circle_atk"] += 90
+                case 53: self.received_stats["circle_atk"] += 120
+                case 54: self.received_stats["circle_atk"] -= 15
+                case 55: self.received_stats["circle_atk"] -= 30
+                case 56: self.received_stats["circle_atk"] -= 45
+                case 57: self.received_stats["circle_atk"] -= 60
                 # Magic Circle Size
-                case 60: self.received_circle_size += 10
-                case 61: self.received_circle_size += 20
-                case 62: self.received_circle_size += 30
-                case 63: self.received_circle_size += 50
-                case 64: self.received_circle_size -= 10
-                case 65: self.received_circle_size -= 20
-                case 66: self.received_circle_size -= 30
-                case 67: self.received_circle_size -= 50
+                case 60: self.received_stats["circle_size"] += 10
+                case 61: self.received_stats["circle_size"] += 20
+                case 62: self.received_stats["circle_size"] += 30
+                case 63: self.received_stats["circle_size"] += 50
+                case 64: self.received_stats["circle_size"] -= 10
+                case 65: self.received_stats["circle_size"] -= 20
+                case 66: self.received_stats["circle_size"] -= 30
+                case 67: self.received_stats["circle_size"] -= 50
                 # Magic Circle Duration
-                case 70: self.received_circle_duration += 5
-                case 71: self.received_circle_duration += 10
-                case 72: self.received_circle_duration += 100
-                case 73: self.received_circle_duration += 200
+                case 70: self.received_stats["circle_duration"] += 5
+                case 71: self.received_stats["circle_duration"] += 10
+                case 72: self.received_stats["circle_duration"] += 100
+                case 73: self.received_stats["circle_duration"] += 200
                 # Magic Circle Graze Range
-                case 80: self.received_circle_graze += 20
-                case 81: self.received_circle_graze += 40
-                case 82: self.received_circle_graze += 60
-                case 83: self.received_circle_graze += 80
-                case 84: self.received_circle_graze += 100
-                case 85: self.received_circle_graze -= 15
-                case 86: self.received_circle_graze -= 30
-                case 87: self.received_circle_graze -= 45
-                case 88: self.received_circle_graze -= 60
-                case 89: self.received_circle_graze -= 75
+                case 80: self.received_stats["circle_graze"] += 20
+                case 81: self.received_stats["circle_graze"] += 40
+                case 82: self.received_stats["circle_graze"] += 60
+                case 83: self.received_stats["circle_graze"] += 80
+                case 84: self.received_stats["circle_graze"] += 100
+                case 85: self.received_stats["circle_graze"] -= 15
+                case 86: self.received_stats["circle_graze"] -= 30
+                case 87: self.received_stats["circle_graze"] -= 45
+                case 88: self.received_stats["circle_graze"] -= 60
+                case 89: self.received_stats["circle_graze"] -= 75
                 # Movement Speed
-                case 90: self.received_speed += 20
-                case 91: self.received_speed += 500
-                case 92: self.received_speed += 1000
-                case 93: self.received_speed = -1000
+                case 90: self.received_stats["speed"] += 20
                 # Invincibility
-                case 95: self.received_invincibility += 120
-                case 96: self.received_invincibility += 300
-                case 97: self.received_invincibility += 420
-                case 98: self.received_invincibility += 600
-                case 99: self.received_invinc_cancel = True
+                case 95: self.received_stats["invinc"] += 120
+                case 96: self.received_stats["invinc"] += 300
+                case 97: self.received_stats["invinc"] += 420
+                case 98: self.received_stats["invinc"] += 600
+                case 99: self.received_stats["invinc_cancel"] = True
                 # Default
                 case _:
                     logger.info(f"Ignoring unknown game item (ID {item_id}).")
 
             self.gameItemQueue.remove(item_id)
 
-        if self.received_bullet_money != 0:
-            self.handler.addBulletMoney(self.received_bullet_money)
-        if self.received_lives != 0:
-            self.handler.addLife(self.received_lives)
-        if self.received_shot_attack != 0:
-            self.handler.gameController.addShotAttack(self.received_shot_attack)
-
-        if self.received_circle_atk != 0:
-            self.handler.gameController.addMagicCircleAttack(self.received_circle_atk)
-        if self.received_circle_size != 0:
-            self.handler.gameController.addMagicCircleSize(self.received_circle_size)
-        if self.received_circle_duration != 0:
-            self.handler.gameController.addMagicCircleDuration(self.received_circle_duration)
-        if self.received_circle_graze != 0:
-            self.handler.gameController.addMagicCircleGraze(self.received_circle_graze)
-
-        if self.received_speed != 0:
-            self.handler.gameController.addSpeed(self.received_speed)
-        if self.received_invincibility != 0:
-            self.handler.gameController.addInvincibility(self.received_invincibility)
-        if self.received_invinc_cancel:
-            self.handler.gameController.clearInvincibility()
-
-        self.received_bullet_money = 0
-        self.received_lives = 0
-        self.received_shot_attack = 0
-        self.received_circle_atk = 0
-        self.received_circle_size = 0
-        self.received_circle_duration = 0
-        self.received_circle_graze = 0
-        self.received_speed = 0
-        self.received_invincibility = 0
-        self.received_invinc_cancel = False
-
+        for key, value in self.received_stats.items():
+            if key != "invinc_cancel" and value != 0:
+                match key:
+                    case "bullet_money": self.handler.addBulletMoney(value)
+                    case "lives": self.handler.addLife(value)
+                    case "shot_attack": self.handler.gameController.addShotAttack(value)
+                    case "circle_atk": self.handler.gameController.addMagicCircleAttack(value)
+                    case "circle_size": self.handler.gameController.addMagicCircleSize(value)
+                    case "circle_duration": self.handler.gameController.addMagicCircleDuration(value)
+                    case "circle_graze": self.handler.gameController.addMagicCircleGraze(value)
+                    case "speed": self.handler.gameController.addSpeed(value)
+                    case "invinc": self.handler.gameController.addInvincibility(value)
+                    case _: continue
+                self.received_stats[key] = 0
+            if key == "invinc_cancel" and value:
+                self.received_stats[key] = False
+                self.handler.gameController.clearInvincibility()
         return
 
     def handle_menu_items(self):
@@ -1066,34 +1075,32 @@ class TouhouHBMContext(CommonContext):
         for item_id in self.menuItemQueue:
             match item_id:
                 # Filler + Useful
-                case 1: self.received_funds += 5
-                case 2: self.received_funds += 10
-                case 3: self.received_funds += 200
-                case 4: self.received_funds += 500
-                case 5: self.received_funds += 1000
-                case 6: self.received_funds += 2000
-                case 7: self.received_funds += 5000
-                case 8: self.received_funds += 8000
+                case 1: self.received_stats["funds"] += 5
+                case 2: self.received_stats["funds"] += 10
+                case 3: self.received_stats["funds"] += 200
+                case 4: self.received_stats["funds"] += 500
+                case 5: self.received_stats["funds"] += 1000
+                case 6: self.received_stats["funds"] += 2000
+                case 7: self.received_stats["funds"] += 5000
+                case 8: self.received_stats["funds"] += 8000
                 # Traps
-                case 10: self.received_funds -= 50
-                case 11: self.received_funds -= 100
-                case 12: self.received_funds -= 200
-                case 13: self.received_funds -= 300
-                case 14: self.received_funds -= 500
-                case 15: self.received_funds -= 1000
-                case 16: self.received_funds -= 2000
+                case 10: self.received_stats["funds"] -= 50
+                case 11: self.received_stats["funds"] -= 100
+                case 12: self.received_stats["funds"] -= 200
+                case 13: self.received_stats["funds"] -= 300
+                case 14: self.received_stats["funds"] -= 500
+                case 15: self.received_stats["funds"] -= 1000
+                case 16: self.received_stats["funds"] -= 2000
+                case 17: self.received_stats["funds"] -= 3000
                 # Default
                 case _:
                     logger.info(f"Ignoring unknown item (ID {item_id}).")
 
             self.menuItemQueue.remove(item_id)
 
-        if self.received_funds != 0:
-            asyncio.create_task(self.addFundsToGame(self.received_funds))
-        # Equip Cost never goes below 100%. This is checked when applying.
-        #if self.received_equip_cost != 0:
-        #    self.handler.addEquipCost(self.received_equip_cost)
-        #    self.received_equip_cost = 0
+        if self.received_stats["funds"] != 0:
+            asyncio.create_task(self.addFundsToGame(self.received_stats["funds"]))
+            self.received_stats["funds"] = 0
 
         return
 
@@ -1598,21 +1605,21 @@ class TouhouHBMContext(CommonContext):
     def set_starting_stage_stats(self):
         # If the toggle was never on in the first place, no need to process this.
         if not self.options["perma_upgrade_toggle"]: return
+
+        starting_stats_set_obj = self.starting_stats.items()
+
         # Otherwise, process as usual.
         if self.debug_alerts:
-            logger.info(f"Starting stage with the following upgrades: {self.starting_lives + 1} lives, {self.starting_bullet_money * 70} Bullet Money, {self.starting_shot_power} Power, {self.starting_shot_attack * 5}% Shot Attack, {self.starting_circle_atk * 5}% Magic Circle Attack.")
+            logger.info(f"Starting stage with the following upgrades:")
 
-        if self.starting_lives > 0:
-            self.handler.addLife(self.starting_lives)
-        if self.starting_bullet_money > 0:
-            self.handler.addBulletMoney(self.starting_bullet_money * 70)
-        if self.starting_shot_power > 0:
-            self.handler.gameController.addShotPower(self.starting_shot_power)
-        if self.starting_shot_attack > 0:
-            self.handler.gameController.addShotAttack(self.starting_shot_attack * 5)
-        if self.starting_circle_atk > 0:
-            self.handler.gameController.addMagicCircleAttack(self.starting_circle_atk * 5)
-
+        for key, value in starting_stats_set_obj:
+            match key:
+                case "lives": self.handler.addLife(value)
+                case "bullet_money": self.handler.addBulletMoney(value * 70)
+                case "shot_power": self.handler.gameController.addShotPower(value)
+                case "shot_attack": self.handler.gameController.addShotAttack(value * 5)
+                case "circle_atk": self.handler.gameController.addMagicCircleAttack(value * 5)
+            if self.debug_alerts: logger.info(f"- {value} {key}")
         return
 
     # Helper functions for things to do with the menu.
@@ -2222,20 +2229,112 @@ class TouhouHBMContext(CommonContext):
         If the game is not in a stage, this gets skipped.
         If the game was generated with 0% Trap Chance, this loop does not get to run.
         """
+        def start_trap(trap_key_name, is_first_time: bool = True):
+            trap_timer_dict[trap_key_name] = self.trap_duration_limit[trap_key_name]
+            trap_active_dict[trap_key_name] = True
+            # 1. Read the values that are being written to (save old values).
+            # 2. Save those values somewhere.
+            # 3. Set the new changes.
+            # 4. When the timer runs out, return to the old value.
+            #    If there are still remaining traps, do not reset value just yet;
+            #    Just reset the timer instead.
+            if (trap_key_name is "aya_speed" or trap_key_name is "freeze") and is_first_time:
+                self.trap_old_values["speed"] = self.handler.gameController.readSpeed()
+
+            match trap_key_name:
+                case "aya_speed":
+                    self.handler.setPlayerSpeed(500)
+                case "circle_disable":
+                    if is_first_time:
+                        magic_circle_stats: list[int] = self.handler.gameController.getMagicCircleStats()
+                        self.trap_old_values["magic"] = {
+                            "atk": magic_circle_stats[1],
+                            "size": magic_circle_stats[2],
+                            "graze": magic_circle_stats[3]
+                        }
+                    self.handler.setMagicCircleTrap()
+                case "freeze":
+                    self.handler.setPlayerSpeed(0)
+                case "powerless":
+                    if is_first_time:
+                        self.trap_old_values["shot_atk"] = self.handler.gameController.getShotAttack()
+                    self.handler.setPowerlessTrap()
+
+            if self.debug_alerts:
+                if is_first_time:
+                    logger.info(f"Trap {trap_key_name} has been activated. Old stats at the time of activation have been saved.")
+                else:
+                    logger.info(f"Trap {trap_key_name} has been extended ({self.received_traps["trap_key_name"]} instances remaining).")
+
+        def remove_trap(trap_name):
+            trap_active_dict[trap_name] = False
+            match trap_name:
+                case "aya_speed":
+                    self.handler.setPlayerSpeed(self.trap_old_values["speed"])
+                case "circle_disable":
+                    self.handler.removeMagicCircleTrap(
+                        self.trap_old_values["magic"]["atk"],
+                        self.trap_old_values["magic"]["size"],
+                        self.trap_old_values["magic"]["graze"],
+                    )
+                case "freeze":
+                    self.handler.setPlayerSpeed(self.trap_old_values["speed"])
+                case "powerless":
+                    self.handler.removePowerlessTrap(self.trap_old_values["shot_atk"])
+            if self.debug_alerts:
+                logger.info(f"Trap {trap_name} has expired, and appropriate player stats have been restored.")
+
         if self.options["trap_chance"] <= 0: return
         try:
             # Setup
-            # Freeze Trap
-            freeze_trap_bool = False
-            freeze_trap_timer = 0
-
-
+            trap_active_dict: dict[str, bool] = {}
+            trap_timer_dict: dict[str, int] = {}
+            for key_name in self.received_traps.keys():
+                trap_active_dict[key_name] = False
+                trap_timer_dict[key_name] = 0
+            # The loop itself
             while self.should_run_loop():
                 await asyncio.sleep(1)
-                if self.handler.isGameInStage():
-                    freeze_trap_timer = 0
+                # If not in a stage or Black Market is opened, don't tick down the timer.
+                if not self.handler.isGameInStage() or self.handler.isBlackMarketOpen(): continue
+                # If stage was restarted, reset all traps.
+                if not self.stage_started_properly:
+                    for key_name in self.received_traps.keys():
+                        self.received_traps[key_name] = 0
+                    for key_name in trap_active_dict.keys():
+                        trap_active_dict[key_name] = False
+                    for key_name in trap_timer_dict.keys():
+                        trap_timer_dict[key_name] = 0
                     continue
-                if freeze_trap_timer > 0: freeze_trap_timer -= 1
+
+                # Handle the actual traps here.
+                for key_name in self.received_traps.keys():
+                    if ((key_name is "aya_speed" or key_name is "freeze") and
+                        (trap_active_dict["aya_speed"] or trap_active_dict["freeze"])): continue
+                    elif not trap_active_dict[key_name] and self.received_traps[key_name] > 0:
+                        start_trap(key_name)
+
+                # Trap timer countdown.
+                for key_name in self.received_traps.keys():
+                    if trap_active_dict[key_name]:
+                        if trap_timer_dict[key_name] > 0:
+                            trap_timer_dict[key_name] -= 1
+                        else:
+                            trap_timer_dict[key_name] = 0
+                            # Special case for Aya Speed and Freeze Traps since they both tinker with player speed.
+                            # This is to avoid saving 0% Speed or 500% Speed as the old speed values.
+                            if key_name is "aya_speed" or key_name is "freeze":
+                                if self.received_traps["aya_speed"] <= 0 and self.received_traps["freeze"] <= 0:
+                                    remove_trap(key_name)
+                                elif self.received_traps["aya_speed"] > 0:
+                                    start_trap("aya_speed", False)
+                                elif self.received_traps["freeze"] > 0:
+                                    start_trap("freeze", False)
+                                continue
+                            # Every other trap gets this.
+                            elif self.received_traps[key_name] > 0:
+                                start_trap(key_name, False)
+                            else: remove_trap(key_name)
         except Exception as e:
             self.inError = True
             self.trap_loop_traceback = "Error in the TRAP loop." + "\n" + traceback.format_exc()
