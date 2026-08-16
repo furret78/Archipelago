@@ -345,13 +345,9 @@ class TouhouHBMContext(CommonContext):
             "powerless": 6
         }
         self.trap_old_values: dict[str, Any] = {
-            "speed": 0,
-            "magic": {
-                "atk": 0,
-                "size": 0,
-                "graze": 0
-            },
-            "shot_atk": 0
+            "speed": -1,
+            "magic": None,
+            "shot_atk": -1
         }
 
         # Client loop error logs
@@ -1044,7 +1040,12 @@ class TouhouHBMContext(CommonContext):
                 case 97: self.received_stats["invinc"] += 420
                 case 98: self.received_stats["invinc"] += 600
                 case 99: self.received_stats["invinc_cancel"] = True
-                # Some of the most evil shit I've written lmao
+                # Custom traps
+                case 91: self.received_traps["aya_speed"] += 1
+                case 92: self.received_traps["circle_disable"] += 1
+                case 93: self.received_traps["freeze"] += 1
+                case 94: self.received_traps["powerless"] += 1
+                # Some of the evilest shit I've written lmao
                 case 501: self.handler.gameController.setBulletMoney(0)
                 case 502:
                     self.trap_old_values["shot_atk"] = 20
@@ -2254,6 +2255,8 @@ class TouhouHBMContext(CommonContext):
         If the game was generated with 0% Trap Chance, this loop does not get to run.
         """
         def start_trap(trap_key_name, is_first_time: bool = True):
+            self.received_traps[trap_key_name] -= 1
+            if self.received_traps[trap_key_name] < 0: self.received_traps[trap_key_name] = 0
             trap_timer_dict[trap_key_name] = self.trap_duration_limit[trap_key_name]
             trap_active_dict[trap_key_name] = True
             # 1. Read the values that are being written to (save old values).
@@ -2263,7 +2266,7 @@ class TouhouHBMContext(CommonContext):
             #    If there are still remaining traps, do not reset value just yet;
             #    Just reset the timer instead.
             if (trap_key_name is "aya_speed" or trap_key_name is "freeze") and is_first_time:
-                self.trap_old_values["speed"] = self.handler.gameController.readSpeed()
+                self.set_trap_old_value("speed", self.handler.gameController.readSpeed())
 
             match trap_key_name:
                 case "aya_speed":
@@ -2271,40 +2274,44 @@ class TouhouHBMContext(CommonContext):
                 case "circle_disable":
                     if is_first_time:
                         magic_circle_stats: list[int] = self.handler.gameController.getMagicCircleStats()
-                        self.trap_old_values["magic"] = {
-                            "atk": magic_circle_stats[1],
-                            "size": magic_circle_stats[2],
-                            "graze": magic_circle_stats[3]
-                        }
+                        self.set_trap_old_value("magic", {
+                            "atk": magic_circle_stats[0],
+                            "size": magic_circle_stats[1],
+                            "graze": magic_circle_stats[2]
+                        })
                     self.handler.setMagicCircleTrap()
                 case "freeze":
                     self.handler.setPlayerSpeed(0)
                 case "powerless":
                     if is_first_time:
-                        self.trap_old_values["shot_atk"] = self.handler.gameController.getShotAttack()
+                        self.set_trap_old_value("shot_atk", self.handler.gameController.getShotAttack())
                     self.handler.setPowerlessTrap()
 
             if self.debug_alerts:
                 if is_first_time:
                     logger.info(f"Trap {trap_key_name} has been activated. Old stats at the time of activation have been saved.")
                 else:
-                    logger.info(f"Trap {trap_key_name} has been extended ({self.received_traps["trap_key_name"]} instances remaining).")
+                    logger.info(f"Trap {trap_key_name} has been extended ({self.received_traps[trap_key_name]} instances remaining).")
 
         def remove_trap(trap_name):
             trap_active_dict[trap_name] = False
             match trap_name:
                 case "aya_speed":
                     self.handler.setPlayerSpeed(self.trap_old_values["speed"])
+                    self.trap_old_values["speed"] = -1
                 case "circle_disable":
                     self.handler.removeMagicCircleTrap(
                         self.trap_old_values["magic"]["atk"],
                         self.trap_old_values["magic"]["size"],
                         self.trap_old_values["magic"]["graze"],
                     )
+                    self.trap_old_values["magic"] = None
                 case "freeze":
                     self.handler.setPlayerSpeed(self.trap_old_values["speed"])
+                    self.trap_old_values["speed"] = -1
                 case "powerless":
                     self.handler.removePowerlessTrap(self.trap_old_values["shot_atk"])
+                    self.trap_old_values["shot_atk"] = -1
             if self.debug_alerts:
                 logger.info(f"Trap {trap_name} has expired, and appropriate player stats have been restored.")
 
@@ -2320,7 +2327,7 @@ class TouhouHBMContext(CommonContext):
             while self.should_run_loop():
                 await asyncio.sleep(1)
                 # If not in a stage or Black Market is opened, don't tick down the timer.
-                if not self.handler.isGameInStage() or self.handler.isBlackMarketOpen(): continue
+                if not self.handler.isGameInStage() or self.handler.isBlackMarketOpen() or self.handler.isStagePaused(): continue
                 # If stage was restarted, reset all traps.
                 if not self.stage_started_properly:
                     for key_name in self.received_traps.keys():
@@ -2329,6 +2336,7 @@ class TouhouHBMContext(CommonContext):
                         trap_active_dict[key_name] = False
                     for key_name in trap_timer_dict.keys():
                         trap_timer_dict[key_name] = 0
+                    self.reset_trap_old_values()
                     if self.debug_alerts:
                         logger.info(f"All Traps have been reset.")
                     continue
@@ -2364,6 +2372,31 @@ class TouhouHBMContext(CommonContext):
         except Exception as e:
             self.inError = True
             self.trap_loop_traceback = "Error in the TRAP loop." + "\n" + traceback.format_exc()
+
+    def set_trap_old_value(self, value_name, value):
+        """
+        Only intended to be used in the Trap loop.
+        """
+        if value_name is "magic":
+            if self.trap_old_values[value_name] is None:
+                self.trap_old_values[value_name] = value
+            elif self.debug_alerts:
+                logger.info(f"Old values field for Magic Circle trap has already been filled! Set to None before using this.")
+            return
+        elif self.trap_old_values[value_name] < 0:
+            self.trap_old_values[value_name] = value
+        elif self.debug_alerts:
+            logger.info(f"Old values field for Trap {value_name} has already been filled! Set to -1 before using this.")
+
+    def reset_trap_old_values(self):
+        """
+        Only intended to be used in the Trap loop.
+        Use this only when the stage restarts.
+        """
+        for value_name in self.trap_old_values.keys():
+            if value_name is "magic":
+                self.trap_old_values[value_name] = None
+            else: self.trap_old_values[value_name] = -1
 
     async def deathlink_loop(self):
         # If going back to the menu, the first transition will turn off

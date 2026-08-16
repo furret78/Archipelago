@@ -205,7 +205,7 @@ class TrapBlacklist(ItemSet):
     default = [
         ONCE_ITEM_TAG + "Funds Reset Trap",
         ONCE_ITEM_TAG + "Bullet Money Reset Trap",
-        ONCE_ITEM_TAG + "0% Shot Attack Trap",
+        ONCE_ITEM_TAG + "20% Shot Attack Trap",
         ONCE_ITEM_TAG + "0% Magic Circle Attack Trap",
         ONCE_ITEM_TAG + "1000% Magic Circle Duration Trap",
         ONCE_ITEM_TAG + "Shot Power Reset Trap"

@@ -111,6 +111,9 @@ class GameHandler:
     def isStageNormal(self) -> bool:
         return self.gameController.getCurrentGameStatus() == 0
 
+    def isStagePaused(self) -> bool:
+        return self.gameController.getCurrentGameStatus() == 16
+
     def getGameFunds(self) -> int:
         return self.gameController.getGameFunds()
 
