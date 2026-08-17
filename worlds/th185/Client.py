@@ -2398,6 +2398,15 @@ class TouhouHBMContext(CommonContext):
                 self.trap_old_values[value_name] = None
             else: self.trap_old_values[value_name] = -1
 
+    def set_default_trap_times(self):
+        for time_name in self.trap_duration_limit.keys():
+            new_time_value = self.options["trap_durations"][time_name]
+            if new_time_value < 2: new_time_value = 2
+            self.trap_duration_limit[time_name] = new_time_value
+
+            if self.debug_alerts:
+                logger.info(f"Trap {time_name} duration has been set to {new_time_value} seconds.")
+
     async def deathlink_loop(self):
         # If going back to the menu, the first transition will turn off
         # both pending Death Link and the "Died to Death Link" flag.
@@ -2584,6 +2593,8 @@ async def game_watcher(ctx: TouhouHBMContext):
 
                 if not ctx.is_progressive_equip_disabled():
                     ctx.handler.initGameProgressSlots()
+
+                ctx.set_default_trap_times()
 
                 asyncio.create_task(ctx.load_save_data())
                 if ctx.debug_alerts:

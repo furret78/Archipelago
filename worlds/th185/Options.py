@@ -215,6 +215,31 @@ class TrapBlacklist(ItemSet):
     display_name = "Trap Blacklist"
 
 
+class TrapDurations(OptionCounter):
+    """
+    How much time should any of the Temporary traps last (in seconds, max 900).
+    If not set, the game will assume default values as follows:
+
+    Extreme Speed Trap/"aya_speed" - 5 seconds
+    Magic Circle Disable Trap/"circle_disable" - 15 seconds
+    Freeze Trap/"freeze" - 3 seconds
+    Powerless Shot Trap/"powerless" - 6 seconds
+    """
+
+    display_name = "Temporary Trap Durations"
+    valid_keys = [
+        "aya_speed", "circle_disable", "freeze", "powerless"
+    ]
+    min = 2
+    max = 900
+    default = {
+        "aya_speed": 5,
+        "circle_disable": 15,
+        "freeze": 3,
+        "powerless": 6,
+    }
+
+
 class LowSkillLogic(Choice):
     """
     Whether the generation logic should include certain Ability Cards as compulsory before challenging late-game stages.
@@ -466,6 +491,7 @@ class TouhouHBMDataclass(PerGameCommonOptions):
     disable_challenge_logic: DisableChallengeLogic
     trap_chance: TrapChance
     trap_blacklist: TrapBlacklist
+    trap_durations: TrapDurations
     low_skill_logic: LowSkillLogic
     low_skill_stats: LowSkillStats
     include_gameplay_filler: IncludeGameplayFiller
@@ -489,7 +515,7 @@ class TouhouHBMDataclass(PerGameCommonOptions):
 option_groups = [
     OptionGroup(
         "Game Options",
-        [TrapBlacklist, DeathLinkTrigger, InvincAgainstDeathLink, EnergyLink, EnergyLinkBulletMoney]
+        [TrapBlacklist, TrapDurations, DeathLinkTrigger, InvincAgainstDeathLink, EnergyLink, EnergyLinkBulletMoney]
     ),
     OptionGroup(
         "Generation Options",
