@@ -104,6 +104,7 @@ class GameHandler:
     def isStageFinish(self):
         """
         Returns if the stage status is set to finish yet.
+        True means it has.
         """
         stage_status = self.gameController.getCurrentGameStatus()
         return stage_status == 0x44000 or stage_status == 0x4000

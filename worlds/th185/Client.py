@@ -961,7 +961,7 @@ class TouhouHBMContext(CommonContext):
         # Properly handle the items only meant for stages here.
         # This does not get to run if the queue is empty,
         # or the game is not running, or the game is not in a stage.
-        while not self.handler.isGameInStage() or not self.is_game_running or not self.stage_started_properly:
+        while not self.handler.isGameInStage() or not self.is_game_running or not self.stage_started_properly or self.handler.isStageFinish():
             await asyncio.sleep(0.5)
 
         for item_id in self.gameItemQueue:
