@@ -143,9 +143,9 @@ def create_all_items(world):
             for prog_item_num in range(world.options.progressive_loadout_count):
                 item_pool.append(world.create_item(PROGRESS_EQUIP_NAME))
         case 2: # Upgrades go separately.
-            for i in range(world.options.progressive_slot_count):
+            for slot_count in range(world.options.progressive_slot_count):
                 item_pool.append(world.create_item(PROGRESS_SLOT_NAME))
-            for i in range(world.options.progressive_cost_count):
+            for cost_count in range(world.options.progressive_cost_count):
                 item_pool.append(world.create_item(PROGRESS_COST_NAME))
 
     # Now that all the important stuff is added, check if there's any spots left.

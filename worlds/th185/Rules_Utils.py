@@ -30,6 +30,7 @@ low_skill_scale = OptionFilter(LowSkillLogic, LowSkillLogic.option_scale)
 low_skill_full = OptionFilter(LowSkillLogic, LowSkillLogic.option_full)
 low_skill_none = OptionFilter(LowSkillLogic, LowSkillLogic.option_none)
 low_skill_stats_on = OptionFilter(LowSkillStats, True)
+low_skill_stats_off = OptionFilter(LowSkillStats, False)
 
 def get_card_shop_item_names() -> list[str]:
     # Go through both lists and fetch the card names.
@@ -64,12 +65,12 @@ def low_skill_check(stage_id: int = 0):
             return (Has(PROGRESS_EQUIP_NAME, count=clamp(stat_count, 0, 6), options=[low_skill_stats_on, progressive_loadout_together])
                     | (Has(PROGRESS_SLOT_NAME, count=clamp(stat_count, 0, 6), options=[low_skill_stats_on, progressive_loadout_separate])
                        & Has(PROGRESS_COST_NAME, count=clamp(stat_count, 0, 5), options=[low_skill_stats_on, progressive_loadout_separate]))
-                    | (progressive_loadout_disabled & True_()))
+                    | (progressive_loadout_disabled & True_()) | (low_skill_stats_off & True_()))
         else:
             return (Has(PROGRESS_EQUIP_NAME, count=6, options=[low_skill_stats_on, progressive_loadout_together])
                     | (Has(PROGRESS_SLOT_NAME, count=6, options=[low_skill_stats_on, progressive_loadout_separate])
                        & Has(PROGRESS_COST_NAME, count=5, options=[low_skill_stats_on, progressive_loadout_separate]))
-                    | (progressive_loadout_disabled & True_()))
+                    | (progressive_loadout_disabled & True_()) | (low_skill_stats_off & True_()))
 
     # Stage 6 and Challenge Market remains unchanged.
     if stage_id == STAGE6_ID or stage_id == STAGE_CHALLENGE_ID:
@@ -224,7 +225,11 @@ def has_early_game_access_item():
 # Midgame (Stage 3+). Does not show up in Stage 5 or End of Market.
 def has_midgame_access_item():
     progress_access = Has(PROGRESS_STAGE_ITEM_NAME, get_progress_item_requirement(STAGE3_NAME), options=[progressive_stages_enabled])
-    nonprogress_access = (has_challenge_access_item() | HasAny(STAGE3_NAME_FULL, STAGE4_NAME_FULL, STAGE6_NAME_FULL)) & progressive_stages_disabled
+    nonprogress_access = ((has_challenge_access_item() |
+                        (Has(STAGE3_NAME_FULL) |
+                        (Has(STAGE4_NAME_FULL) & low_skill_check(STAGE4_ID)) |
+                        (Has(STAGE6_NAME_FULL) & low_skill_check(STAGE6_ID)))) &
+                        progressive_stages_disabled)
     return progress_access | nonprogress_access
 
 
@@ -232,7 +237,7 @@ def has_midgame_access_item():
 # Low Skill Logic forces the generation to include certain Ability Cards as compulsory.
 def has_lategame_access_item():
     progress_access = (Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(STAGE4_NAME), options=[progressive_stages_enabled]) &
-                       low_skill_check(STAGE4_ID))
+                       low_skill_check(STAGE6_ID))
     nonprogress_access = ((Has(STAGE4_NAME_FULL) & low_skill_check(STAGE4_ID)) |
                           (Has(STAGE5_NAME_FULL) & low_skill_check(STAGE5_ID)) |
                           (Has(STAGE6_NAME_FULL) & low_skill_check(STAGE6_ID)) |
@@ -354,7 +359,7 @@ def add_generic_access_card_rule(world, card_name_id: str, access_level: int):
         case 3:  # Stage 3+
             world.set_rule(generic_location_card, has_midgame_access_item())
         case 4:  # Lategame
-            world.set_rule(generic_location_card, has_lategame_access_item() & low_skill_check(STAGE4_ID))
+            world.set_rule(generic_location_card, has_lategame_access_item())
         case _:
             pass
 

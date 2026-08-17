@@ -150,7 +150,7 @@ def set_market_reward_rules(world):
                     world.set_rule(location_card_reward, has_sekibanki_access())
                 # Generic conditions otherwise.
                 else:
-                    world.set_rule(location_card_reward, has_stage_access_item(stage_name))
+                    world.set_rule(location_card_reward, has_stage_access_item(stage_name) | has_challenge_access_item())
 
                 was_exclusive_card = True
 
