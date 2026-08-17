@@ -113,11 +113,12 @@ class ProgressiveLoadout(Choice):
 
 class ProgressiveLoadoutCount(Range):
     """
-    Only used if "Itemize Equipment Upgrades" is set to simultaneous.
+    Only used if "Itemize Equipment Upgrades" is set to Simultaneous.
     This will determine how many of them will be in the item pool.
     Starting card slots will max out at 34 and equip cost at 1600%.
+    Minimum of 6 items because of one of the Achievements.
     """
-    range_start = 0
+    range_start = 6
     range_end = 33
     default = 6
 
@@ -126,10 +127,11 @@ class ProgressiveLoadoutCount(Range):
 
 class ProgressiveSlotCount(Range):
     """
-    Only used if "Itemize Equipment Upgrades" is set to separate.
+    Only used if "Itemize Equipment Upgrades" is set to Separate.
     This determines how many starting card slot upgrades will be in the item pool.
+    Minimum of 6 slots because of one of the Achievements.
     """
-    range_start = 0
+    range_start = 6
     range_end = 33
     default = 6
 
@@ -138,9 +140,9 @@ class ProgressiveSlotCount(Range):
 
 class ProgressiveCostCount(Range):
     """
-    Only used if "Itemize Equipment Upgrades" is set to separate.
+    Only used if "Itemize Equipment Upgrades" is set to Separate.
     This will determine how many equip cost upgrades will be in the item pool.
-    Equip cost maxes out at 1000%, and each upgrade is worth 50%.
+    Equip cost maxes out at +600%, and each upgrade is worth 50%.
     """
     range_start = 0
     range_end = 12
