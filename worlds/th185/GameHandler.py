@@ -447,11 +447,13 @@ class GameHandler:
         self.gameController.directSetMagicCircleStats(0, 0, 0)
 
     def removeMagicCircleTrap(self, old_atk: int, old_size: int, old_graze: int):
-        self.gameController.directSetMagicCircleStats(old_atk, old_size, old_graze)
+        self.gameController.addMagicCircleAttack(old_atk)
+        self.gameController.addMagicCircleSize(old_size)
+        self.gameController.addMagicCircleGraze(old_graze)
 
     # Powerless Shot Trap (sets Shot Attack % to 0).
     def setPowerlessTrap(self):
         self.gameController.directSetShotAttack(0)
 
     def removePowerlessTrap(self, old_value: int):
-        self.gameController.directSetShotAttack(old_value)
+        self.gameController.addShotAttack(old_value)

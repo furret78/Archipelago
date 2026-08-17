@@ -161,11 +161,10 @@ class GameController:
 
     # Shot Attack %
     def getShotAttack(self):
-        return self.pm.read_int(self.addrShotAttack)
+        return self.pm.read_short(self.addrShotAttack)
 
     def addShotAttack(self, value):
-        newValue = clamp(self.pm.read_short(self.addrShotAttack) + value, 0, 1000)
-        self.pm.write_short(self.addrShotAttack, newValue)
+        self.directSetShotAttack(self.getShotAttack() + value)
 
     def directSetShotAttack(self, value):
         self.pm.write_short(self.addrShotAttack, clamp(value, 0, 1000))

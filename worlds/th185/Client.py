@@ -2297,7 +2297,7 @@ class TouhouHBMContext(CommonContext):
             trap_active_dict[trap_name] = False
             match trap_name:
                 case "aya_speed":
-                    self.handler.setPlayerSpeed(self.trap_old_values["speed"])
+                    self.handler.gameController.addSpeed(self.trap_old_values["speed"])
                     self.trap_old_values["speed"] = -1
                 case "circle_disable":
                     self.handler.removeMagicCircleTrap(
@@ -2307,7 +2307,7 @@ class TouhouHBMContext(CommonContext):
                     )
                     self.trap_old_values["magic"] = None
                 case "freeze":
-                    self.handler.setPlayerSpeed(self.trap_old_values["speed"])
+                    self.handler.gameController.addSpeed(self.trap_old_values["speed"])
                     self.trap_old_values["speed"] = -1
                 case "powerless":
                     self.handler.removePowerlessTrap(self.trap_old_values["shot_atk"])
