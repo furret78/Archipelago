@@ -203,9 +203,9 @@ class GameController:
         Returns the Attack %, Size %, and Graze % of the Magic Circle in that order as a List.
         """
         return [
-            self.pm.read_int(self.addrMagicCircleAttack),
-            self.pm.read_int(self.addrMagicCircleSize),
-            self.pm.read_int(self.addrMagicCircleGraze)
+            self.pm.read_short(self.addrMagicCircleAttack),
+            self.pm.read_short(self.addrMagicCircleSize),
+            self.pm.read_short(self.addrMagicCircleGraze)
         ]
 
     # Movement Speed %

@@ -3,7 +3,7 @@ import unittest
 import pymem
 
 from ..Tools import getPointerAddress, get_internal_boss_id_to_client
-from ..variables.address_gameplay import ADDR_LAST_BOSS_MET, ADDR_CURRENT_STAGE_PTR
+from ..variables.address_gameplay import ADDR_LAST_BOSS_MET, ADDR_CURRENT_STAGE_PTR, ADDR_SHOT_ATTACK
 from ..variables.card_const import ADDR_CARD_TO_DEX, MALLET_CARD
 from ..variables.meta_data import DISPLAY_NAME
 from .. import TouhouHBMWorld, FILE_NAME, ADDR_BASE_MENU_PTR
@@ -37,3 +37,15 @@ class PythonTestFunctions(unittest.TestCase):
         addrStageStatus = self.pm.base_address + ADDR_CURRENT_STAGE_PTR
         addrUsed = getPointerAddress(self.pm, addrStageStatus, [0xB0])
         print(f"Stage status: {self.pm.read_int(addrUsed)}")
+
+    def test_read_shot_attack(self):
+        self.pm = pymem.Pymem(process_name=FILE_NAME)
+        addrShotAttack = self.pm.base_address + ADDR_SHOT_ATTACK
+        #addrUsed = getPointerAddress(self.pm, addrStageStatus, [0xB0])
+        print(f"Shot Attack%: {self.pm.read_short(addrShotAttack)}")
+
+    def test_write_shot_attack(self):
+        self.pm = pymem.Pymem(process_name=FILE_NAME)
+        addrShotAttack = self.pm.base_address + ADDR_SHOT_ATTACK
+        self.pm.write_short(addrShotAttack, 1000)
+        print(f"Shot Attack%: {self.pm.read_short(addrShotAttack)}")
