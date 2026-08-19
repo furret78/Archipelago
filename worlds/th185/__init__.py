@@ -118,6 +118,8 @@ class TouhouHBMWorld(World):
             "low_skill_logic": self.options.low_skill_logic.value,
             "low_skill_stats": self.options.low_skill_stats.value,
             "include_gameplay_filler": self.options.include_gameplay_filler.value,
+            "dragon_gems_condition": self.options.dragon_gems_condition.value,
+            "dragon_gems_pool": self.options.dragon_gems_pool.value,
             "death_link": self.options.death_link.value,
             "death_link_trigger": self.options.death_link_trigger.value,
             "death_link_invincibility": self.options.death_link_invincibility.value,

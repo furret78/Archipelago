@@ -13,6 +13,7 @@ CATEGORY_TRAP = "Traps"
 CATEGORY_CARD = "Ability Cards"
 CATEGORY_PROGRESS = "Stage Progress"
 CATEGORY_PERMA = "Permanent Upgrades"
+CATEGORY_TREASURE = "Treasure"
 
 
 class TouhouHBMItem(Item):
@@ -169,6 +170,29 @@ def create_all_items(world):
                 perma_remain_index += 1
 
         # Once this is done, check for remaining locations again.
+        remaining_locations = get_remaining_locations(item_pool)
+
+    # Check if the Completion Goal is Dragon Gem Hunt.
+    # If it is, calculate the number of remaining locations that can be filled.
+    # Adjust the victory condition and item pool amount as necessary.
+    # Then, once that is done, check for remaining locations again.
+    if world.options.completion_type == 7:
+        # If there are fewer unfilled locations than the victory condition,
+        # change the victory condition.
+        if remaining_locations < world.options.dragon_gems_condition:
+            world.options.dragon_gems_condition.value = remaining_locations
+        # If there are fewer dragon gems in the pool than the victory condition,
+        # change the pool.
+        if world.options.dragon_gems_pool < world.options.dragon_gems_condition:
+            world.options.dragon_gems_pool.value = world.random.randint(world.options.dragon_gems_condition.value, 100)
+        # If there are fewer unfilled locations than the number that should be in the pool,
+        # change the pool.
+        if remaining_locations < world.options.dragon_gems_pool:
+            world.options.dragon_gems_pool.value = remaining_locations
+
+        for i in range(world.options.dragon_gems_pool):
+            item_pool.append(world.create_item(DRAGON_GEM_ITEM_NAME))
+
         remaining_locations = get_remaining_locations(item_pool)
 
     # Useful and filler are the same here, but useful has limits.
@@ -464,6 +488,10 @@ item_table: Dict[str, TouhouHBMItemData] = {
     PERMA_POWER_NAME: TouhouHBMItemData(CATEGORY_PERMA, 303, ItemClassification.useful),
     PERMA_ATK_NAME: TouhouHBMItemData(CATEGORY_PERMA, 304, ItemClassification.useful),
     PERMA_MAGIC_ATK_NAME: TouhouHBMItemData(CATEGORY_PERMA, 305, ItemClassification.useful),
+
+    # TREASURE HUNT
+    # There's only 1 item in this category
+    DRAGON_GEM_ITEM_NAME: TouhouHBMItemData(CATEGORY_TREASURE, 400, ItemClassification.progression)
 }
 
 ITEM_TABLE_ID_TO_STAGE_NAME: Dict[int, str] = {

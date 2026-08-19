@@ -297,4 +297,4 @@ def set_achievement_rules(world):
 
 
 def set_goal_condition(world) -> None:
-    world.set_completion_rule(get_goal_condition(world.options.completion_type))
+    world.set_completion_rule(get_goal_condition(world))

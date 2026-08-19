@@ -31,6 +31,7 @@ low_skill_full = OptionFilter(LowSkillLogic, LowSkillLogic.option_full)
 low_skill_none = OptionFilter(LowSkillLogic, LowSkillLogic.option_none)
 low_skill_stats_on = OptionFilter(LowSkillStats, True)
 low_skill_stats_off = OptionFilter(LowSkillStats, False)
+treasure_hunt_on = OptionFilter(CompletionType, CompletionType.option_dragon_gems)
 
 def get_card_shop_item_names() -> list[str]:
     # Go through both lists and fetch the card names.
@@ -363,7 +364,7 @@ def add_generic_access_card_rule(world, card_name_id: str, access_level: int):
         case _:
             pass
 
-def get_goal_condition(completion_type: int):
+def get_goal_condition(world):
     def minimum_story_clear():
         progress_access = (Has(PROGRESS_STAGE_ITEM_NAME, count=get_progress_item_requirement(STAGE6_NAME)) &
                            Has(NITORI_STORY_CARD_NAME) & progressive_stages_enabled)
@@ -401,6 +402,13 @@ def get_goal_condition(completion_type: int):
         )
         return progress_access | nonprogress_access
 
+    def dragon_gem_hunt():
+        # This will only ever be called if the completion type is Dragon Gem Hunt anyways.
+        # No need to add an option filter here.
+        return Has(DRAGON_GEM_ITEM_NAME, count=world.options.dragon_gems_condition.value)
+
+    completion_type: int = world.options.completion_type
+
     if completion_type == CompletionType.option_full:
         return full_story_clear()
     elif completion_type == CompletionType.option_min:
@@ -413,5 +421,7 @@ def get_goal_condition(completion_type: int):
         return has_challenge_access_item(True)
     elif completion_type == CompletionType.option_true_all:
         return full_clear_rule() & has_challenge_access_item(True)
+    elif completion_type == CompletionType.option_dragon_gems:
+        return dragon_gem_hunt()
     else:
         return full_clear_rule()

@@ -115,12 +115,13 @@ class ProgressiveLoadoutCount(Range):
     """
     Only used if "Itemize Equipment Upgrades" is set to Simultaneous.
     This will determine how many of them will be in the item pool.
-    Starting card slots will max out at 34 and equip cost at 1600%.
-    Minimum of 6 items because of one of the Achievements.
+    Minimum of +6 items because of one of the Achievements.
+    Can technically go up to +33, but it is recommended to only go up to +15 at most.
     """
     range_start = 6
     range_end = 33
     default = 6
+    alias_Max = 15
 
     display_name = "Simultaneous - Equipment Upgrades Count"
 
@@ -129,11 +130,13 @@ class ProgressiveSlotCount(Range):
     """
     Only used if "Itemize Equipment Upgrades" is set to Separate.
     This determines how many starting card slot upgrades will be in the item pool.
-    Minimum of 6 slots because of one of the Achievements.
+    Minimum of +6 slots because of one of the Achievements.
+    Can technically go up to +33, but it is recommended to only go up to +15 at most.
     """
     range_start = 6
     range_end = 33
     default = 6
+    alias_Max = 15
 
     display_name = "Separate - Starting Card Slot Upgrades Count"
 
@@ -142,10 +145,10 @@ class ProgressiveCostCount(Range):
     """
     Only used if "Itemize Equipment Upgrades" is set to Separate.
     This will determine how many equip cost upgrades will be in the item pool.
-    Equip cost maxes out at +600%, and each upgrade is worth 50%.
+    Equip cost maxes out at +800%, and each upgrade is worth 50%.
     """
     range_start = 0
-    range_end = 12
+    range_end = 16
     default = 6
 
     display_name = "Separate - Equip Cost Upgrades Count"
@@ -374,6 +377,7 @@ class CompletionType(Choice):
     5. Challenge Market Clear.
     6. Clear everything except Challenge Market.
     7. Clear everything.
+    8. Dragon Gem Hunt - Collect a certain number of Dragon Gem items randomly placed throughout the game.
     """
 
     display_name = "Completion Goal"
@@ -385,6 +389,7 @@ class CompletionType(Choice):
     option_challenge = 4
     option_all = 5
     option_true_all = 6
+    option_dragon_gems = 7
 
     default = option_full
 
@@ -404,7 +409,36 @@ class CompletionType(Choice):
             return "Clear everything (Except Challenge Market)"
         elif value == cls.option_true_all:
             return "Clear everything"
+        elif value == cls.option_dragon_gems:
+            return "Dragon Gem Hunt"
         return super().get_option_name(value)
+
+
+class DragonGemRequirement(Range):
+    """
+    Only effective if the Completion Type is set to Dragon Gem Hunt.
+    This will determine how many Dragon Gem items are required for goal.
+    If there are not enough locations for the required count, the count will be adjusted accordingly.
+    """
+    range_start = 1
+    range_end = 100
+    default = 30
+
+    display_name = "Dragon Gems Required"
+
+
+class DragonGemAmount(Range):
+    """
+    Only effective if the Completion Type is set to Dragon Gem Hunt.
+    This will determine how many Dragon Gem items would be in the item pool.
+    If this number is less than the victory condition number,
+    the number in the item pool will be randomized with a minimum the same as the victory condition.
+    """
+    range_start = 1
+    range_end = 100
+    default = 60
+
+    display_name = "Dragon Gems in Pool"
 
 
 class PermaUpgradeToggle(Toggle):
@@ -485,8 +519,8 @@ class TouhouHBMDataclass(PerGameCommonOptions):
     progressive_stages: ProgressiveStages
     progressive_loadout: ProgressiveLoadout
     progressive_loadout_count: ProgressiveLoadoutCount
-    progressive_cost_count: ProgressiveCostCount
     progressive_slot_count: ProgressiveSlotCount
+    progressive_cost_count: ProgressiveCostCount
     stage_boss_locations: StageBossLocations
     disable_challenge_logic: DisableChallengeLogic
     completion_type: CompletionType
@@ -496,6 +530,8 @@ class TouhouHBMDataclass(PerGameCommonOptions):
     low_skill_logic: LowSkillLogic
     low_skill_stats: LowSkillStats
     include_gameplay_filler: IncludeGameplayFiller
+    dragon_gems_condition: DragonGemRequirement
+    dragon_gems_pool: DragonGemAmount
     death_link: DeathLink
     death_link_trigger: DeathLinkTrigger
     death_link_invincibility: InvincAgainstDeathLink
@@ -567,6 +603,12 @@ option_groups = [
             DisableChallengeLogic,
             LowSkillLogic,
             LowSkillStats
+        ]
+    ),
+    OptionGroup(
+        "Dragon Gem Hunt Options", [
+            DragonGemRequirement,
+            DragonGemAmount
         ]
     )
 ]

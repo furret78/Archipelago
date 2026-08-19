@@ -182,6 +182,8 @@ PERMA_BM_NAME = "+70 Bullet Money" + PERMA_ITEM_TAG
 PERMA_POWER_NAME = "+1 Power" + PERMA_ITEM_TAG
 PERMA_ATK_NAME = "+5% Shot Attack" + PERMA_ITEM_TAG
 PERMA_MAGIC_ATK_NAME = "+5% Magic Circle Attack" + PERMA_ITEM_TAG
+# Treasure Hunt mode item
+DRAGON_GEM_ITEM_NAME = "Izanagi Object: Dragon Gem"
 
 # Shortened stage names
 TUTORIAL_NAME = "Tutorial"

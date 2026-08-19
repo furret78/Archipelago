@@ -190,6 +190,19 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
 
         logger.info(f"Automatic save replacement set to: {self.ctx.client_settings[CLIENT_AUTO_REPLACE]}")
 
+    def _cmd_check_dragon_gem(self):
+        """
+        Returns the number of Dragon Gem items collected so far and how many is needed for victory in total. Only works if the Completion Goal is set to Dragon Gem Hunt.
+        """
+        if not self.ctx.is_connected:
+            logger.info(SERVER_NOT_CONNECTED_MSG)
+            return
+        if self.ctx.options["completion_type"] != 7:
+            logger.info(f"The Completion Goal of this game is NOT Dragon Gem Hunt.")
+            return
+
+        logger.info(f"Current Dragon Gems Collected: {self.ctx.treasure_hunt_count} / {self.ctx.options["dragon_gems_condition"]}.")
+
     def _cmd_toggle_debug(self):
         """
         Toggles whether the client will actively alert about certain functions.
@@ -253,6 +266,7 @@ class TouhouHBMContext(CommonContext):
         self.progressive_stage_list: list[int] = []
         self.progressive_cost_list: list[int] = []
         self.starting_upgrade_list: list[int] = []
+        self.treasure_hunt_count: int = 0
         # Dex dictionary does not exist. Use the list of acquired checks for that.
         # Owning a card and unlocking its dex entry is one and the same,
         # but it is separate for the player.
@@ -381,6 +395,7 @@ class TouhouHBMContext(CommonContext):
         self.unlocked_stages = []
         self.progressive_stage_list = []
         self.starting_upgrade_list = []
+        self.treasure_hunt_count = 0
 
         self.enable_card_selection_checking = False
         self.enable_card_shop_scanning = True
@@ -831,6 +846,7 @@ class TouhouHBMContext(CommonContext):
         progress_item_list = []
         cost_item_list = []
         starting_upgrade_list = []
+        treasure_hunt_list = []
 
         for network_item in network_item_list:
             if network_item.item in ITEM_TABLE_ID_TO_STAGE_NAME:
@@ -839,6 +855,9 @@ class TouhouHBMContext(CommonContext):
                 ability_card_unlock_list.append(ITEM_TABLE_ID_TO_CARD_ID[network_item.item])
             elif network_item.item in STARTING_UPGRADE_LIST:
                 starting_upgrade_list.append(network_item.item)
+            # Item ID for Treasure Hunt item.
+            elif network_item.item == 400:
+                treasure_hunt_list.append(network_item.item)
             # Item ID for progressive stages.
             # There is really no need to check for this option here since generation realistically will never
             # give Progressive Markets in non-Progressive worlds.
@@ -859,6 +878,9 @@ class TouhouHBMContext(CommonContext):
             self.progressive_cost_list += cost_item_list
         if len(starting_upgrade_list) > 0:
             self.starting_upgrade_list += starting_upgrade_list
+        if len(treasure_hunt_list) > 0:
+            self.treasure_hunt_count += len(treasure_hunt_list)
+            asyncio.create_task(self.handle_treasure_hunt(self.treasure_hunt_count))
 
         self.handle_progressive_stages(self.progressive_stage_list)
         self.handle_progressive_cost(self.progressive_cost_list)
@@ -930,6 +952,20 @@ class TouhouHBMContext(CommonContext):
         self.starting_stats["circle_atk"] = clamp(filtered_list.count(item_table[PERMA_MAGIC_ATK_NAME].code), 0, 10)
         return
 
+    async def handle_treasure_hunt(self, treasure_count):
+        """
+        Handles Treasure Hunt mode stuff.
+        Will immediately return if Completion Goal is not Treasure Hunt.
+        This also checks for Victory Condition specifically for the Treasure Hunt mode.
+        """
+        if self.options["completion_type"] != 7: return
+        if self.debug_alerts:
+            logger.info(f"DEBUG - Dragon Gem Hunt: {treasure_count} / {self.options["dragon_gems_condition"]}.")
+        if treasure_count >= self.options["dragon_gems_condition"] and not self.finished_game:
+            self.finished_game = True
+            await self.send_msgs([{"cmd": 'StatusUpdate', "status": 30}])
+
+
     # Non-save data items.
     def handle_filler_items(self, filtered_list):
         if len(filtered_list) <= 0: return
@@ -939,6 +975,7 @@ class TouhouHBMContext(CommonContext):
             if item_id in ITEM_TABLE_ID_TO_STAGE_NAME: continue
             if item_id in ITEM_TABLE_ID_TO_CARD_ID: continue
             if item_id in PROGRESSIVE_ITEMS_LIST: continue
+            if item_id == 400: continue # This is the ID for the Dragon Gem Treasure items.
             if check_for_game_filler(item_id):
                 self.gameItemQueue.append(item_id)
                 continue
@@ -2572,6 +2609,8 @@ async def game_watcher(ctx: TouhouHBMContext):
                 if ctx.debug_alerts:
                     logger.info(f"LOADING - Now loading data...")
 
+                ctx.set_default_trap_times()
+
                 if ctx.options["death_link"]:
                     await ctx.update_death_link(True)
                     ctx.deathlink_enabled = True
@@ -2593,8 +2632,6 @@ async def game_watcher(ctx: TouhouHBMContext):
 
                 if not ctx.is_progressive_equip_disabled():
                     ctx.handler.initGameProgressSlots()
-
-                ctx.set_default_trap_times()
 
                 asyncio.create_task(ctx.load_save_data())
                 if ctx.debug_alerts:
