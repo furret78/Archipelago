@@ -87,7 +87,7 @@ class ProgressiveLoadout(Choice):
     Whether starting card slots and equip cost will be upgraded according to the number of bosses defeated or via items received.
     The game begins with 1 starting card slot and 100% equip cost.
 
-    1. Disabled - Slots and cost will be unlocked according to the number of bosses defeated.
+    1. Disabled - Slots and cost will be unlocked according to the number of bosses defeated (vanilla).
     2. Simultaneous - Both slots and cost will be upgraded at the same time.
     3. Separate - Slots and cost will only be upgraded with the appropriate items received.
     """
