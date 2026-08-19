@@ -1634,10 +1634,11 @@ class TouhouHBMContext(CommonContext):
     def load_save_data_menu(self):
         if not self.energylink_enabled:
             self.handler.setMenuFunds(self.menuFunds)
+        # This is assuming there is no Itemized loadout.
         if self.is_progressive_equip_disabled():
             self.handler.setCardSlots(self.loadout_slots)
             self.handler.setEquipCost(self.equip_cost)
-        # Load progressive loadout stuff here.
+        # Load progressive loadout stuff here if that's enabled.
         else:
             self.set_loadout_slots_in_stage()
 
