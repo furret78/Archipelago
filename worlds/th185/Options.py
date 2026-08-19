@@ -103,7 +103,7 @@ class ProgressiveLoadout(Choice):
     @classmethod
     def get_option_name(cls, value: T) -> str:
         if value == cls.option_none:
-            return "Disabled"
+            return "Disabled/Vanilla"
         if value == cls.option_together:
             return "Simultaneous Equipment Upgrades"
         if value == cls.option_separate:
