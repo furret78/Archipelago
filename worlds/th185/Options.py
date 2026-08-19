@@ -489,6 +489,7 @@ class TouhouHBMDataclass(PerGameCommonOptions):
     progressive_slot_count: ProgressiveSlotCount
     stage_boss_locations: StageBossLocations
     disable_challenge_logic: DisableChallengeLogic
+    completion_type: CompletionType
     trap_chance: TrapChance
     trap_blacklist: TrapBlacklist
     trap_durations: TrapDurations
@@ -502,7 +503,6 @@ class TouhouHBMDataclass(PerGameCommonOptions):
     energy_link_bullet_money: EnergyLinkBulletMoney
     music_room_checks: MusicRoomChecks
     achievement_checks: AchieveChecks
-    completion_type: CompletionType
     start_inventory_from_pool: StartInventoryPool
     perma_upgrade_toggle: PermaUpgradeToggle
     perma_upgrade_life: PermaLifeCount
@@ -514,45 +514,113 @@ class TouhouHBMDataclass(PerGameCommonOptions):
 
 option_groups = [
     OptionGroup(
-        "Game Options",
-        [TrapBlacklist, TrapDurations, DeathLinkTrigger, InvincAgainstDeathLink, EnergyLink, EnergyLinkBulletMoney]
+        "Game Options", [
+            ProgressionBalancing,
+            Accessibility,
+            CompletionType,
+            TrapChance,
+            TrapBlacklist,
+            TrapDurations,
+            IncludeGameplayFiller
+        ]
     ),
     OptionGroup(
-        "Generation Options",
-        [StartingMarket, StageBossLocations, ProgressiveStages, MusicRoomChecks, AchieveChecks]
+        "Death Link & Energy Link Options", [
+            DeathLink,
+            DeathLinkTrigger,
+            InvincAgainstDeathLink,
+            EnergyLink,
+            EnergyLinkBulletMoney
+        ]
     ),
     OptionGroup(
-        "Equipment Upgrade Options",
-        [ProgressiveLoadout, ProgressiveLoadoutCount, ProgressiveSlotCount, ProgressiveCostCount]
+        "Generation Options", [
+            StartingMarket,
+            StageBossLocations,
+            ProgressiveStages,
+            MusicRoomChecks,
+            AchieveChecks
+        ]
     ),
     OptionGroup(
-        "Handicap Options",
-        [AntiGrindingToggle, AntiGrindingItemPlacements, PermaUpgradeToggle, PermaLifeCount, PermaBulletMoney, PermaShotPower, PermaShotStrength, PermaMagicStrength]
+        "Equipment Upgrade Options", [
+            ProgressiveLoadout,
+            ProgressiveLoadoutCount,
+            ProgressiveSlotCount,
+            ProgressiveCostCount
+        ]
     ),
     OptionGroup(
-        "Logic Options",
-        [DisableChallengeLogic, LowSkillLogic, LowSkillStats, CompletionType]
+        "Gameplay Handicap Options", [
+            AntiGrindingToggle,
+            AntiGrindingItemPlacements,
+            PermaUpgradeToggle,
+            PermaLifeCount,
+            PermaBulletMoney,
+            PermaShotPower,
+            PermaShotStrength,
+            PermaMagicStrength
+        ]
+    ),
+    OptionGroup(
+        "Logic Handicap Options", [
+            DisableChallengeLogic,
+            LowSkillLogic,
+            LowSkillStats
+        ]
     )
 ]
 
 option_presets = {
-    "easy": {
-        "starting_market": 0, # Tutorial
-        "progressive_stages": True,
-        "progressive_loadout": 0,
-        "stage_boss_locations": 1, # Only stage clears
-        "disable_challenge_logic": True,
-        "trap_chance": 0,
-        "low_skill_logic": 1,
+    "Easy": {
+        "completion_type": 1,
+        "trap_chance": 10,
         "include_gameplay_filler": False,
         "death_link": False,
-        "death_link_trigger": 0,
-        "death_link_invincibility": True,
         "energy_link": False,
-        "energy_link_bullet_money": False,
-        "music_room_checks": False,
-        "anti_grinding_placements": [],
-        "achievement_checks": False,
-        "completion_type": 0 # Full Main Story
+        "starting_market": 0,
+        "progressive_stages": True,
+        "stage_boss_locations": 1,
+        "progressive_loadout": 0,
+        "perma_upgrade_toggle": True,
+        "perma_upgrade_life": 3,
+        "perma_upgrade_bm": 8,
+        "perma_upgrade_power": 3,
+        "perma_upgrade_atk": 8,
+        "perma_upgrade_magic_atk": 8,
+        "disable_challenge_logic": True,
+        "low_skill_logic": True
+    },
+    "Overdrive": {
+        "progression_balancing": 99,
+        "accessibility": 2,
+        "completion_type": 6,
+        "trap_chance": 100,
+        "include_gameplay_filler": True,
+        "trap_blacklist": [],
+        "death_link": True,
+        "death_link_invincibility": False,
+        "starting_market": 8,
+        "progressive_stages": False,
+        "stage_boss_locations": 2,
+        "music_room_checks": True,
+        "achievement_checks": True,
+        "progressive_loadout": 2,
+        "progressive_cost_count": 12,
+        "progressive_slot_count": 33,
+        "anti_grinding_toggle": True,
+        "anti_grinding_placements": [
+            YACHIE_CARD_NAME,
+            TAKANE_STORY_CARD_NAME,
+        ],
+        "perma_upgrade_toggle": True,
+        "perma_upgrade_life": 3,
+        "perma_upgrade_bm": 8,
+        "perma_upgrade_power": 3,
+        "perma_upgrade_atk": 8,
+        "perma_upgrade_magic_atk": 8,
+        "disable_challenge_logic": False,
+        "low_skill_logic": False,
+        "low_skill_stats": False
     }
 }
