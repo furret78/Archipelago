@@ -198,7 +198,10 @@ class TouhouHBMClientProcessor(ClientCommandProcessor):
             logger.info(SERVER_NOT_CONNECTED_MSG)
             return
         if self.ctx.options["completion_type"] != 7:
-            logger.info(f"The Completion Goal of this game is NOT Dragon Gem Hunt.")
+            logger.info(f"The Completion Goal of this game is NOT Dragon Gem Hunt!")
+            return
+        if not self.ctx.is_game_running:
+            logger.info(GAME_NOT_RUNNING_MSG)
             return
 
         logger.info(f"Current Dragon Gems Collected: {self.ctx.treasure_hunt_count} / {self.ctx.options["dragon_gems_condition"]}.")
