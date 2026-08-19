@@ -8,12 +8,5 @@
 - Implement full game data reset upon disconnect. (if needed)
 - Figure out seamless room switching while the game is running.
 
-- Add trap: Lily White Trap
-    - Requires figuring out how to run game functions from outside.
-- Add trap loop and turn some traps (max speed trap, freeze trap, etc.) into temporary timed traps.
-
-- Figure out non-horrible handling of Progressive Card Slots.
-
-- Code refactoring for more clarity.
-
-- Linux support for the client.
+- Add trap: Lily White Trap (Requires figuring out how to run game functions from outside.)
+- If the above is figured out, properly figure out how to kill the player.

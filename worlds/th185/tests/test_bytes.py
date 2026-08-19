@@ -4,6 +4,7 @@ import pymem
 
 from ..Tools import getPointerAddress, get_internal_boss_id_to_client
 from ..variables.address_card_dex import ADDR_DEX_NO_CARD
+from ..variables.address_code import LIST_ADDR_LIVES_CAP
 from ..variables.address_gameplay import ADDR_LAST_BOSS_MET, ADDR_CURRENT_STAGE_PTR, ADDR_SHOT_ATTACK
 from ..variables.card_const import ADDR_CARD_TO_DEX, MALLET_CARD
 from ..variables.meta_data import DISPLAY_NAME
@@ -55,3 +56,9 @@ class PythonTestFunctions(unittest.TestCase):
         self.pm = pymem.Pymem(process_name=FILE_NAME)
         addrNoCard = getPointerAddress(self.pm, self.pm.base_address + ADDR_BASE_MENU_PTR, [ADDR_DEX_NO_CARD])
         self.pm.write_bytes(addrNoCard, bytes([0x01]), 1)
+
+    def test_increase_lives_cap(self):
+        self.pm = pymem.Pymem(process_name=FILE_NAME)
+        for addr in LIST_ADDR_LIVES_CAP:
+            addrLifeCapNum = self.pm.base_address + addr
+            self.pm.write_bytes(addrLifeCapNum, bytes([0x0B]), 1)

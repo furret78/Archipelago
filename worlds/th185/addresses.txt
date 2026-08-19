@@ -1,6 +1,6 @@
 th185.exe+48686
 Amount of Starting Lives
-Byte only, ideally between 7 and 0
+Byte only, ideally between 11 (0b) and 0
 
 SavaDataStruct_1 + 0x26420 (pointer + offset)
 Where Ability Cards in the loadout slots are kept

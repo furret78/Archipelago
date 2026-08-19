@@ -256,9 +256,9 @@ class TouhouHBMContext(CommonContext):
         # - Exiting a stage.
         self.menuFunds: int = 0
         # Number of Ability Cards the player can equip at the start of a stage.
-        self.loadout_slots: int = 1  # Max 7 in-game.
+        self.loadout_slots: int = 1  # Max 7 in-game vanilla.
         # Equipment cost.
-        self.equip_cost: int = 100  # Max 350% in-game.
+        self.equip_cost: int = 100  # Max 350% in-game vanilla.
         # This is for eye-candy. List contains the string IDs of cards marked as "New!" in the game.
         self.permashop_cards_new: list = []
         # List of Cards that are unlocked in Shop.

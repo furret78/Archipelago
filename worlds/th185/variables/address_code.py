@@ -2,6 +2,41 @@ ADDR_ANTICHEAT_HACK = 0x000744A6 # NOP opcodes should be used.
 ADDR_ALERT_POPUP_PTR = 0x0004819F # Set this to 90, 90.
 ADDR_ALERT_POPUP_FUNC = 0x000481A7 # Set this to 90, 90, 90, 90, 90.
 
+# The original byte at these locations is 07.
+# Overwrite with 0B (11). 12 is when the game crashes.
+LIST_ADDR_LIVES_CAP = (
+    # Function 1
+    0x0a355,
+    0x0a35b,
+    0x0a36e,
+    0x0a377,
+    # Function 2 - Probably Mokou's card thing?
+    0x0a43e,
+    0x0a444,
+    0x0a44b,
+    0x0a451,
+    0x0a460,
+    0x0a46e,
+    0x0a472,
+    0x0a48c,
+    0x0a495,
+    # Function 3
+    0x0aef8,
+    0x0aeff,
+    0x0af14,
+    0x0af1d,
+    # Function 4
+    0x12e4c,
+    0x12e52,
+    0x12e65,
+    0x12e6e,
+    # Function 5
+    0x14d6c,
+    0x14d73,
+    0x14d85,
+    0x14d8e
+)
+
 # Addresses of Card Upgrade conditional statements in the game's binary.
 # Upgrades 1-4 require overwriting 3 bytes with 90 E9 BF.
 # This skips the entire clause about setting card slots and equip cost.

@@ -105,7 +105,7 @@ class GameController:
         return self.pm.read_int(self.addrLives)
 
     def setLives(self, value):
-        self.pm.write_int(self.addrLives, clamp(value, 0, 7))
+        self.pm.write_int(self.addrLives, clamp(value, 0, 11))
 
     # Funds (in-game) functions
     def getGameFunds(self) -> int:
@@ -380,6 +380,8 @@ class GameController:
         self.pm.write_bytes(self.pm.base_address + ADDR_CURSOR_SET_CHALLENGE, bytes([0x07]), 1)
         # Forcibly unlock the option to equip no cards at all.
         self.setNoCardData()
+        # Increase the life cap from 7 to 11.
+        self.increaseLivesCap()
 
     def initGameCardOverride(self):
         """
@@ -402,6 +404,11 @@ class GameController:
     def setNoCardData(self):
         addrFromCardDex = self.getAddressFromPointerWithBase(ADDR_DEX_NO_CARD)
         self.pm.write_bytes(addrFromCardDex, bytes([0x01]), 1)
+
+    def increaseLivesCap(self):
+        for addr in LIST_ADDR_LIVES_CAP:
+            addrLifeCapNum = self.pm.base_address + addr
+            self.pm.write_bytes(addrLifeCapNum, bytes([0x0B]), 1)
 
     # Check if the player's state.
     # Does not check if the player is in a stage or if the player is at the end of a stage.
