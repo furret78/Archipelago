@@ -226,20 +226,7 @@ def check_for_nonmoney_filler(given_item_id: int):
     """
     If True, it's not money filler.
     """
-    return given_item_id > 36
-
-def check_for_enduring_trap_filler(given_item_id: int):
-    """
-    If True, it's an Enduring Trap.
-    """
-    return 400 <= given_item_id < 500
-
-
-def check_for_extreme_trap_filler(given_item_id: int):
-    """
-    If True, it's an Extreme Trap.
-    """
-    return given_item_id >= 500
+    return given_item_id > 37
 
 def get_perma_upgrade_counts(world):
     """
