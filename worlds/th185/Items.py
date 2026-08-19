@@ -226,7 +226,7 @@ def create_all_items(world):
 def get_item_groups() -> dict[str, set[str]]:
     item_groups: Dict[str, set[str]] = {}
 
-    item_group_list = [CATEGORY_CARD, CATEGORY_STAGE, CATEGORY_PROGRESS, CATEGORY_PERMA, CATEGORY_TRAP, CATEGORY_ITEM, CATEGORY_FILLER]
+    item_group_list = [CATEGORY_CARD, CATEGORY_STAGE, CATEGORY_PROGRESS, CATEGORY_PERMA, CATEGORY_TRAP, CATEGORY_ITEM, CATEGORY_FILLER, CATEGORY_PERMA, CATEGORY_TREASURE]
 
     for category in item_group_list:
         category_dict = get_items_by_category(category)
