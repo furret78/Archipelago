@@ -3,6 +3,7 @@ import unittest
 import pymem
 
 from ..Tools import getPointerAddress, get_internal_boss_id_to_client
+from ..variables.address_card_dex import ADDR_DEX_NO_CARD
 from ..variables.address_gameplay import ADDR_LAST_BOSS_MET, ADDR_CURRENT_STAGE_PTR, ADDR_SHOT_ATTACK
 from ..variables.card_const import ADDR_CARD_TO_DEX, MALLET_CARD
 from ..variables.meta_data import DISPLAY_NAME
@@ -49,3 +50,8 @@ class PythonTestFunctions(unittest.TestCase):
         addrShotAttack = self.pm.base_address + ADDR_SHOT_ATTACK
         self.pm.write_short(addrShotAttack, 1000)
         print(f"Shot Attack%: {self.pm.read_short(addrShotAttack)}")
+
+    def test_unlock_blank_slot(self):
+        self.pm = pymem.Pymem(process_name=FILE_NAME)
+        addrNoCard = getPointerAddress(self.pm, self.pm.base_address + ADDR_BASE_MENU_PTR, [ADDR_DEX_NO_CARD])
+        self.pm.write_bytes(addrNoCard, bytes([0x01]), 1)
