@@ -18,7 +18,7 @@ Optionally, the following could also be location checks:
 They may contain items for different games as well as different items from within 100th Black Market.
 
 ## What is the goal of 100th Black Market when randomized?
-You may choose 1 out of 7 goals to reach for in this implementation.
+You may choose 1 out of 8 goals to reach for in this implementation.
 - Complete the **full story line**. This means defeating not just the boss of End of Market, but also the hidden bosses of the 4th and 6th Market.
 - Complete the **minimum story line**. This means only defeating the hidden boss of the 6th Market is necessary.
 - Collect **all Ability Cards**.
@@ -26,6 +26,7 @@ You may choose 1 out of 7 goals to reach for in this implementation.
 - Both of the above, shown as **Clear everything (except Challenge Market)** in the options page.
 - Clear **Challenge Market - Lunar Rainbow Black Market**.
 - All of the above, shown as **Clear everything** in the options page.
+- Dragon Gem Hunt. Treasure hunt mode similar to SMW's Yoshi Egg Hunt.
 
 ## Which items can be in another player's world?
 ### Stage Unlocks (Progression)
@@ -51,7 +52,7 @@ All cards except two of Nazrin's "Money Comes and Goes On Its Own" cards are shu
 - Additional Starting Shot Power
 - Additional Starting Shot Strength
 - Additional Starting Magic Circle Attack stat
-### Useful/Filler Items
+### One-time Useful/Filler Items
 - Additional Lives
 - Additional Funds
 - Additional Bullet Money
@@ -59,7 +60,7 @@ All cards except two of Nazrin's "Money Comes and Goes On Its Own" cards are shu
 - Movement Speed
 - Shot Attack Strength
 - Temporary Invincibility
-### Traps (Some are customizable)
+### One-time Traps (Some are customizable)
 - Reduced Funds
 - Reduced Bullet Money
 - Reduced Equipment Cost Limit
@@ -69,8 +70,10 @@ All cards except two of Nazrin's "Money Comes and Goes On Its Own" cards are shu
 - Reduced Shot Power
 - Reduced Shot Strength
 - Instant Invincibility Cancel
+### Treasure Hunt Item (Progression)
+- Izanagi Object: Dragon Gem. Although this item is marked as Progression, it does not contribute to literal game progression and does not further unlock more checks. It is only used if the goal is Dragon Gem Hunt.
 
-Certain items received only take effect in a stage. If the player is not in a stage, the game will wait until they are in a stage before processing said items. These items last only during the current run of a stage and will disappear upon the start of a new run, except for items related to **Funds**, **Bullet Money**, and **Equipment Cost Limit**.
+Certain items received only take effect in a stage. If the player is not in a stage, the game will wait until they are in a stage before processing said items. Items marked as `One-time` will last only during the current run of a stage, and will disappear upon the start of a new run.
 
 ## What does another world's item look like in 100th Black Market?
 The items are **visually unchanged**. After collecting an item, a message will show up in the client.
@@ -78,7 +81,7 @@ The items are **visually unchanged**. After collecting an item, a message will s
 ## When the player receives an item, what happens?
 When you receive an item, the client will inform you of what you received. Changes will occur as appropriate in the game.
 
-## Credits
+## Special Thanks
 - **Nepley**: Their AP implementations for Embodiment of Scarlet Devil, Perfect Cherry Blossom, and Imperishable Night were borrowed as a framework for 100th Black Market AP. Anticheat disabling as well.
 - **CodeGorilla**: Nicer-looking names in Options.
 - **Doremy/Iesua Inane**, Mirage Creators: Playtesting, writing several Death Link messages.
