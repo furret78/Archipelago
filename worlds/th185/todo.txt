@@ -1,5 +1,4 @@
 - funds received in stage at the end of a run should go to menu funds instead
-- raise equip cost option to 18 for a total of 1000% equip cost
 - update wiki page
 - work on poptracker pack
 

@@ -1160,7 +1160,7 @@ class TouhouHBMContext(CommonContext):
         while not self.menu_stats_initialized:
             await asyncio.sleep(0.5)
 
-        if self.handler.isGameInStage():
+        if self.handler.isGameInStage() and not self.enable_card_selection_checking:
             self.handler.addGameFunds(received_funds)
         else:
             self.handler.addMenuFunds(received_funds)
