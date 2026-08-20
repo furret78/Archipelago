@@ -1,4 +1,3 @@
-- funds received in stage at the end of a run should go to menu funds instead
 - update wiki page
 - work on poptracker pack
 
