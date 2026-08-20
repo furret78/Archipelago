@@ -1603,7 +1603,7 @@ class TouhouHBMContext(CommonContext):
             for stage_name in STAGE_LIST:
                 # If this stage name exists in the location's name, continue.
                 # If not, abort mission.
-                if stage_name not in full_location_name: continue
+                if stage_name not in location_name: continue
                 # If there are only stage clear locations and no boss locations,
                 # Consider all bosses in that stage defeated.
                 # Make an exception if it is Nitori or Takane.
