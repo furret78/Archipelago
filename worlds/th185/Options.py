@@ -145,10 +145,10 @@ class ProgressiveCostCount(Range):
     """
     Only used if "Itemize Equipment Upgrades" is set to Separate.
     This will determine how many equip cost upgrades will be in the item pool.
-    Equip cost maxes out at +800%, and each upgrade is worth 50%.
+    Equip cost maxes out at +900%, and each upgrade is worth 50%.
     """
     range_start = 0
-    range_end = 16
+    range_end = 18
     default = 6
 
     display_name = "Separate - Equip Cost Upgrades Count"

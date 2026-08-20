@@ -1,6 +1,7 @@
 ADDR_ANTICHEAT_HACK = 0x000744A6 # NOP opcodes should be used.
 ADDR_ALERT_POPUP_PTR = 0x0004819F # Set this to 90, 90.
 ADDR_ALERT_POPUP_FUNC = 0x000481A7 # Set this to 90, 90, 90, 90, 90.
+ADDR_KOISHI_CARD_BUG = 0x0000E8C4 # Set this to 90, 90, 90, 90, 90.
 
 # The original byte at these locations is 07.
 # Overwrite with 0B (11). 12 is when the game crashes.

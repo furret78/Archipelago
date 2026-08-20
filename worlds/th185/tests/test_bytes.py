@@ -4,7 +4,7 @@ import pymem
 
 from ..Tools import getPointerAddress, get_internal_boss_id_to_client
 from ..variables.address_card_dex import ADDR_DEX_NO_CARD
-from ..variables.address_code import LIST_ADDR_LIVES_CAP
+from ..variables.address_code import LIST_ADDR_LIVES_CAP, ADDR_KOISHI_CARD_BUG
 from ..variables.address_gameplay import ADDR_LAST_BOSS_MET, ADDR_CURRENT_STAGE_PTR, ADDR_SHOT_ATTACK
 from ..variables.card_const import ADDR_CARD_TO_DEX, MALLET_CARD
 from ..variables.meta_data import DISPLAY_NAME
@@ -62,3 +62,7 @@ class PythonTestFunctions(unittest.TestCase):
         for addr in LIST_ADDR_LIVES_CAP:
             addrLifeCapNum = self.pm.base_address + addr
             self.pm.write_bytes(addrLifeCapNum, bytes([0x0B]), 1)
+
+    def test_koishi_fix(self):
+        self.pm = pymem.Pymem(process_name=FILE_NAME)
+        self.pm.write_bytes(self.pm.base_address + ADDR_KOISHI_CARD_BUG, bytes([0x90, 0x90, 0x90, 0x90, 0x90]), 5)
