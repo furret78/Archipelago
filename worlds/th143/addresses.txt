@@ -1,0 +1,93 @@
+go to scene_end_operations() at 0x00433940
+
+th143.exe+E6B9C scorefile/save data
+offset f16c = notice queue counter
+offset ((index of notice queue counter * 4) + 0xf170)
+
+notice index (seems to be 4 bytes?)
+0 none, will softlock
+1 fabric unlock
+2 camera unlock
+3 umbrella unlock
+4 lantern unlock
+5 yinyang unlock
+6 bomb unlock
+7 jizo unlock
+8 doll unlock
+9 mallet unlock
+10 subskill unlock
+11 fabric upgrade  1 uses
+12 camera upgrade 1 uses
+13 umbrella upgrade 1 offscreen
+14 lantern upgrade 1 time
+15 yinyang upgrade 1 uses
+16 bomb upgrade 1 time
+17 jizo upgrade 1 postdeath invulnerability
+18 doll upgrade 1 health
+19 mallet upgrade 1 uses
+20 fabric upgrade 2 time
+21 camera upgrade 2 range
+22 none (umbrella use does not change)
+23 none (lantern use does not change)
+24 none (yinyang only has uses)
+25 bomb upgrade 2 uses
+26 jizo upgrade 2 uses
+27 doll upgrade 2 uses
+28 none
+29 none
+30 day 2 unlock
+31 day 3 unlock
+32 day 4 unlock
+33 day 5 unlock
+34 day 6 unlock
+35 day 7 unlock
+36 day 8 unlock
+37 day 9 unlock
+38 final day unlock
+39 all scenes complete
+
+
+
+th143.exe+E6A5C
+game thread pointer
+if returns 0, means not in a stage
+if anything but 0, means in a stage
+
+th143.exe+c7090
+scorefile filename "scoreth143.dat"
+73 63 6f 72 65 74 68 31 34 33 2e 64 61 74
+change to "score143ap.dat"
+73 63 6F 72 65 31 34 33 61 70 2E 64 61 74
+
+number of times died: th143.exe+E6B9C offset 0xF07C
+achievements: offset EFF9 (1) F03E (70)
+music room: offset EF74 (1) EF7C (9)
+
+(all bytes here)
+th143.exe+E6B9C
+offset efb8 1-1 first clear + unlock game
+offset f088 3-1 first time clear + unlock rest of day 3
+offset f089 5-1 first time clear + unlock rest of day 5
+offset f08a 6-1 first time clear + unlock rest of day 6
+offset f08b 8-1 first time clear + unlock rest of day 8
+
+
+(0x147FCF6C - 0xE6B9C / 0x34) - 0x48F
+
+th143.exe+33d19
+
+01 Fabric
+02 Camera
+03 Umbrella
+04 Lantern
+05 Yin-yang
+06 Jizo
+07 Bomb
+08 Decoy Doll
+09 Mallet
+Sub07 Jizo
+Sub03 Umbrella
+Sub01 Fabric
+
+th143.exe+e6b9c offset EFAD
+th143.exe+e4714
