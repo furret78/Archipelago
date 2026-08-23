@@ -71,8 +71,32 @@ offset f089 5-1 first time clear + unlock rest of day 5
 offset f08a 6-1 first time clear + unlock rest of day 6
 offset f08b 8-1 first time clear + unlock rest of day 8
 
+(this is a byte)
+th143.exe+E6B9C offset EFAC => item unlock progress
+0 = 3 items
+1 = 6 items
+2 = 9/all items
+(byte)
+th143.exe+e6b9c offset EFAD => subitem unlock (data)
+th143.exe+E4728 => subitem unlock (menu)
 
-(0x147FCF6C - 0xE6B9C / 0x34) - 0x48F
+th143.exe+E6B9C
+2 umbrella
+(2 + 48f) * 34 = ed74
+
+offset < ((main_item_id + 0x48f) * 0x34) + the following: >
+0x1c level
+0x28 unique stat
+0x24 use count
+0xc achievement index
+0x2c ???
+0x30 ???
+
+th143.exe+E6B90
+offset 10 then offset 18
+=> main item use count
+offset 14 then offset 18
+-> sub item use count
 
 th143.exe+33d19
 
@@ -91,3 +115,16 @@ Sub01 Fabric
 
 th143.exe+e6b9c offset EFAD
 th143.exe+e4714
+
+th143.exe+E6B90 offset 0x18 = total item use during scene count
+
+th143.exe+E6B90 offset 7 * 0x314 + 3c = 2-1 No-item clear?
+scorefile offset eef4
+
+th143.exe+E6B90 offset (last_scene_id * 0x314) + 3c = what scene has had a no-item clear?
+th143.exe+E6B9C offset eef4 = Total No-item Clears
+th143.exe+E6B90 offset (0x10 * item_id + last_scene_id * 0x314 + 8) = scene clear record with item / what item was used to clear scene?
+th143.exe+E6B90 offset ed0c + (34 * item_id) + 14 = item scene clear count = item clear count / how scenes has this item been used to clear?
+
+th143.exe+E6B9C offset 0xEF94 = playtime (frames)
+th143.exe+E6B9C offset 0xEF98 = playtime (if this hits anywhere above 0, the player has accumulated way too much time)
