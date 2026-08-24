@@ -3,6 +3,15 @@ go to scene_end_operations() at 0x00433940
 th143.exe+E6B9C scorefile/save data
 offset f16c = notice queue counter
 offset ((index of notice queue counter * 4) + 0xf170)
+offset efa4 = last chosen day
+offset efa8 = last chosen scene in day
+offset ef9c = last main item used
+offset efa0 = last sub item used
+offset f080 = total scene clears (not unique scene clears) (goes up to 99,999,999)
+offset ef28 = same as above for some reason (goes up to 9,999,999)
+
+th143.exe+e6a2c = last cleared scene, if 0 => no scene cleared
+
 
 notice index (seems to be 4 bytes?)
 0 none, will softlock
@@ -66,16 +75,17 @@ music room: offset EF74 (1) EF7C (9)
 (all bytes here)
 th143.exe+E6B9C
 offset efb8 1-1 first clear + unlock game
+offset f084 ?
 offset f088 3-1 first time clear + unlock rest of day 3
 offset f089 5-1 first time clear + unlock rest of day 5
 offset f08a 6-1 first time clear + unlock rest of day 6
 offset f08b 8-1 first time clear + unlock rest of day 8
 
-(this is a byte)
+(this is 2 bytes)
 th143.exe+E6B9C offset EFAC => item unlock progress
-0 = 3 items
-1 = 6 items
-2 = 9/all items
+0x0000 = 3 items
+0x0100 or 0x0001 = 6 items
+0x0002 or 0x0102 = 9/all items
 (byte)
 th143.exe+e6b9c offset EFAD => subitem unlock (data)
 th143.exe+E4728 => subitem unlock (menu)
@@ -84,17 +94,49 @@ th143.exe+E6B9C
 2 umbrella
 (2 + 48f) * 34 = ed74
 
-offset < ((main_item_id + 0x48f) * 0x34) + the following: >
+th143.exe+e6b68
+offset 0x494
+
+(all bytes)
+th143.exe+e4710 currently selected main item
+th143.exe+e472c same as the above (redundancy?)
+th143.exe+E4714 currently selected sub item
+
+0 Nimble Fabric
+1 Tengu's Toy Camera
+2 Gap Folding Umbrella
+3 Ghastly Send-off Lantern
+4 Bloodthirsty Yin-yang Orb
+5 Four-Foot Magic Bomb
+6 Substitute Jizo
+7 Cursed Decoy Doll
+8 Miracle Mallet Replica
+(any of the values below causes count to be undetectable)
+9 Fabric?
+A Umbrella?
+B Camera?
+C Jizo?
+D Doll?
+E Yinyang?
+F Lantern?
+10 Bomb?
+11 Mallet?
+12+ Fabric?
+
+th143.exe+E6B9C
+offset <((main_item_id + 0x48f) * 0x34) + the following:
 0x1c level
 0x28 unique stat
 0x24 use count
 0xc achievement index
-0x2c ???
-0x30 ???
+0x2c ??? (related to use count)
+0x30 ??? (related to unique stat)>
 
 th143.exe+E6B90
 offset 10 then offset 18
 => main item use count
+offset 18
+=> how many times a main item has been used?
 offset 14 then offset 18
 -> sub item use count
 

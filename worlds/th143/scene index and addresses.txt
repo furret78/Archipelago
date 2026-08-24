@@ -5,6 +5,8 @@ clear = all bytes, challenge and score = 4 bytes/integer
 clear addresses are distanced from each other by +/- 0x314
 challenge and score addresses apply similarly
 
+index here is in decimal
+
 1 1-1 (clear: 0x354) (challenge: 0x380) (score: 0x384) start game, yatsuhashi 3 items unlock
 2 1-2 (clear: 0x668) (challenge: 0x694) (score: 0x698)
 3 1-3 (clear: 0x97C) (challenge: 0x9A8)

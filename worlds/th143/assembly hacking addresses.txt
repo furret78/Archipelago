@@ -1,0 +1,192 @@
+cheat code disabling
+th143.exe+
+65eed => all 90 (9 bytes)
+65ef6 => all 90 (9 bytes)
+65ee2 => 02 (1 byte, how many characters must be correct to activate cheat)
+65eec => 10 (1 byte, sound assignment for cheat unlock)
+sound index
+0x00 player shoot bullet
+0x01 player shoot bullet
+0x02 death
+0x03 enemy defeat
+0x04 enemy defeat (quieter)
+0x05 boss defeat
+0x06 big bullet burst
+0x07 select
+0x08 select
+0x09 cancel
+0x0A change option
+0x0B timeout 1
+0x0C timeout 2
+0x0D gain option
+0x0E pause
+0x0F gain bomb
+0x10 invalid
+0x11 gain life/extend
+0x12 laser
+0x13 laser short
+0x14 marisa laser shooting
+0x15 boss shoot bullet
+0x16 boss shoot bullet 2
+0x17 boss shoot bullet 3
+0x18 boss shoot bullet (loud)
+0x19 boss shoot bullet (slightly loud)
+0x1A boss shoot bullet 2
+0x1B boss shoot bullet (loud)
+0x1C boss charge-up (old?)
+0x1D old burst/charge up?
+0x1E boss charge up long (modern)
+0x1F camera ready
+0x20 se_gun
+0x21 spell card declare
+0x22 hit enemy
+0x23 hit enemy (near dead)
+0x24 hit enemy (invincible)
+0x25 collect item
+0x26 sparkle
+0x27 twinkle
+0x28 twinkle short
+0x29 sparkle (loud)
+0x2A graze
+0x2B graze
+0x2C slash (loud)
+0x2D slash
+0x2E gain bomb (loud)
+0x2F life item appears
+0x30 bomb item appears
+0x31 master spark
+0x32 transition? border?
+0x33 taiko drum
+0x34 transition 2?
+0x35 transition 2?
+0x36 boss charge up short
+0x37 player charge up
+0x38 player charge ready (cirno bomb ready)
+0x39 DDC item collection
+0x3A player (cirno) charge ready?
+0x3B divine spirit 1
+0x3C divine spirit 2
+0x3D divine spirit 3
+0x3E divine spirit 4
+0x3F divine spirit collect
+0x40 marisa missile shoot
+0x41 marisa missile explode
+0x42 trance death
+0x43 some kind of alert/appear sound? from TD
+0x44 nitori missile explode
+0x45 spell card timeout
+0x46 noise (used for waves in HBM)
+0x47 bullet clear
+0x48 something?
+0x49 wolf howl
+0x4A life item appears
+0x4B growth
+0x4C fabric use
+0x4D fabric over
+0x4E notice/alert appears
+0x4F camera takes photo
+0x50 camera zoom
+0x51 gap teleport (left?)
+0x52 gap teleport (right?)
+0x53 gap teleport
+0x54 lantern use/yin-yang use
+0x55 lantern over/yin-yang over
+0x56 gain achievement
+0x57 all scenes clear alert
+
+
+PAUSE_MENU_PTR
+th143.exe+e6b84 offset 0x34
+th143.exe+e6b84 offset 0x3e4
+
+&pause_menu_pointer_6[0xe] and 1
+
+th143.exe+385a0 function for disabling menu functions, look into this later
+
+Always allow/disable Next Scene
+th143.exe+4abaf => EB 29 (this ensures the condition is always skipped, and will be available)
+or set it to 90 90 with length 2 (this ensures it will always be greyed out)
+
+Disable Next Scene bug by disabling Replays
+th143.exe+e4700 = number of continues used
+set to anything but 0 and the game will autolock replays across all pause menus
+th143.exe+4ab90
+set to 90 90 to lock replays only on a scene clear
+
+Is Pause Menu open? / Pause game?
+GAME_THREAD_PTR
+th143.exe+E6A5C offset 0x80 (1 byte)
+if 0 then no, if 0x10 then yes
+
+Something idk
+th143.exe+E6A5C offset 0x94 (1 byte)
+
+
+Disable next day unlocks
+th143.exe+62559 => EB
+
+
+Forced item upgrades
+th143.exe
+the following should be added onto the address, not offset unless written as such
+=> the byte(s) to write to the address
+set to EB unless stated otherwise
+
+Nimble Fabric
+566e4
+566fe
+56718
+56732
+5674c
+56766
+
+Tengu's Toy Camera
+56803
+5681d
+56837
+56851
+4586b
+56885
+
+Gap Folding Umbrella
+56916
+56930
+5694a
+56964
+5697e
+
+Ghastly Send-Off Lantern
+56a08
+56a22
+56a3c
+56a56
+
+Bloodthirsty Yin-yang Orb
+56aed
+56b07
+56b21
+
+Four-Foot Magic Bomb
+56bb2
+56bcc
+56be6
+56c00
+56c1a
+
+Substitute Jizo
+56cab
+56cc5
+56cdf
+56cf9
+56d13
+
+Cursed Decoy Doll
+56da1
+56dbb
+56dd5
+56def
+
+Miracle Mallet Replica
+56e85
+56e9f
+56eb9
