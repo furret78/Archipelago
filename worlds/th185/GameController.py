@@ -297,8 +297,8 @@ class GameController:
         if stage != STAGE_CHALLENGE_ID:
             bossRecordAddress = self.getAddressFromPointerWithBase(ADDR_BOSS_ID_TO_PTR[stage][boss][category])
         else:
-            bossRecordAddress = self.getAddressFromPointerWithBase(ADDR_BOSS_ID_TO_PTR[stage][boss])
-        self.pm.write_bytes(bossRecordAddress, bytes([value]), 1)
+            bossRecordAddress = self.getAddressFromPointerWithBase(ADDR_BOSS_ID_TO_PTR[STAGE_CHALLENGE_ID][boss])
+        self.pm.write_bytes(bossRecordAddress, bytes([clamp(value, 0x00, 0xFF)]), 1)
 
     def getHiddenBossDefeat(self, stage: int, boss: int) -> bool:
         """
@@ -318,7 +318,7 @@ class GameController:
         """
         finalOffset = OFFSET_HIDDEN_DEFEAT_STAT + (stage * OFFSET_MULT_STAGE_STAT) + boss
         addrHiddenBossRecord = self.getAddressFromPointerWithBase(finalOffset)
-        self.pm.write_bytes(addrHiddenBossRecord, bytes([value]), 1)
+        self.pm.write_bytes(addrHiddenBossRecord, bytes([clamp(value, 0x00, 0xFF)]), 1)
 
     # Card Shop functions
     def getShopCardData(self, card_id: str) -> bytes:

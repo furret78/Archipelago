@@ -36,7 +36,7 @@ def copy_and_replace(directory: str, logger):
     if os.path.exists(backup_file_path):
         os.remove(backup_file_path)
 
-    logger.info(f"Successfully replaced save data at: {full_file_path}")
+    logger.info(f"Scorefile has been replaced at: {full_file_path}")
 
 
 def get_currency_type_from_str(currency_type_string: str, game_context, logger) -> int:

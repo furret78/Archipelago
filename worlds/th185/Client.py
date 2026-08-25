@@ -23,6 +23,7 @@ from .variables.music_and_achiev import MUSIC_ROOM_UNLOCK_STR, ACHIEVE_UNLOCK_ST
 
 
 # Handles the game itself. The watcher that runs loops is down below.
+challenge_boss_pool = get_boss_names_challenge_list()
 
 class TouhouHBMClientProcessor(ClientCommandProcessor):
     def __init__(self, ctx):
@@ -239,6 +240,7 @@ class TouhouHBMContext(CommonContext):
 
         self.no_card_unlocked: bool = False
         self.loadingDataSetup: bool = True
+        self.save_data_loaded_complete: bool = False
         self.retrievedCustomData: bool = False
         self.halt_game_logic: bool = False
 
@@ -389,6 +391,7 @@ class TouhouHBMContext(CommonContext):
 
         self.is_connected = False
         self.loadingDataSetup = True
+        self.save_data_loaded_complete = False
 
         self.menuFunds = 0
         self.loadout_slots = 1
@@ -1325,14 +1328,42 @@ class TouhouHBMContext(CommonContext):
         """
         return self.options["progressive_loadout"] == 0
 
+    # Lock all location data
+    async def lock_all_location_data(self):
+        """
+        It is not always reliable that the game will be in a clean state.
+        Make sure to clear all boss records and card records before doing location checks.
+        """
+        for stage_name in STAGE_LIST:
+            market_id = STAGE_NAME_TO_ID[stage_name]
+            if stage_name != CHALLENGE_NAME:
+                for boss_name in ALL_BOSSES_LIST[market_id]:
+                    self.handler.setBossRecordGame(market_id, BOSS_NAME_TO_ID[boss_name], False)
+                    self.handler.setBossRecordGame(market_id, BOSS_NAME_TO_ID[boss_name], False, BossDataType.Defeat)
+            else:
+                for boss_name in challenge_boss_pool:
+                    self.handler.setBossRecordGame(market_id, BOSS_NAME_TO_ID[boss_name], False)
+                    if boss_name not in ALL_BOSSES_LIST[STAGE6_ID]: continue
+                    self.handler.setBossRecordGame(market_id, BOSS_NAME_TO_ID[boss_name], False, BossDataType.Defeat)
+
+        for card in ABILITY_CARD_LIST:
+            self.handler.setCardShopRecordGame(card, False)
+            self.handler.setDexCardData(card, False)
+
+        for soundtrack_id in MUSIC_ROOM_NAME_DICT.keys():
+            self.handler.setMusicRecord(soundtrack_id, False)
+
+        for achievement_id in ACHIEVE_NAME_DICT.keys():
+            self.handler.setAchievementStatus(achievement_id, False)
+
+        return
+
     # Update locations
     async def update_locations_checked(self):
         """
         Check if any locations has been checked since this was last called.
         If there is, send a message and update the checked location list.
         """
-        challenge_boss_pool = get_boss_names_challenge_list()
-
         def obligatory_location_table_check(given_location_name: str) -> bool:
             """
             Obligatory location table check function.
@@ -1372,9 +1403,12 @@ class TouhouHBMContext(CommonContext):
                     if stage_boss_name in STORY_BOSSES_LIST: continue
                     self.handler.autoClearBossRecord(stage_id=local_stage_id, boss_id=BOSS_NAME_TO_ID[stage_boss_name])
 
-        new_locations = []
+            return
 
         if self.loadingDataSetup: return
+        if not self.save_data_loaded_complete: return
+
+        new_locations = []
 
         stage_exist_status = self.handler.isGameInStage()
         black_market_status = self.handler.isBlackMarketOpen()
@@ -1537,7 +1571,9 @@ class TouhouHBMContext(CommonContext):
 
         self.handler.setLoadMenuIndex(self.options["starting_market"])
 
-        if self.debug_alerts: logger.info(f"LOADING - Attempting to load previous play data...")
+        await self.lock_all_location_data()
+
+        if self.debug_alerts: logger.info(f"LOADING - Cleared dirty game state. Attempting to load previous play data...")
 
         try:
             if self.debug_alerts: logger.info(f"(1/4) Loading music room and achievement records.")
@@ -1548,6 +1584,8 @@ class TouhouHBMContext(CommonContext):
             self.load_save_data_dex()
             if self.debug_alerts: logger.info(f"(4/4) Loading other menu data.")
             self.load_save_data_menu()
+
+            self.save_data_loaded_complete = True
         except Exception as e:
             if self.debug_alerts:
                 logger.info(f"LOADING - Error occurred during the process.")
@@ -2157,8 +2195,9 @@ class TouhouHBMContext(CommonContext):
         """
         try:
             while self.should_run_loop():
-                await self.update_locations_checked()
-                self.update_stage_list()
+                if self.save_data_loaded_complete:
+                    await self.update_locations_checked()
+                    self.update_stage_list()
                 await asyncio.sleep(0.5)
         except Exception as e:
             self.inError = True
@@ -2306,7 +2345,7 @@ class TouhouHBMContext(CommonContext):
             # 4. When the timer runs out, return to the old value.
             #    If there are still remaining traps, do not reset value just yet;
             #    Just reset the timer instead.
-            if (trap_key_name is "aya_speed" or trap_key_name is "freeze") and is_first_time:
+            if (trap_key_name == "aya_speed" or trap_key_name == "freeze") and is_first_time:
                 self.set_trap_old_value("speed", self.handler.gameController.readSpeed())
 
             match trap_key_name:
@@ -2384,7 +2423,7 @@ class TouhouHBMContext(CommonContext):
 
                 # Handle the actual traps here.
                 for key_name in self.received_traps.keys():
-                    if ((key_name is "aya_speed" or key_name is "freeze") and
+                    if ((key_name == "aya_speed" or key_name == "freeze") and
                         (trap_active_dict["aya_speed"] or trap_active_dict["freeze"])): continue
                     elif not trap_active_dict[key_name] and self.received_traps[key_name] > 0:
                         start_trap(key_name)
@@ -2398,7 +2437,7 @@ class TouhouHBMContext(CommonContext):
                             trap_timer_dict[key_name] = 0
                             # Special case for Aya Speed and Freeze Traps since they both tinker with player speed.
                             # This is to avoid saving 0% Speed or 500% Speed as the old speed values.
-                            if key_name is "aya_speed" or key_name is "freeze":
+                            if key_name == "aya_speed" or key_name == "freeze":
                                 if self.received_traps["aya_speed"] <= 0 and self.received_traps["freeze"] <= 0:
                                     remove_trap(key_name)
                                 elif self.received_traps["aya_speed"] > 0:
@@ -2418,7 +2457,7 @@ class TouhouHBMContext(CommonContext):
         """
         Only intended to be used in the Trap loop.
         """
-        if value_name is "magic":
+        if value_name == "magic":
             if self.trap_old_values[value_name] is None:
                 self.trap_old_values[value_name] = value
             elif self.debug_alerts:
@@ -2435,7 +2474,7 @@ class TouhouHBMContext(CommonContext):
         Use this only when the stage restarts.
         """
         for value_name in self.trap_old_values.keys():
-            if value_name is "magic":
+            if value_name == "magic":
                 self.trap_old_values[value_name] = None
             else: self.trap_old_values[value_name] = -1
 
@@ -2542,13 +2581,7 @@ async def game_watcher(ctx: TouhouHBMContext):
 	It will also attempt to reconnect if the connection to the game is lost.
     """
     ctx.get_or_default_client_settings()
-
     await ctx.wait_for_initial_connection_info()
-
-    if CLIENT_AUTO_REPLACE in ctx.client_settings:
-        if ctx.client_settings[CLIENT_AUTO_REPLACE]:
-            copy_and_replace(ctx.scorefile_path, logger)
-
     await ctx.initial_load_last_item_list()
 
     while not ctx.exit_event.is_set():
@@ -2573,6 +2606,9 @@ async def game_watcher(ctx: TouhouHBMContext):
 
         # Trying to make first connection to the game
         if ctx.handler is None and not ctx.inError:
+            if CLIENT_AUTO_REPLACE in ctx.client_settings:
+                if ctx.client_settings[CLIENT_AUTO_REPLACE]:
+                    copy_and_replace(ctx.scorefile_path, logger)
             logger.info(f"Trying to find {SHORT_NAME} game process...")
             asyncio.create_task(ctx.connect_to_game())
             while ctx.handler is None and not ctx.exit_event.is_set():
