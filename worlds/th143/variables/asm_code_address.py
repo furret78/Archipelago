@@ -1,3 +1,4 @@
+# Addresses to disable forced item upgrades.
 ADDR_OFFSET_ITEM_UPGRADES = (
     # Nimble Fabric
     0x566e4, 0x566fe, 0x56718, 0x56732, 0x5674c, 0x56766,
@@ -18,3 +19,9 @@ ADDR_OFFSET_ITEM_UPGRADES = (
     # Miracle Mallet Replica
     0x56e85, 0x56e9f, 0x56eb9
 )
+
+# Cheat code disabling.
+# 18 bytes of 0x90 (NOP).
+ADDR_STATIC_CHEAT_CODE = 0x00065EED
+# Change to 0x10 to play the invalid sound since the cheat code is disabled.
+ADDR_STATIC_CHEAT_SOUND = 0x00065EEC

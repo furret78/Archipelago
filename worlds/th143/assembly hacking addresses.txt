@@ -118,6 +118,15 @@ GAME_THREAD_PTR
 th143.exe+E6A5C offset 0x80 (1 byte)
 if 0 then no, if 0x10 then yes
 
+Reduce playtime requirements by half
+(time written in reverse order of bytes/little endian encoding/least significant byte first)
+th143.exe+338aa
+40 73 05 (0x57e40) => 20 bf 02 (0x02bf20)
+th143.exe+338ce
+40 77 1b (0x1b7740) => a0 bb 0d (0x0dbba0)
+th143.exe+338f2
+80 ee 36 (0x36ee80) => 40 77 1b (0x1b7740)
+
 Something idk
 th143.exe+E6A5C offset 0x94 (1 byte)
 
