@@ -170,3 +170,29 @@ th143.exe+E6B90 offset ed0c + (34 * item_id) + 14 = item scene clear count = ite
 
 th143.exe+E6B9C offset 0xEF94 = playtime (frames)
 th143.exe+E6B9C offset 0xEF98 = playtime (if this hits anywhere above 0, the player has accumulated way too much time)
+
+
+th143.exe+e6b88 offset 0x684 = player death state
+00 teleports a distance upwards and clears screen
+01 normal
+02 returning from below screen
+03 frozen in place (invincible)
+04 pichu~un
+
+th143.exe+e6b88 offset 1847c = player invincibility states
+0x00 normal
+0x10 lock player speed, can still shoot
+0x20 invincible, can move
+0x32 invincible, cannot move
+add 0x04 to turn off death sound
+0xA0 invincible, hides player sprite, lantern
+0x100 homing attacks home for 1 frame, doll
+0x600 lock player sprite
+0x200 lock player sprite at moving right (immediately set to 0x600 afterwards)
+0x300 same as above
+0x400 resets everything
+0x500 sets to 0x100 afterwards (using doll anim?)
+
+
+th143.exe+e6a54 offset 198
+set to 1 to instantly crash the game
