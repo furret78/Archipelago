@@ -199,3 +199,25 @@ Miracle Mallet Replica
 56e85
 56e9f
 56eb9
+
+
+
+Disable specific scene clears (Change this to 90/NOP)
+33ce7 5 bytes
+33cec 7 bytes
+
+3-1
+33d6f 5 bytes
+33d74 7 bytes
+
+5-1
+33dfc 5 bytes
+33e01 7 bytes
+
+6-1
+33e50 5 bytes
+33e55 7 bytes
+
+8-1
+33e84 5 bytes
+33e89 7 bytes

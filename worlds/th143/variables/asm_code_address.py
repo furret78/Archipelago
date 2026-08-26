@@ -22,6 +22,32 @@ ADDR_OFFSET_ITEM_UPGRADES = (
 
 # Cheat code disabling.
 # 18 bytes of 0x90 (NOP).
-ADDR_STATIC_CHEAT_CODE = 0x00065EED
+ADDR_STATIC_CHEAT_CODE = 0x65EED
 # Change to 0x10 to play the invalid sound since the cheat code is disabled.
-ADDR_STATIC_CHEAT_SOUND = 0x00065EEC
+ADDR_STATIC_CHEAT_SOUND = 0x65EEC
+
+# Disabling saving replays if a scene was cleared successfully.
+# Original opcodes are 7e, 0a. Change to 90, 90.
+ADDR_STATIC_SAVE_REPLAY = 0x4AB90
+# Disabling Next Scene button.
+# Original opcodes are 7c, 29. Change to 90, 90 to ensure it is always locked.
+ADDR_STATIC_NEXT_SCENE = 0x4ABAF
+# Disabling unlocking the next Day. Change to EB to always skip unlock.
+ADDR_STATIC_UNLOCK_DAY = 0x62559
+
+# Set playtime requirements for achievements.
+# Written in little endian encoding/least significant byte first.
+ADDR_STATIC_PLAYTIME_REQ = [0x338AA, 0x338CE, 0x338F2]
+
+# Disable special Scene 1 alerts.
+ADDR_STATIC_SCENE_ONE = [
+    # 2 bytes
+    (0x33d19, 0x33da6, 0x33e2f),
+    # 6 bytes,
+    (0x33d1b, 0x33d33, 0x33d39, 0x33d4a, 0x33d50, 0x33d61,
+     0x33da8, 0x33dc0, 0x33dc6, 0x33dd7, 0x33ddd, 0x33dee, 0x33e42),
+    # 7 bytes
+    (0x33d21, 0x33dae),
+    # 11 bytes
+    (0x33d28, 0x33d3f, 0x33d56, 0x33db5, 0x33dcc, 0x33de3, 0x33e37)
+]
