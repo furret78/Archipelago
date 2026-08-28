@@ -3,7 +3,7 @@ import unittest
 import pymem
 
 from BaseClasses import MultiWorld
-from worlds.th143.variables.asm_code_address import ADDR_OFFSET_ITEM_UPGRADES
+from worlds.th143.variables.asm_code_address import ADDR_STATIC_ITEM_UPGRADES
 
 
 def getPointerAddress(pm, base, offsets):
@@ -19,7 +19,7 @@ class ISCStatTest(unittest.TestCase):
 
     def test_disable_item_level_up(self):
         self.pm = pymem.Pymem(process_name="th143.exe")
-        for offset in ADDR_OFFSET_ITEM_UPGRADES:
+        for offset in ADDR_STATIC_ITEM_UPGRADES:
             self.pm.write_bytes(self.pm.base_address + offset, bytes([0xEB]), 1)
         print("Disabled all cheat item upgrades!")
 
@@ -31,7 +31,7 @@ class ISCStatTest(unittest.TestCase):
     def test_set_sub_item(self):
         # Change between True and False to unlock and lock sub-items, respectively.
         self.pm = pymem.Pymem(process_name="th143.exe")
-        cheat_sub_item_unlocked: bool = True
+        cheat_sub_item_unlocked: bool = False
 
         addrSubItemData = getPointerAddress(self.pm, self.pm.base_address + 0xE6B9C, [0xEFAD])
         self.pm.write_bool(addrSubItemData, cheat_sub_item_unlocked)
@@ -49,16 +49,16 @@ class ISCStatTest(unittest.TestCase):
         # 6 Substitute Jizo
         # 7 Cursed Decoy Doll
         # 8 Miracle Mallet Replica
-        cheat_item_id = 3
-        cheat_item_level = 0 # purely cosmetic
-        cheat_item_unique_stat = 500
+        cheat_item_id = 6
+        cheat_item_level = 7 # purely cosmetic
+        cheat_item_unique_stat = 60
         # See Touhou Wiki for what each item's unique stat is.
         # For items that use time as their unique stat, 60 = 1 second.
         # Bloodthirsty Yin-yang Orb's unique stat only ever stays at 60 in the vanilla game.
         # Four-Foot Magic Bomb starts at 128, its subsequent upgrades are multiplied by percentage rounded up.
         # e.g. 20% of 128 = 25.6, meaning 128 + 25.6 = 153.6, rounded up = 154
         # Miracle Mallet's unique stat only ever stays at 400 in the vanilla game.
-        cheat_item_use_count = 99
+        cheat_item_use_count = 69
         # The game displays up to 9 at most, but the actual count can go beyond that.
 
         # Write level.

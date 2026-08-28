@@ -1,5 +1,5 @@
-# Addresses to disable forced item upgrades.
-ADDR_OFFSET_ITEM_UPGRADES = (
+# Addresses to disable forced item upgrades. Set to EB (1 byte).
+ADDR_STATIC_ITEM_UPGRADES = (
     # Nimble Fabric
     0x566e4, 0x566fe, 0x56718, 0x56732, 0x5674c, 0x56766,
     # Tengu's Toy Camera
@@ -27,7 +27,7 @@ ADDR_STATIC_CHEAT_CODE = 0x65EED
 ADDR_STATIC_CHEAT_SOUND = 0x65EEC
 
 # Disabling saving replays if a scene was cleared successfully.
-# Original opcodes are 7e, 0a. Change to 90, 90.
+# Original opcodes are 7e, 0a. Change to 90, 90 to disable.
 ADDR_STATIC_SAVE_REPLAY = 0x4AB90
 # Disabling Next Scene button.
 # Original opcodes are 7c, 29. Change to 90, 90 to ensure it is always locked.
@@ -37,17 +37,20 @@ ADDR_STATIC_UNLOCK_DAY = 0x62559
 
 # Set playtime requirements for achievements.
 # Written in little endian encoding/least significant byte first.
+# 1 hour, 5 hours, and 10 hours, respectively. All 3 bytes.
 ADDR_STATIC_PLAYTIME_REQ = [0x338AA, 0x338CE, 0x338F2]
 
-# Disable special Scene 1 alerts.
+# Disable special Scene 1 alerts. Change them to 0x90/NOP.
 ADDR_STATIC_SCENE_ONE = [
     # 2 bytes
     (0x33d19, 0x33da6, 0x33e2f),
-    # 6 bytes,
+    # 5 bytes
+    (0x33ce7, 0x33d6f, 0x33dfc, 0x33e50, 0x33e84),
+    # 6 bytes
     (0x33d1b, 0x33d33, 0x33d39, 0x33d4a, 0x33d50, 0x33d61,
      0x33da8, 0x33dc0, 0x33dc6, 0x33dd7, 0x33ddd, 0x33dee, 0x33e42),
     # 7 bytes
-    (0x33d21, 0x33dae),
+    (0x33d21, 0x33dae, 0x33cec, 0x33d74, 0x33e01, 0x33e55, 0x33e89),
     # 11 bytes
     (0x33d28, 0x33d3f, 0x33d56, 0x33db5, 0x33dcc, 0x33de3, 0x33e37)
 ]

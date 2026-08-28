@@ -103,15 +103,8 @@ th143.exe+e6b84 offset 0x3e4
 
 th143.exe+385a0 function for disabling menu functions, look into this later
 
-Always allow/disable Next Scene
-th143.exe+4abaf => EB 29 (this ensures the condition is always skipped, and will be available)
-or set it to 90 90 with length 2 (this ensures it will always be greyed out)
-
-Disable Next Scene bug by disabling Replays
 th143.exe+e4700 = number of continues used
 set to anything but 0 and the game will autolock replays across all pause menus
-th143.exe+4ab90
-set to 90 90 to lock replays only on a scene clear
 
 Is Pause Menu open? / Pause game?
 GAME_THREAD_PTR
@@ -130,94 +123,51 @@ th143.exe+338f2
 Something idk
 th143.exe+E6A5C offset 0x94 (1 byte)
 
+This is responsible for incrementing the scene variable for the Next Scene function
+th143.exe+4b1e5
+41 (increase by 1) => 90 (do nothing)
 
-Disable next day unlocks
-th143.exe+62559 => EB
+Scene photo file name
+th143.exe+c7ba0
+th143.exe+c5000
+savedata
+73 61 76 65 64 61 74 61
+sc_143ap
+73 63 5F 31 34 33 61 70
 
+Replay file name
+th143.exe+c67a0
+th143
+74 68
+ap143
+61 70
+Replay folder name
+th143.exe+c6ed8
+th143.exe+c7be4
+replay
+72 65 70 6c 61 79
+rep_ap
+72 65 70 5F 61 70
 
-Forced item upgrades
-th143.exe
-the following should be added onto the address, not offset unless written as such
-=> the byte(s) to write to the address
-set to EB unless stated otherwise
+Scorefile filename (handled with thcrap, can still attempt override in client)
+th143.exe+c7090
+scoreth143.dat
+73 63 6f 72 65 74 68 31 34 33
+scoreap143.dat
+73 63 6F 72 65 61 70 31 34 33
 
-Nimble Fabric
-566e4
-566fe
-56718
-56732
-5674c
-56766
-
-Tengu's Toy Camera
-56803
-5681d
-56837
-56851
-4586b
-56885
-
-Gap Folding Umbrella
-56916
-56930
-5694a
-56964
-5697e
-
-Ghastly Send-Off Lantern
-56a08
-56a22
-56a3c
-56a56
-
-Bloodthirsty Yin-yang Orb
-56aed
-56b07
-56b21
-
-Four-Foot Magic Bomb
-56bb2
-56bcc
-56be6
-56c00
-56c1a
-
-Substitute Jizo
-56cab
-56cc5
-56cdf
-56cf9
-56d13
-
-Cursed Decoy Doll
-56da1
-56dbb
-56dd5
-56def
-
-Miracle Mallet Replica
-56e85
-56e9f
-56eb9
+Bypass all scene locks to instate own system
+Day 3 Lock (overwrite the next 3 with EB)
+th143.exe+63a2d
+Day 5 Lock
+th143.exe+63a40
+Day 6 Lock
+th143.exe+63a53
+Day 8 Lock (overwrite with 0x90, length 15)
+th143.exe+63a5f
 
 
-
-Disable specific scene clears (Change this to 90/NOP)
-33ce7 5 bytes
-33cec 7 bytes
-
-3-1
-33d6f 5 bytes
-33d74 7 bytes
-
-5-1
-33dfc 5 bytes
-33e01 7 bytes
-
-6-1
-33e50 5 bytes
-33e55 7 bytes
-
-8-1
-33e84 5 bytes
-33e89 7 bytes
+Disable forcing sub-item slot to be unlocked during 6-1
+th143.exe+633bc (0x90, length 7)
+Disable locking sub-item slot if 6-1 is not cleared
+th143.exe+625d2 (0xEB)

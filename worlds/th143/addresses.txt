@@ -10,7 +10,21 @@ offset efa0 = last sub item used
 offset f080 = total scene clears (not unique scene clears) (goes up to 99,999,999)
 offset ef28 = same as above for some reason (goes up to 9,999,999)
 
+
+TODO: find a way to check if and only if the player is doing scene select for sub-item locking purposes
+- this is to avoid fucking with watching replays
+th143.exe+E471C last chosen scene in menu
+
+
 th143.exe+e6a2c = last cleared scene, if 0 => no scene cleared
+
+
+Set both of these to between 0 and 9 for Day 1 and 10
+Only when hooking onto the game since there's really no need to do so otherwise
+Remember to read this value all the time when possible, so long as the menu pointer isn't 0
+If it *is* 0, don't
+th143.exe+E4718 last selected day (menu)
+th143.exe+E4734 last selected day (menu, data)
 
 
 notice index (seems to be 4 bytes?)
@@ -155,8 +169,12 @@ Sub07 Jizo
 Sub03 Umbrella
 Sub01 Fabric
 
-th143.exe+e6b9c offset EFAD
-th143.exe+e4714
+th143.exe+e6b9c offset EFAD = sub-item unlock boolean
+th143.exe+E4728 = same as the above, but for menu UI
+th143.exe+e4714 = current sub-item that will be taken into the stage
+(can be modified in the menu 24/7 if the value is undesirable somehow
+e.g. 07 when 07 is not available, can be immediately swapped to 09
+not needed if sub-items are still locked)
 
 th143.exe+E6B90 offset 0x18 = total item use during scene count
 
@@ -165,8 +183,10 @@ scorefile offset eef4
 
 th143.exe+E6B90 offset (last_scene_id * 0x314) + 3c = what scene has had a no-item clear?
 th143.exe+E6B9C offset eef4 = Total No-item Clears
+
 th143.exe+E6B90 offset (0x10 * item_id + last_scene_id * 0x314 + 8) = scene clear record with item / what item was used to clear scene?
-th143.exe+E6B90 offset ed0c + (34 * item_id) + 14 = item scene clear count = item clear count / how scenes has this item been used to clear?
+
+th143.exe+E6B90 offset ed0c + (34 * item_id) + 14 = item scene clear count = item clear count / how many scenes has this item been used to clear?
 
 th143.exe+E6B9C offset 0xEF94 = playtime (frames)
 th143.exe+E6B9C offset 0xEF98 = playtime (if this hits anywhere above 0, the player has accumulated way too much time)

@@ -1,3 +1,8 @@
+how many scenes should a day have (this is static, no offsets here)
+how many scenes shown = th143.exe+c4a30 + (day_id * 4)
+day 1 = day_id 0
+day 10 = day_id 9
+
 th143.exe+E6B9C
 offsets are below
 
