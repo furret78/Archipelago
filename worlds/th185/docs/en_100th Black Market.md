@@ -1,5 +1,9 @@
 # Black Market of Bulletphilia ~ 100th Black Market
 
+## Obligatory Derivative Work (二次創作) Disclaimer
+
+This Archipelago implementation is not an official work by Team Shanghai Alice, and should be strictly considered as such. Do not mistake it as an official work.
+
 ## Where is the options page?
 
 The player options page for this game contains all the options you need to configure and export a config file. Player options page link: [100th Black Market Player Options Page](../player-options). If installed as a custom .apworld, it is recommended to use the Archipelago Launcher's **Options Creator** instead.
