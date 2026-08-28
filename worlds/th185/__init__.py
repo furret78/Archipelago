@@ -21,7 +21,8 @@ components.append(Component(
     func=launch_client,
     component_type=Type.CLIENT,
     game_name=DISPLAY_NAME,
-    icon="th185_card"
+    icon="th185_card",
+    description="AP Client for Black Market of Bulletphilia ~ 100th Black Market."
 ))
 
 icon_paths["th185_card"] = f"ap:{__name__}/icons/th185_card.png"
