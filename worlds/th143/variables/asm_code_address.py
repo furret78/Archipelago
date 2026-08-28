@@ -1,3 +1,7 @@
+# ASM addresses for ASM hacks.
+# All of these are static addresses that should be added onto the base address.
+# These require no offsets at all, or only additions instead of proper pointer offsets.
+
 # Addresses to disable forced item upgrades. Set to EB (1 byte).
 ADDR_STATIC_ITEM_UPGRADES = (
     # Nimble Fabric
@@ -26,12 +30,12 @@ ADDR_STATIC_CHEAT_CODE = 0x65EED
 # Change to 0x10 to play the invalid sound since the cheat code is disabled.
 ADDR_STATIC_CHEAT_SOUND = 0x65EEC
 
-# Disabling saving replays if a scene was cleared successfully.
+# Disable saving replays if a scene was cleared successfully.
 # Original opcodes are 7e, 0a. Change to 90, 90 to disable.
 ADDR_STATIC_SAVE_REPLAY = 0x4AB90
-# Disabling Next Scene button.
-# Original opcodes are 7c, 29. Change to 90, 90 to ensure it is always locked.
-ADDR_STATIC_NEXT_SCENE = 0x4ABAF
+# Changing whether the Next Scene button actually takes you to the next scene.
+# Originally 0x41 (increase by 1). Change to 0x00 to do nothing.
+ADDR_STATIC_NEXT_SCENE = 0x4b1e5
 # Disabling unlocking the next Day. Change to EB to always skip unlock.
 ADDR_STATIC_UNLOCK_DAY = 0x62559
 
@@ -54,3 +58,18 @@ ADDR_STATIC_SCENE_ONE = [
     # 11 bytes
     (0x33d28, 0x33d3f, 0x33d56, 0x33db5, 0x33dcc, 0x33de3, 0x33e37)
 ]
+
+# Name of the BestShot folder.
+# Change to 73 63 5F 31 34 33 61 70 (sc_143ap)
+ADDR_STATIC_BESTSHOT_NAME = (0xc7ba0, 0xc5000)
+# Name of the replay folder.
+# Change to 72 65 70 5F 61 70 (rep_ap)
+ADDR_STATIC_REPLAY_NAME = (0xc6ed8, 0xc7be4)
+# Name of the scorefile.
+# Change to 73 63 6F 72 65 61 70 31 34 33 (scoreap143) upon connection.
+ADDR_STATIC_SCOREFILE_NAME = 0xc7090
+
+# Overwrite these with 0xEB
+ADDR_STATIC_SCENE_LOCKS = (0x63a2d, 0x63a40, 0x63a53)
+# Overwrite this with 0x90, 15 bytes.
+ADDR_STATIC_DAY8_LOCK = 0x63a5f

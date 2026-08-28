@@ -123,17 +123,6 @@ th143.exe+338f2
 Something idk
 th143.exe+E6A5C offset 0x94 (1 byte)
 
-This is responsible for incrementing the scene variable for the Next Scene function
-th143.exe+4b1e5
-41 (increase by 1) => 90 (do nothing)
-
-Scene photo file name
-th143.exe+c7ba0
-th143.exe+c5000
-savedata
-73 61 76 65 64 61 74 61
-sc_143ap
-73 63 5F 31 34 33 61 70
 
 Replay file name
 th143.exe+c67a0
@@ -141,33 +130,22 @@ th143
 74 68
 ap143
 61 70
-Replay folder name
-th143.exe+c6ed8
-th143.exe+c7be4
-replay
-72 65 70 6c 61 79
-rep_ap
-72 65 70 5F 61 70
 
-Scorefile filename (handled with thcrap, can still attempt override in client)
-th143.exe+c7090
-scoreth143.dat
-73 63 6f 72 65 74 68 31 34 33
-scoreap143.dat
-73 63 6F 72 65 61 70 31 34 33
-
-Bypass all scene locks to instate own system
-Day 3 Lock (overwrite the next 3 with EB)
-th143.exe+63a2d
-Day 5 Lock
-th143.exe+63a40
-Day 6 Lock
-th143.exe+63a53
-Day 8 Lock (overwrite with 0x90, length 15)
-th143.exe+63a5f
 
 
 Disable forcing sub-item slot to be unlocked during 6-1
 th143.exe+633bc (0x90, length 7)
+original: C6 80 AD EF 00 00 01
 Disable locking sub-item slot if 6-1 is not cleared
 th143.exe+625d2 (0xEB)
+
+Replace all with 0x90 (length 10)
+Disable forcing items in 6-1
+th143.exe+633c3
+th143.exe+633cd
+Disable forcing items in 5-1
+th143.exe+63388
+th143.exe+63392
+Disable forcing items in 3-1
+th143.exe+6334e
+th143.exe+63358
