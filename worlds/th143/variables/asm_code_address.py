@@ -23,6 +23,16 @@ ADDR_STATIC_ITEM_UPGRADES = (
     # Miracle Mallet Replica
     0x56e85, 0x56e9f, 0x56eb9
 )
+ADDR_STATIC_MALLET_SUB4 = (
+    # Miracle Mallet Sub-item's additions (part 1).
+    # Set all to 0x90, length 4.
+    0x5678f, 0x568ae, 0x569a7, 0x56a7f, 0x56b4a, 0x56c43
+)
+ADDR_STATIC_MALLET_SUB3 = (
+    # Miracle Mallet Sub-item's additions (part 2).
+    # Set all to 0x90, length 3.
+    0x56d3c, 0x56e18, 0x56ee2
+)
 
 # Cheat code disabling.
 # 18 bytes of 0x90 (NOP).
@@ -59,6 +69,17 @@ ADDR_STATIC_SCENE_ONE = [
     (0x33d28, 0x33d3f, 0x33d56, 0x33db5, 0x33dcc, 0x33de3, 0x33e37)
 ]
 
+# Disable forcing equip of items during scenes.
+# Override all with 0x90, length 10.
+ADDR_STATIC_FORCE_ITEM = (0x6334e, 0x63358, 0x63388, 0x63392, 0x633c3, 0x633cd)
+# Disable forced sub-item unlock during 6-1.
+# Overwrite with 0x90, length 7.
+ADDR_STATIC_FORCE_SUBITEM = 0x633bc
+# If 6-1 is not cleared, the game will try to relock sub-items if they're unlocked.
+# Overwrite with 0xEB to disable that.
+ADDR_STATIC_LOCK_SUBITEM = 0x625d2
+
+
 # Name of the BestShot folder.
 # Change to 73 63 5F 31 34 33 61 70 (sc_143ap)
 ADDR_STATIC_BESTSHOT_NAME = (0xc7ba0, 0xc5000)
@@ -66,10 +87,14 @@ ADDR_STATIC_BESTSHOT_NAME = (0xc7ba0, 0xc5000)
 # Change to 72 65 70 5F 61 70 (rep_ap)
 ADDR_STATIC_REPLAY_NAME = (0xc6ed8, 0xc7be4)
 # Name of the scorefile.
-# Change to 73 63 6F 72 65 61 70 31 34 33 (scoreap143) upon connection.
-ADDR_STATIC_SCOREFILE_NAME = 0xc7090
+# Change to 61 70 (scoreap143) upon connection.
+ADDR_STATIC_SCOREFILE_NAME = 0xc7095
 
 # Overwrite these with 0xEB
 ADDR_STATIC_SCENE_LOCKS = (0x63a2d, 0x63a40, 0x63a53)
 # Overwrite this with 0x90, 15 bytes.
 ADDR_STATIC_DAY8_LOCK = 0x63a5f
+# Overwrite how many scenes a day should have.
+# The formula is (base address + the below + (day ID * 4))
+# Day ID is 0-9. Each field is 4 bytes.
+ADDR_STATIC_START_SCENE_COUNT = 0xc4a30
