@@ -65,3 +65,8 @@ This implementation does not run natively on Linux nor does the game without int
 
 - Mods which _**directly**_ modify the game executable will break compatibility. As the client relies on consistent memory addresses to operate, directly editing the executable will derail the entire thing.
 - Mods run via the [Touhou Community Reliant Automatic Patcher (thcrap)](https://github.com/thpatch/thcrap) _may_ work, at least for language patches. This patcher is not bundled in with this AP implementation.
+
+## Uninstallation Guide
+
+- As written in **Important Setup Before Playing**, the game's save data is typically located in `%appdata%\ShanghaiAlice\th185`, although other OSes may differ. As this implementation does not permanently modify the game binaries, all that should be done is navigating to the directory written above and delete both `scoreth185.dat` and `scoreth185bak.dat`.
+- This implementation keeps its own save data in a .json file located at `data\th185` in your **Archipelago Launcher's directory**. There is actually no need to delete anything there short of a desire to clear out disk space, but it should be noted that it will negatively impact your experience with this implementation if you still have the save data of unfinished runs there.
