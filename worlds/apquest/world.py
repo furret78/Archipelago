@@ -20,7 +20,7 @@ from . import options as apquest_options  # rename due to a name conflict with W
 # You could have all your world code in just this one class, but for readability and better structure,
 # it is common to split up world functionality into multiple files.
 # This implementation in particular has the following additional files, each covering one topic:
-# regions.py, locations.py, rules.py, items.py, options.py and web_world.py.
+# regions.py, locations.py, rules.py, items.py, options_classes.py and web_world.py.
 # It is recommended that you read these in that specific order, then come back to the world class.
 class APQuestWorld(World):
     """
@@ -36,8 +36,8 @@ class APQuestWorld(World):
     # The WebWorld is a definition class that governs how this world will be displayed on the website.
     web = web_world.APQuestWebWorld()
 
-    # This is how we associate the options defined in our options.py with our world.
-    # (Note: options.py has been imported as "apquest_options" at the top of this file to avoid a name conflict)
+    # This is how we associate the options defined in our options_classes.py with our world.
+    # (Note: options_classes.py has been imported as "apquest_options" at the top of this file to avoid a name conflict)
     options_dataclass = apquest_options.APQuestOptions
     options: apquest_options.APQuestOptions  # Common mistake: This has to be a colon (:), not an equals sign (=).
 

@@ -1,6 +1,6 @@
 """
 Contains the complex data manipulation functions for mission order generation and Archipelago region creation.
-Incoming data is validated to match specifications in .options.py.
+Incoming data is validated to match specifications in .options_classes.py.
 The functions here are called from ..regions.py.
 """
 
@@ -53,7 +53,7 @@ def resolve_unlocks(mission_order: SC2MOGenMissionOrder):
 
 
 def dict_to_entry_rule(mission_order: SC2MOGenMissionOrder, data: Dict[str, Any], start_node: MissionOrderNode, rule_id: int = -1) -> EntryRule:
-    """Tries to create an entry rule object from an entry rule dict. The structure of these dicts is validated in .options.py."""
+    """Tries to create an entry rule object from an entry rule dict. The structure of these dicts is validated in .options_classes.py."""
     if "items" in data:
         items: Dict[str, int] = data["items"]
         has_generic_key = False

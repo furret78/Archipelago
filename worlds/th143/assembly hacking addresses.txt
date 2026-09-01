@@ -111,14 +111,14 @@ GAME_THREAD_PTR
 th143.exe+E6A5C offset 0x80 (1 byte)
 if 0 then no, if 0x10 then yes
 
-Reduce playtime requirements by half
+Reduce playtime requirements by half/by a fifth
 (time written in reverse order of bytes/little endian encoding/least significant byte first)
 th143.exe+338aa
-40 73 05 (0x57e40) => 20 bf 02 (0x02bf20)
+40 73 05 (0x57e40) => 20 bf 02 (0x02bf20) => 40 19 01 (0x011940)
 th143.exe+338ce
-40 77 1b (0x1b7740) => a0 bb 0d (0x0dbba0)
+40 77 1b (0x1b7740) => a0 bb 0d (0x0dbba0) => 40 73 05 (0x57e40)
 th143.exe+338f2
-80 ee 36 (0x36ee80) => 40 77 1b (0x1b7740)
+80 ee 36 (0x36ee80) => 40 77 1b (0x1b7740) => 80 FC 0A (0x0AFC80)
 
 Something idk
 th143.exe+E6A5C offset 0x94 (1 byte)
@@ -132,20 +132,24 @@ ap143
 61 70
 
 
+Disable force set item max level caps
+th143.exe
++566d6 fabric (replace with 0x90, length 7)
++567f5 camera
++56908 umbrella
++569fa lantern
++56ae4 yinyang
++56ba4 bomb
++56c9d jizo
++56d93 doll
++56e7c mallet
 
-Disable forcing sub-item slot to be unlocked during 6-1
-th143.exe+633bc (0x90, length 7)
-original: C6 80 AD EF 00 00 01
-Disable locking sub-item slot if 6-1 is not cleared
-th143.exe+625d2 (0xEB)
-
-Replace all with 0x90 (length 10)
-Disable forcing items in 6-1
-th143.exe+633c3
-th143.exe+633cd
-Disable forcing items in 5-1
-th143.exe+63388
-th143.exe+63392
-Disable forcing items in 3-1
-th143.exe+6334e
-th143.exe+63358
+Lantern subitem deathbomb check
+th143.exe+508c0
+Doll subitem focus extra shots
+th143.exe+5106e
+06 focus many shots
+01 unfocus many shots
+05 focus non-doll shots
+0A and above crashes game
+(originally 06, 05 for non-doll shots, any less for no shot)

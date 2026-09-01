@@ -2,19 +2,27 @@ go to scene_end_operations() at 0x00433940
 
 th143.exe+E6B9C scorefile/save data
 offset f16c = notice queue counter
-offset ((index of notice queue counter * 4) + 0xf170)
+offset ((index of notice queue counter * 4) + 0xf170) = which notice to show at what index
 offset efa4 = last chosen day
 offset efa8 = last chosen scene in day
 offset ef9c = last main item used
 offset efa0 = last sub item used
 offset f080 = total scene clears (not unique scene clears) (goes up to 99,999,999)
 offset ef28 = same as above for some reason (goes up to 9,999,999)
+offset ef2c = total scene clear count
+offset efe0 = whether the game already showed the congratulations screen naturally yet
+offset (achievement_id + 0xeff9) = achievement boolean
+offset (music_id + 0xef74) = music room boolean
 
 
 TODO: find a way to check if and only if the player is doing scene select for sub-item locking purposes
 - this is to avoid fucking with watching replays
 th143.exe+E471C last chosen scene in menu
 
+
+Some random Stage Pointer address that is consistently set to 0 upon stage restart
+Probably some sort of counter? If less than 53 then stage likely restarted.
+th143.exe+e6a00 offset 0x4240
 
 th143.exe+e6a2c = last cleared scene, if 0 => no scene cleared
 
@@ -75,6 +83,7 @@ th143.exe+E6A5C
 game thread pointer
 if returns 0, means not in a stage
 if anything but 0, means in a stage
+offset 0x94 whether the stage is currently a replay
 
 th143.exe+c7090
 scorefile filename "scoreth143.dat"
@@ -145,6 +154,10 @@ offset <((main_item_id + 0x48f) * 0x34) + the following:
 0xc achievement index
 0x2c ??? (related to use count)
 0x30 ??? (related to unique stat)>
+alternative formula for calculating level address:
+offset (main_item_id * 0x34) + 0xed28 = current level
+offset (main_item_id * 0x34) + 0xed2c = max level cap
+
 
 th143.exe+E6B90
 offset 10 then offset 18

@@ -1,0 +1,9 @@
+- finish goal
+- finish create items
+- finish __init__.py/world (generate early, adjust items)
+- finish client
+- TODO: Patch mallet infinite plus stat exploit
+- TODO: Rebalanced item leveling system
+- TODO: More logic difficulties other than Normal
+- TODO: Add more nuanced item level difficulties
+- TODO: Add brutal Itemless logic

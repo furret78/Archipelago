@@ -34,7 +34,7 @@ to let the player choose the difficulty, and an option to choose how much health
 option classes (with a docstring), give them a `display_name`, and add them to our game's options dataclass:
 
 ```python
-# options.py
+# options_classes.py
 from dataclasses import dataclass
 
 from Options import Toggle, Range, Choice, PerGameCommonOptions
@@ -196,7 +196,7 @@ All numeric options (i.e. Toggle, Choice, Range) can be compared to integers, st
 strings that match the option attributes after "option_" is stripped, and the attributes themselves. The option can
 also be checked to see if it exists within a collection, but this will fail for a set of strings due to hashing.
 ```python
-# options.py
+# options_classes.py
 class Logic(Choice):
     option_normal = 0
     option_hard = 1
