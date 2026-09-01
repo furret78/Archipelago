@@ -64,3 +64,9 @@ def get_absolute_scene_id(day_id: int = 0, scene_id: int = 0) -> int:
 	for i in range(clean_day_id - 1):
 		final_scene_id += CONST_DAY_SCENE_COUNT[i]
 	return final_scene_id
+
+def get_day_item_count(starting_day: int) -> int:
+	"""
+	How many Progressive Day items are remaining to unlock the rest of the Days.
+	"""
+	return clamp(9 - starting_day, 0, 9)

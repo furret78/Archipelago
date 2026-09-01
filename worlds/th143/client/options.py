@@ -31,6 +31,7 @@ class ISCDataclass(PerGameCommonOptions):
 	subitem_slot_unlock: SubitemSlotUnlock
 	subitem_individual: SubitemIndividual
 	scene_skip_count: SceneSkipCount
+	useless_filler: UselessFillerAllowed
 	# Logic/Locations
 	include_music_checks: IncludeMusicRoomChecks
 	include_itemless_logic: IncludeItemlessLogic
@@ -67,13 +68,14 @@ option_groups = [
 		]
 	),
 	OptionGroup(
-		"Item Progression Options", [
+		"Item Generation Options", [
 			ItemUpgradeProgression,
 			ItemUpgradeSeparate,
 			ItemUpgradeRemoveCap,
 			SubitemSlotUnlock,
 			SubitemIndividual,
-			SceneSkipCount
+			SceneSkipCount,
+			UselessFillerAllowed
 		]
 	),
 	OptionGroup(

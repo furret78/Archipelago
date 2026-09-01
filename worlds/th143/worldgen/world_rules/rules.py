@@ -1,6 +1,7 @@
 from rule_builder.rules import False_, True_
 from .rules_utils import rule_require_day_access, rule_require_scene_access, rule_multiple_scene_access, get_scene_rule, \
-	rule_require_day_clears, get_scene_rule_per_item, get_all_day_clears, get_nickname_rule, get_all_nickname_rules
+	rule_require_day_clears, get_scene_rule_per_item, get_all_day_clears, get_nickname_rule, get_all_nickname_rules, \
+	get_gold_hunt_rule
 from ..world_locations.locations import get_fake_scene_name, get_fake_scene_access_name
 from ...client.options_classes import CompletionType
 from ...utils.utils_get_name import get_entrance_to_region_name, get_location_name_scene, get_location_name_music_room, \
@@ -181,6 +182,6 @@ def set_goal_condition(world):
 	elif completion_type == CompletionType.option_all_achievements_true:
 		completion_rule = get_all_nickname_rules(70)
 	elif completion_type == CompletionType.option_gold_rush:
-		pass
+		completion_rule = get_gold_hunt_rule(world.options.treasure_required)
 
-	return completion_rule
+	world.set_completion_rule(completion_rule)

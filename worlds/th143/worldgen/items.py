@@ -1,11 +1,14 @@
 from typing import NamedTuple, Optional
+from unittest import case
 
 from BaseClasses import Item, ItemClassification
-from worlds.th143.variables.game_info import DISPLAY_NAME
-from worlds.th143.variables.game_stat_info import CONST_ITEM_UPGRADE_STAT
-from worlds.th143.utils.utils_get_name import get_scene_unlock_name, get_item_upgrade_name_id, \
+from .. import ISCWorld, CONST_DAY_TO_ID
+from ..utils.utils_math import get_day_item_count
+from ..variables.game_info import DISPLAY_NAME
+from ..variables.game_stat_info import CONST_ITEM_UPGRADE_STAT, CONST_DAY_SCENE_COUNT
+from ..utils.utils_get_name import get_scene_unlock_name, get_item_upgrade_name_id, \
 	get_item_remove_cap, get_item_name_usage, get_item_name_stat, get_item_name_subitem
-from worlds.th143.variables.location_item_name import CONST_PROGRESSIVE_DAY, CONST_SUBITEM_SLOT_NAME, CONST_TEMP_PREFIX, \
+from ..variables.location_item_name import CONST_PROGRESSIVE_DAY, CONST_SUBITEM_SLOT_NAME, CONST_TEMP_PREFIX, \
 	CONST_FILLER_NAME, CONST_FILLER_USELESS_NAMES, CONST_FILLER_USELESS_PREFIX, CONST_TREASURE_ITEM_NAMES, CONST_ITEM_SHORT_TO_ID
 
 class ISCItem(Item):
@@ -50,16 +53,28 @@ def get_random_filler_item_name(world) -> str:
 
 	for name in get_items_by_category(CATEGORY_USEFUL).keys():
 		filler_item_list.append(name)
-	for name in get_items_by_category(CATEGORY_FILLER).keys():
-		filler_item_list.append(name)
+
+	# If useless Filler is enabled, add to pool.
+	if world.options.useless_filler:
+		for name in get_items_by_category(CATEGORY_FILLER).keys():
+			filler_item_list.append(name)
 
 	final_item_name: str = world.random.choice(filler_item_list).__str__()
 
-	# TODO: Trap Check here.
+	# Trap Chance
+	if world.random.randint(0, 99) < world.options.trap_chance:
+		trap_item_list = []
+		for name in get_items_by_category(CATEGORY_TRAP).keys():
+			if name in world.options.trap_blacklist: continue
+			trap_item_list.append(name)
+		final_item_name: str = world.random.choice(trap_item_list).__str__()
 
 	# Then finally, return a filler.
 	return final_item_name
 
+#
+# Other various Item utils
+#
 def get_vanilla_level_max(item_id: int) -> int:
 	"""
 	How many upgrade items are needed to reach the max vanilla level.
@@ -118,7 +133,9 @@ def get_vanilla_max_stat_dict() -> dict[str, int]:
 		max_stat_dict[item_name] = get_vanilla_stat_max(item_id)
 	return max_stat_dict
 
+#
 # Really specific functions that are rarely called
+#
 def get_item_groups() -> dict[str, set[str]]:
 	item_groups: dict[str, set[str]] = {}
 
@@ -142,7 +159,57 @@ def get_item_groups() -> dict[str, set[str]]:
 
 	return item_groups
 
-def create_all_items(world):
+def create_all_items(world: ISCWorld):
+	def get_remaining_locations(the_pool: list[Item]):
+		number_of_items = len(the_pool)
+		number_of_unfilled_locations = len(world.multiworld.get_unfilled_locations(world.player))
+		return number_of_unfilled_locations - number_of_items
+
+	item_pool: list[Item] = []
+
+	# Generate all Day and Scene unlocks, if necessary. (9 Items)
+
+	# This is only ever used if Progressive Day is active.
+	latest_day_opened: int = world.options.starting_day.value
+	if len(world.selected_random_starting_days) > 0:
+		latest_day_opened = CONST_DAY_TO_ID[world.selected_random_starting_days[0]]
+	if world.options.progressive_day:
+		day_items_to_submit: int = get_day_item_count(latest_day_opened)
+		if day_items_to_submit > 0:
+			for item_submit_index in range(day_items_to_submit):
+				item_pool.append(world.create_item(CONST_PROGRESSIVE_DAY))
+
+	# Generating Progressive Scene items
+	scene_deduct_list: list[int] = []
+	for day_chosen_str in world.selected_random_starting_days:
+		scene_deduct_list.append(CONST_DAY_TO_ID[day_chosen_str])
+
+	for day_id in range(10):
+		# Require only 1 item by default.
+		how_many_to_append: int = 1
+		match world.options.progressive_scene:
+			case 0: # Lock Day 3, 5, 6 and 8 (2 items)
+				if (day_id + 1) in (3, 5, 6, 8): how_many_to_append = 2
+			case 1: # Lock Day 1 as well (also 2 items)
+				if (day_id + 1) in (1, 3, 5, 6, 8): how_many_to_append = 2
+			case 2: # Lock all Days to Scene 1
+				how_many_to_append = 2
+			case 3: # Actually lock all Days for real. Require several Progressive Scene items to fully unlock.
+				how_many_to_append = CONST_DAY_SCENE_COUNT[day_id]
+
+		if day_id in scene_deduct_list: how_many_to_append -= 1
+		if how_many_to_append > 0:
+			for count in range(how_many_to_append):
+				item_pool.append(world.create_item(get_scene_unlock_name(day_id + 1)))
+
+	# Generate all Item upgrades.
+	# Check what kind of upgrade has been set in the Options.
+
+	# Generate Treasure items, if possible and necessary.
+	# Correct Treasure options here.
+
+
+	# Finally, generate Filler.
 	pass
 
 

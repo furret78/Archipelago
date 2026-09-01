@@ -238,6 +238,7 @@ class StartingDay(Choice):
 class StartingDayRandomRange(Range):
 	"""
 	Only applicable if Starting Day is set to Randomized Start.
+	If Progressive Scene is enabled, this option is locked to 1.
 	Affects how many Days the player will begin with at random.
 	Minimum of 1, maximum of 10.
 	"""
@@ -263,7 +264,7 @@ class ValidStartingDays(OptionSet):
 class ItemUpgradeProgression(Choice):
 	"""
 	Determines how item use count and stat should be handled.
-	(Rebalanced is the same as Vanilla at the moment.)
+	(Currently fixed to Vanilla; will change in the future.)
 
 	0. Vanilla - Exactly as in the original game.
 	1. Vanilla Max+ - Items can go beyond Max.
@@ -273,7 +274,7 @@ class ItemUpgradeProgression(Choice):
 
 	option_vanilla = 0
 	option_vanilla_plus = 1
-	option_custom = 2
+	option_custom_system = 2
 
 	default = option_vanilla
 
@@ -283,7 +284,7 @@ class ItemUpgradeProgression(Choice):
 			return "Vanilla"
 		elif value == cls.option_vanilla_plus:
 			return "Vanilla Max+"
-		elif value == cls.option_custom:
+		elif value == cls.option_custom_system:
 			return "Rebalanced"
 		return super().get_option_name(value)
 
@@ -334,6 +335,9 @@ class SubitemIndividual(Toggle):
 	"""
 	display_name = "Sub-item Progression: Itemized Individual Sub-items"
 
+#
+# FILLER ITEM SETTINGS
+#
 class SceneSkipCount(Range):
 	"""
 	How many Scene Skip items can appear in the item pool?
@@ -343,6 +347,12 @@ class SceneSkipCount(Range):
 	range_start = 0
 	range_end = 70
 	default = 6
+
+class UselessFillerAllowed(DefaultOnToggle):
+	"""
+	Whether useless Filler items that do exactly nothing will be part of the Filler item pool.
+	"""
+	display_name = "Allow Useless Filler"
 
 #
 # LOGIC/LOCATIONS

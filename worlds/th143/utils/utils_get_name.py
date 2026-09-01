@@ -37,7 +37,7 @@ def get_item_name_subitem(item_id: int = 0) -> str:
 	return f"{item_name} Sub-item"
 
 # Day Number is indexed at 1.
-def get_scene_unlock_name(day_number: int = 0) -> str:
+def get_scene_unlock_name(day_number: int = 1) -> str:
 	return f"Day {str(day_number)} {CONST_PROGRESSIVE_SCENE}"
 
 def get_clear_with_item_fake(item_id: int = 0) -> str:

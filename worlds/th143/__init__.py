@@ -2,7 +2,11 @@ from typing import Mapping, Any
 
 from worlds.AutoWorld import World
 from .client import options
+from .client.options_classes import StartingDay, CompletionType
+from .utils.utils_get_name import get_scene_unlock_name
+from .utils.utils_math import clamp
 from .variables.game_info import DISPLAY_NAME
+from .variables.location_item_name import CONST_DAY_TO_ID, CONST_PROGRESSIVE_DAY, CONST_TREASURE_ITEM_NAMES
 from .worldgen import regions, items
 from .worldgen.world_locations import location_table
 from .worldgen.world_locations import locations
@@ -37,11 +41,72 @@ class ISCWorld(World):
 	item_name_groups = items.get_item_groups()
 	location_name_groups = location_table.location_groups
 
+	selected_random_starting_days: list[str]
+
 	def generate_early(self) -> None:
 		if self.options.skill_difficulty.value != 1:
 			self.options.skill_difficulty.value = 1
 		if self.options.include_itemless_logic:
 			self.options.include_itemless_logic.value = False
+		if self.options.item_upgrade_progress.value != 0:
+			self.options.item_upgrade_progress.value = 0
+
+		# If Randomized Start is enabled, randomize it here.
+		if self.options.starting_day == StartingDay.option_random_day:
+			self.selected_random_starting_days = []
+
+			valid_random_pool = []
+			if len(self.options.valid_starting_days.value) <= 0:
+				self.options.valid_starting_days.value = CONST_DAY_TO_ID.keys()
+			for i in self.options.valid_starting_days.value:
+				valid_random_pool.append(i)
+
+			self.options.starting_day_random_range.value = clamp(
+				self.options.starting_day_random_range.value, 1, len(self.options.valid_starting_days.value) - 1
+			)
+
+			if self.options.progressive_day:
+				self.options.starting_day_random_range.value = 1
+
+			rand_count = 0
+			while rand_count < self.options.starting_day_random_range.value:
+				random_chosen_day = self.random.choice(valid_random_pool)
+				if random_chosen_day not in self.selected_random_starting_days:
+					self.selected_random_starting_days.append(random_chosen_day)
+					rand_count += 1
+				else: continue
+
+		# If the length of this is greater than 0, it means Randomized Start is active.
+		if len(self.selected_random_starting_days) > 0:
+			# If Progressive Day is enabled, only 1 Day was chosen.
+			# Push as many Progressive Day items as possible to reach that Day.
+			if self.options.progressive_day:
+				item_count_needed: int = CONST_DAY_TO_ID[self.selected_random_starting_days[0]]
+				if item_count_needed > 0:
+					for k in range(item_count_needed):
+						self.push_precollected(self.create_item(CONST_PROGRESSIVE_DAY))
+			# Otherwise, push Progressive Scene for the Days that have been unlocked.
+			else:
+				for day_str in self.selected_random_starting_days:
+					day_id_from_str: int = CONST_DAY_TO_ID[day_str] + 1
+					self.push_precollected(self.create_item(get_scene_unlock_name(day_id_from_str)))
+		# Otherwise, continue as though it was not active.
+		else:
+			if self.options.progressive_day:
+				item_count_needed: int = self.options.starting_day.value
+				if item_count_needed > 0:
+					for k in range(item_count_needed):
+						self.push_precollected(self.create_item(CONST_PROGRESSIVE_DAY))
+			else:
+				day_id_from_str: int = CONST_DAY_TO_ID[self.options.starting_day.value] + 1
+				self.push_precollected(self.create_item(get_scene_unlock_name(day_id_from_str)))
+
+		# For fun, if the goal is Gold Rush, add the Miracle Mallet (Real) to the player's inventory.
+		# It does absolute fuck-all, but it's a funny easter egg.
+		if self.options.completion_type == CompletionType.option_gold_rush:
+			self.push_precollected(self.create_item(CONST_TREASURE_ITEM_NAMES[1]))
+
+		return
 
 	def create_regions(self):
 		regions.create_and_connect_regions(self)
@@ -82,6 +147,7 @@ class ISCWorld(World):
 			"subitem_slot_unlock": self.options.subitem_slot_unlock.value,
 			"subitem_individual": self.options.subitem_individual.value,
 			"scene_skip_count": self.options.scene_skip_count.value,
+			"useless_filler": self.options.useless_filler.value,
 			"include_music_checks": self.options.include_music_checks.value,
 			"include_itemless_logic": self.options.include_itemless_logic.value,
 			"include_item_clears": self.options.include_item_clears.value,
