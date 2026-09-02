@@ -44,6 +44,7 @@ class ISCWorld(World):
 	selected_random_starting_days: list[str]
 
 	def generate_early(self) -> None:
+		# TODO: Remove these things and work on their parts.
 		if self.options.skill_difficulty.value != 1:
 			self.options.skill_difficulty.value = 1
 		if self.options.include_itemless_logic:

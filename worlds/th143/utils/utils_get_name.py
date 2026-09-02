@@ -11,7 +11,7 @@ from ..variables.location_item_name import CONST_ITEM_NAMES, \
 # ITEMS
 #
 # Get Item names for things related to Cheat Items.
-def get_item_upgrade_name_id(item_id: int = 0) -> str:
+def get_item_name_level(item_id: int = 0) -> str:
 	clean_item_num: int = clamp(item_id, 0, 8)
 	item_name: str = CONST_ITEM_NAMES[clean_item_num]
 	return f"Progressive {item_name}: Level Up"

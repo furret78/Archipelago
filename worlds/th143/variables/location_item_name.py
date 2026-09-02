@@ -28,6 +28,7 @@ CONST_ITEM_SHORT_TO_ID = {
 CONST_SUBITEM_SLOT_NAME = "Sub-Item Equip Slot"
 CONST_PROGRESSIVE_DAY = "Progressive Day"
 CONST_PROGRESSIVE_SCENE = "Progressive Scene"
+CONST_REMOVE_LEVEL_CAP = "Progressive Items: Remove Level Cap"
 CONST_ITEM_STAT_NAMES = [
     "Through Time",
     "Photography Range",
@@ -39,6 +40,7 @@ CONST_ITEM_STAT_NAMES = [
     "Appearance Time",
     "Damage Output"
 ]
+CONST_SCENE_SKIP_NAME = "Scene Skip"
 
 # Actual ID starts from 0.
 CONST_DAY_TO_ID = {

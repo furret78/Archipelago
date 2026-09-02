@@ -16,8 +16,8 @@ class ISCDataclass(PerGameCommonOptions):
 	completion_type: CompletionType
 	start_inventory_from_pool: StartInventoryPool
 	# Gold Rush
-	treasure_required: TreasureRequired
 	treasure_percent: TreasurePercent
+	treasure_required: TreasureRequired
 	# Progression
 	progressive_day: ProgressiveDay
 	progressive_scene: ProgressiveScene
@@ -54,8 +54,8 @@ option_groups = [
 	),
 	OptionGroup(
 		"Treasure Hunt Options", [
-			TreasureRequired,
-			TreasurePercent
+			TreasurePercent,
+			TreasureRequired
 		]
 	),
 	OptionGroup(

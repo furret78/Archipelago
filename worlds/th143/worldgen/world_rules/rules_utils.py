@@ -4,7 +4,7 @@ from ..world_locations.locations import get_fake_clear_item_name, get_fake_day_c
 from ...worldgen.items import get_vanilla_max_level_dict, get_vanilla_max_count_dict, get_vanilla_max_stat_dict, \
 	get_vanilla_count_max, get_vanilla_level_max, get_vanilla_stat_max
 from ...client.options_classes import *
-from ...utils.utils_get_name import get_scene_unlock_name, get_item_upgrade_name_id, get_item_name_usage, \
+from ...utils.utils_get_name import get_scene_unlock_name, get_item_name_level, get_item_name_usage, \
 	get_item_name_stat, get_item_name_subitem
 from ...utils.utils_math import clamp, duplicate_list
 from ...variables.game_stat_info import CONST_DAY_SCENE_COUNT
@@ -141,7 +141,7 @@ def rule_require_specific_main_items(item_list: list[str]):
 	for item_short, item_max in get_vanilla_max_level_dict():
 		if item_short in item_list:
 			item_id_from_string = CONST_ITEM_SHORT_TO_ID[item_short]
-			final_item_dict[get_item_upgrade_name_id(item_id_from_string)] = item_max
+			final_item_dict[get_item_name_level(item_id_from_string)] = item_max
 
 	final_count_dict = {}
 	final_stat_dict = {}
@@ -198,7 +198,7 @@ def rule_require_specific_sub_items(sub_item_list: list[str]):
 def rule_require_one_main_item(item_string_id: str):
 	if not item_string_id: return True_()
 	item_id: int = CONST_ITEM_SHORT_TO_ID[item_string_id]
-	return (Has(get_item_upgrade_name_id(item_id), count=get_vanilla_level_max(item_id),
+	return (Has(get_item_name_level(item_id), count=get_vanilla_level_max(item_id),
 				options=[option_ItemUpgradeSeparate_Off]) |
 			HasAllCounts({
 				get_item_name_usage(item_id): get_vanilla_count_max(item_id),

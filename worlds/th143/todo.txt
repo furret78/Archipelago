@@ -1,5 +1,4 @@
-- finish goal
-- finish create items
+- finish webworld
 - finish __init__.py/world (generate early, adjust items)
 - finish client
 - TODO: Patch mallet infinite plus stat exploit

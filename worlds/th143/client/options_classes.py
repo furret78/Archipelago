@@ -134,7 +134,6 @@ class TreasurePercent(Range):
 	"""
 	Only applicable if Completion Goal is set to Gold Rush (Treasure Hunt).
 	How many % of the Filler pool should be replaced with Treasure items?
-	Will be automatically adjusted if goal requirement is higher.
 	"""
 	display_name = "Gold Rush Filler Percentage"
 
@@ -296,7 +295,7 @@ class ItemUpgradeSeparate(Toggle):
 
 class ItemUpgradeRemoveCap(Choice):
 	"""
-	Only applicable if Cheat Item Progression: Max+ Levels is enabled.
+	Only applicable if Cheat Item Progression: Max+ Levels or Rebalanced is enabled.
 	Configures whether the player would require a Remove Level Cap item to increase item level past the vanilla maximum.
 
 	0. Disabled - Has no vanilla level cap in place.
