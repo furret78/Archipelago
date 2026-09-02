@@ -9,7 +9,7 @@ from ...utils.utils_math import clamp
 from ...variables.game_info import SHORT_NAME
 from ...variables.game_stat_info import CONST_DAY_SCENE_COUNT
 from ...variables.location_item_name import CONST_DAY_TO_ID, CONST_NICKNAME_NAME, EVENT_ITEM_SCENE_CLEAR_NAME, \
-	EVENT_ITEM_SCENE_UNLOCK_NAME
+	EVENT_ITEM_SCENE_UNLOCK_NAME, CONST_ITEM_NAMES, CONST_ITEM_SHORT_TO_ID
 
 
 class ISCLocation(Location):
@@ -57,7 +57,7 @@ def create_all_locations(world):
 		if region_name == world.origin_region_name:
 			# Nicknames here.
 			for nickname_id in range(CONST_TOTAL_NICKNAME_COUNT):
-				if nickname_id >= (CONST_TOTAL_NICKNAME_COUNT - 11) and not world.options.include_hidden_nicknames:
+				if nickname_id >= (CONST_TOTAL_NICKNAME_COUNT - 10) and not world.options.include_hidden_nicknames:
 					continue
 				nickname_str: str = get_location_name_nickname(nickname_id + 1)
 
@@ -129,7 +129,9 @@ def create_all_locations(world):
 				selected_region.locations.append(event_day_specific_location)
 
 				# Item-specific Clears
-				for item_id in range(10):
+				for item_string_id in CONST_ITEM_SHORT_TO_ID.keys():
+					if not check_if_scene_is_possible(day_id + 1, scene_id + 1, item_string_id): continue
+					item_id = CONST_ITEM_SHORT_TO_ID[item_string_id]
 					# Event location
 					event_item_location = get_fake_location(
 						world,
@@ -159,7 +161,6 @@ def create_all_locations(world):
 						world.location_name_to_id[item_scene_str],
 						selected_region
 					)
-
 					selected_region.locations.append(item_scene_location)
 
 	return
@@ -167,13 +168,10 @@ def create_all_locations(world):
 #
 # FAKE LOCATION UTILS
 #
-def get_fake_location(world, location_name: str, given_region) -> ISCLocation:
-	return ISCLocation(
-		world.player,
-		location_name,
-		None,
-		given_region
-	)
+def get_fake_location(world, location_name: str, given_region, show_spoiler: bool = False) -> ISCLocation:
+	new_fake_location = ISCLocation(world.player, location_name, None, given_region)
+	new_fake_location.show_in_spoiler = show_spoiler
+	return new_fake_location
 
 def get_fake_item(world, item_name: str) -> ISCItem:
 	return ISCItem(
@@ -186,19 +184,20 @@ def get_fake_item(world, item_name: str) -> ISCItem:
 # Indexing starts at 1 for Day and Scene IDs.
 # 0-8 for items. 9 for no items. Leave anything else for generic clears.
 def get_fake_scene_name(day_id: int = 1, scene_id: int = 1, with_item: int = 10, dupe_index: int = 0) -> str:
-	fake_location_str = f"{day_id}-{scene_id} Generic"
+	fake_location_str: str
+	item_id: int = clamp(with_item, 0, 9)
 
-	if 0 < with_item < 9:
-		fake_location_str = f"{day_id}-{scene_id} with {with_item}"
+	if with_item < 9:
+		fake_location_str = f"{day_id}-{scene_id} with {CONST_ITEM_NAMES[item_id]}"
 	elif with_item == 9:
 		fake_location_str = f"{day_id}-{scene_id} Itemless"
+	else:
+		fake_location_str = f"{day_id}-{scene_id} Generic"
 
-	if dupe_index != 0:
-		return f"{fake_location_str} No. {str(dupe_index)}"
-	return fake_location_str
+	return f"EVENTLOCATION: {fake_location_str} No. {str(dupe_index)}"
 
 def get_fake_scene_access_name(day_id: int = 1, scene_id: int = 1) -> str:
-	return f"{day_id}-{scene_id} Access"
+	return f"EVENTLOCATION: {day_id}-{scene_id} Access"
 
 def get_fake_clear_item_name(with_item: int = 10) -> str:
 	if 0 < with_item < 9:
@@ -210,3 +209,45 @@ def get_fake_clear_item_name(with_item: int = 10) -> str:
 
 def get_fake_day_clear_item_name(day_id: int = 1) -> str:
 	return f"{EVENT_ITEM_SCENE_CLEAR_NAME} Day {clamp(day_id, 1, 10)}"
+
+#
+# Special check for Item-specific scenes
+#
+def check_if_scene_is_possible(day_id: int, scene_id: int, item_string_id: str) -> bool:
+	"""
+	Boolean to see if a Scene is possible to clear with the item in question.
+	Day ID and Scene ID are indexed from 1.
+	"""
+	from ..world_rules.rules_utils import check_if_scene_in_set, CONST_ITEM_SHORT_TO_CLEAR_SET, \
+		NORMAL_CLEAR_JIZO_DOLL_SET, NORMAL_CLEAR_LANTERN_DOLL_SET, NORMAL_CLEAR_MALLET_JIZO_SET, \
+		get_scene_item_clear_potential, NORMAL_CLEAR_NO_ITEM_SET, NORMAL_CLEAR_DOLL_SUB_SET
+
+	is_scene_possible = False
+
+	if item_string_id != "none":
+		if check_if_scene_in_set(day_id, scene_id, CONST_ITEM_SHORT_TO_CLEAR_SET[item_string_id]):
+			is_scene_possible = True
+
+		match item_string_id:
+			case "jizo":
+				if check_if_scene_in_set(day_id, scene_id, NORMAL_CLEAR_JIZO_DOLL_SET):
+					is_scene_possible = True
+			case "lantern":
+				if check_if_scene_in_set(day_id, scene_id, NORMAL_CLEAR_LANTERN_DOLL_SET):
+					is_scene_possible = True
+			case "mallet":
+				if check_if_scene_in_set(day_id, scene_id, NORMAL_CLEAR_MALLET_JIZO_SET):
+					is_scene_possible = True
+
+		scene_item_potential_set = tuple(get_scene_item_clear_potential(day_id, scene_id))
+
+		if len(scene_item_potential_set) > 0:
+			if item_string_id in scene_item_potential_set:
+				is_scene_possible = True
+
+	if check_if_scene_in_set(day_id, scene_id, NORMAL_CLEAR_NO_ITEM_SET):
+		is_scene_possible = True
+	if check_if_scene_in_set(day_id, scene_id, NORMAL_CLEAR_DOLL_SUB_SET):
+		is_scene_possible = True
+
+	return is_scene_possible

@@ -2,13 +2,12 @@ from rule_builder.rules import False_, True_
 from .rules_utils import rule_require_day_access, rule_require_scene_access, rule_multiple_scene_access, get_scene_rule, \
 	rule_require_day_clears, get_scene_rule_per_item, get_all_day_clears, get_nickname_rule, get_all_nickname_rules, \
 	get_gold_hunt_rule
-from ..world_locations.locations import get_fake_scene_name, get_fake_scene_access_name
+from ..world_locations.locations import get_fake_scene_name, get_fake_scene_access_name, check_if_scene_is_possible
 from ...client.options_classes import CompletionType
 from ...utils.utils_get_name import get_entrance_to_region_name, get_location_name_scene, get_location_name_music_room, \
 	get_location_name_nickname, get_location_name_scene_with_item
 from ...variables.game_stat_info import CONST_DAY_SCENE_COUNT
 from ...variables.location_item_name import CONST_DAY_TO_ID, CONST_NICKNAME_NAME, CONST_ITEM_SHORT_TO_ID
-
 
 def set_all_rules(world):
 	set_entrance_rules(world)
@@ -82,6 +81,7 @@ def set_item_scene_clear_rules(world):
 			used_day_id: int = day_id + 1
 			used_scene_id: int = scene_id + 1
 			for item_string_id in item_short_list:
+				if not check_if_scene_is_possible(used_day_id, used_scene_id, item_string_id): continue
 				used_item_id: int = CONST_ITEM_SHORT_TO_ID[item_string_id]
 				item_specific_rule = get_scene_rule_per_item(
 					day_id=used_day_id,
@@ -114,13 +114,14 @@ def set_nickname_rules(world):
 	nickname_total_count = len(CONST_NICKNAME_NAME)
 	for nickname_id in range(nickname_total_count):
 		# Special cases that can be automated.
-		if nickname_id >= (nickname_total_count - 11) and not world.options.include_hidden_nicknames:
+		if nickname_id >= (nickname_total_count - 10) and not world.options.include_hidden_nicknames:
 			continue
 		nickname_location = world.get_location(get_location_name_nickname(nickname_id + 1))
 		nickname_rule = get_nickname_rule(nickname_id)
 		world.set_rule(nickname_location, nickname_rule)
 
 def set_music_room_rules(world):
+	if not world.options.include_music_checks: return
 	for music_id in range(9):
 		music_location = world.get_location(get_location_name_music_room(music_id + 1))
 		music_rule = False_()
@@ -145,7 +146,7 @@ def set_music_room_rules(world):
 				))
 			case 6: # Mermaid from the Uncharted Land
 				music_rule = rule_multiple_scene_access((
-					(1, 1)
+					(1, 1), (0, 0)
 				))
 			case 7: # Reverse Ideology
 				music_rule = rule_multiple_scene_access((
@@ -153,11 +154,11 @@ def set_music_room_rules(world):
 				))
 			case 8: # Illusionary Joururi
 				music_rule = rule_multiple_scene_access((
-					(5, 1)
+					(5, 1), (0, 0)
 				))
 			case 9: # Youkai Mountain ~ Mysterious Mountain
 				music_rule = rule_multiple_scene_access((
-					(6, 1)
+					(6, 1), (0, 0)
 				))
 			case _:
 				music_rule = False_()

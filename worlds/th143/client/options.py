@@ -87,3 +87,28 @@ option_groups = [
 		]
 	)
 ]
+
+option_presets = {
+	"Normal All Items": {
+		"skill_difficulty": 1,
+		"trap_chance": 10,
+		"death_link": False,
+		"completion_type": 2,
+
+		"progressive_day": False,
+		"progressive_scene": 2,
+		"starting_day": 0,
+
+		"item_upgrade_progress": 0,
+		"item_upgrade_separate": False,
+		"subitem_slot_unlock": True,
+		"subitem_individual": True,
+		"scene_skip_count": 20,
+		"useless_filler": True,
+
+		"include_music_checks": True,
+		"include_itemless_logic": False,
+		"include_item_clears": False,
+		"include_hidden_nicknames": False
+	}
+}

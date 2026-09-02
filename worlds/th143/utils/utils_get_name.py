@@ -61,7 +61,8 @@ def get_location_name_scene(day_number: int = 0, scene_number: int = 0) -> str:
 # Day Number and Scene Number is indexed at 1.
 # Example output: [Item Clear] Scene 1-1 Nimble Fabric
 def get_location_name_scene_with_item(day_number: int = 0, scene_number: int = 0, item_id: int = 0) -> str:
-	if 0 < item_id < 9:
+	used_item_id: int = clamp(item_id, 0, 9)
+	if item_id < 9:
 		item_name = CONST_ITEM_NAMES[item_id]
 	else:
 		item_name = "No Items"

@@ -1,5 +1,4 @@
-- finish webworld
-- finish __init__.py/world (generate early, adjust items)
+- test generation
 - finish client
 - TODO: Patch mallet infinite plus stat exploit
 - TODO: Rebalanced item leveling system

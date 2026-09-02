@@ -3,6 +3,7 @@ from typing import Mapping, Any
 from worlds.AutoWorld import World
 from .client import options
 from .client.options_classes import StartingDay, CompletionType
+from .client.webworld import ISCWebWorld
 from .utils.utils_get_name import get_scene_unlock_name
 from .utils.utils_math import clamp
 from .variables.game_info import DISPLAY_NAME
@@ -28,6 +29,7 @@ class ISCWorld(World):
 	(from en.touhouwiki.net)
 	"""
 	game = DISPLAY_NAME
+	web = ISCWebWorld()
 
 	location_name_to_id = location_table.location_table
 	location_id_to_name = location_table.location_table_reverse
@@ -42,6 +44,7 @@ class ISCWorld(World):
 	location_name_groups = location_table.location_groups
 
 	selected_random_starting_days: list[str]
+	treasure_count_needed: int
 
 	def generate_early(self) -> None:
 		# TODO: Remove these things and work on their parts.
@@ -52,10 +55,11 @@ class ISCWorld(World):
 		if self.options.item_upgrade_progress.value != 0:
 			self.options.item_upgrade_progress.value = 0
 
+		self.treasure_count_needed = 0
+		self.selected_random_starting_days = []
+
 		# If Randomized Start is enabled, randomize it here.
 		if self.options.starting_day == StartingDay.option_random_day:
-			self.selected_random_starting_days = []
-
 			valid_random_pool = []
 			if len(self.options.valid_starting_days.value) <= 0:
 				self.options.valid_starting_days.value = CONST_DAY_TO_ID.keys()
@@ -99,7 +103,7 @@ class ISCWorld(World):
 					for k in range(item_count_needed):
 						self.push_precollected(self.create_item(CONST_PROGRESSIVE_DAY))
 			else:
-				day_id_from_str: int = CONST_DAY_TO_ID[self.options.starting_day.value] + 1
+				day_id_from_str: int = self.options.starting_day.value + 1
 				self.push_precollected(self.create_item(get_scene_unlock_name(day_id_from_str)))
 
 		# For fun, if the goal is Gold Rush, add the Miracle Mallet (Real) to the player's inventory.
@@ -152,6 +156,7 @@ class ISCWorld(World):
 			"include_music_checks": self.options.include_music_checks.value,
 			"include_itemless_logic": self.options.include_itemless_logic.value,
 			"include_item_clears": self.options.include_item_clears.value,
-			"include_hidden_nicknames": self.options.include_hidden_nicknames.value
+			"include_hidden_nicknames": self.options.include_hidden_nicknames.value,
+			"treasure_count_needed": self.treasure_count_needed
 		}
 		return data

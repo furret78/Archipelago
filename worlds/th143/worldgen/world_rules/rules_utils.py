@@ -1,3 +1,5 @@
+import logging
+
 from rule_builder.options import OptionFilter
 from rule_builder.rules import Has, True_, False_, HasAnyCount, HasAllCounts, HasFromList
 from ..world_locations.locations import get_fake_clear_item_name, get_fake_day_clear_item_name
@@ -110,17 +112,22 @@ def rule_require_scene_access(day_id: int = 1, scene_id: int = 1):
 		options=[option_ProgressiveScene_Gradual]
 	)
 
-	full_access = (option_ProgressiveScene_Full & True_())
+	full_access = Has(
+		get_scene_unlock_name(day_id),
+		count=1,
+		options=[option_ProgressiveScene_Full]
+	)
 
 	return day_access & (vanilla_access | vanilla_plus_access | first_scene_access | gradual_access | full_access)
 
-def rule_multiple_scene_access(day_scene_tuples: tuple):
+def rule_multiple_scene_access(day_scene_tuples):
 	"""
 	Argument passed in should be in the form of ((1, 1), (2, 5)), etc.
 	First number is the Day ID, second is Scene ID.
 	"""
 	multiple_scene_rule = False_()
 	for day_scene_pair in day_scene_tuples:
+		if day_scene_pair == (0, 0): break
 		multiple_scene_rule = multiple_scene_rule | rule_require_scene_access(
 			day_id=day_scene_pair[0],
 			scene_id=day_scene_pair[1]
@@ -138,17 +145,17 @@ def rule_require_specific_main_items(item_list: list[str]):
 	if len(item_list) <= 0: return True_()
 
 	final_item_dict = {}
-	for item_short, item_max in get_vanilla_max_level_dict():
+	for item_short, item_max in get_vanilla_max_level_dict().items():
 		if item_short in item_list:
 			item_id_from_string = CONST_ITEM_SHORT_TO_ID[item_short]
 			final_item_dict[get_item_name_level(item_id_from_string)] = item_max
 
 	final_count_dict = {}
 	final_stat_dict = {}
-	for count_short, count_max in get_vanilla_max_count_dict():
+	for count_short, count_max in get_vanilla_max_count_dict().items():
 		if count_short in item_list:
 			final_count_dict[count_short] = count_max
-	for stat_short, stat_max in get_vanilla_max_stat_dict():
+	for stat_short, stat_max in get_vanilla_max_stat_dict().items():
 		if stat_short in item_list:
 			final_stat_dict[stat_short] = stat_max
 
@@ -198,12 +205,20 @@ def rule_require_specific_sub_items(sub_item_list: list[str]):
 def rule_require_one_main_item(item_string_id: str):
 	if not item_string_id: return True_()
 	item_id: int = CONST_ITEM_SHORT_TO_ID[item_string_id]
-	return (Has(get_item_name_level(item_id), count=get_vanilla_level_max(item_id),
-				options=[option_ItemUpgradeSeparate_Off]) |
-			HasAllCounts({
+
+	level_rule = Has(get_item_name_level(item_id), count=get_vanilla_level_max(item_id),
+				options=[option_ItemUpgradeSeparate_Off])
+	separate_rule = HasAllCounts({
 				get_item_name_usage(item_id): get_vanilla_count_max(item_id),
 				get_item_name_stat(item_id): get_vanilla_stat_max(item_id)
-			}, options=[option_ItemUpgradeSeparate_On]))
+			}, options=[option_ItemUpgradeSeparate_On])
+
+	if item_string_id == "yinyang":
+		separate_rule = HasAllCounts({
+			get_item_name_usage(item_id): get_vanilla_count_max(item_id)
+		}, options=[option_ItemUpgradeSeparate_On])
+
+	return level_rule | separate_rule
 
 
 def rule_require_one_sub_item(item_string_id: str):
@@ -270,14 +285,18 @@ def get_scene_rule(day_id: int, scene_id: int):
 	Retrieves the rule specific to a Scene.
 	Day ID and Scene ID are indexed from 0.
 	"""
+	used_day_id: int = day_id + 1
+	used_scene_id: int = scene_id + 1
+
 	generic_scene_rule = rule_require_scene_access(
 		day_id=day_id + 1,
 		scene_id=scene_id + 1
 	)
+
 	specific_item_list = []
 	# This retrieves a dict key-value pair.
-	for item_name, item_clear_set in CONST_ITEM_SHORT_TO_CLEAR_SET:
-		if check_if_scene_in_set(day_id, scene_id, item_clear_set):
+	for item_name, item_clear_set in CONST_ITEM_SHORT_TO_CLEAR_SET.items():
+		if check_if_scene_in_set(used_day_id, used_scene_id, item_clear_set):
 			specific_item_list.append(item_name)
 	# After the list has been filled,
 	if len(specific_item_list) > 0:
@@ -285,31 +304,35 @@ def get_scene_rule(day_id: int, scene_id: int):
 	else:
 		specific_scene_rule = False_()
 
-	if check_if_scene_in_set(day_id, scene_id, NORMAL_CLEAR_DOLL_SUB_SET):
+	if check_if_scene_in_set(used_day_id, used_scene_id, NORMAL_CLEAR_DOLL_SUB_SET):
 		specific_scene_rule = specific_scene_rule | rule_require_one_sub_item("doll")
-	if check_if_scene_in_set(day_id, scene_id, NORMAL_CLEAR_JIZO_DOLL_SET):
+	if check_if_scene_in_set(used_day_id, used_scene_id, NORMAL_CLEAR_JIZO_DOLL_SET):
 		specific_scene_rule = specific_scene_rule | rule_require_item_combo(("jizo", "doll"))
-	if check_if_scene_in_set(day_id, scene_id, NORMAL_CLEAR_LANTERN_DOLL_SET):
+	if check_if_scene_in_set(used_day_id, used_scene_id, NORMAL_CLEAR_LANTERN_DOLL_SET):
 		specific_scene_rule = specific_scene_rule | rule_require_item_combo(("lantern", "doll"))
-	if check_if_scene_in_set(day_id, scene_id, NORMAL_CLEAR_MALLET_JIZO_SET):
+	if check_if_scene_in_set(used_day_id, used_scene_id, NORMAL_CLEAR_MALLET_JIZO_SET):
 		specific_scene_rule = specific_scene_rule | rule_require_item_combo(("mallet", "jizo"))
 
-	specific_scene_rule = specific_scene_rule | get_very_specific_scene_rules(day_id, scene_id)
+	specific_scene_rule = specific_scene_rule | get_very_specific_scene_rules(used_day_id, used_scene_id)
 
 	# Check if the Scene also appears in the No-Item set.
 	# If it does, no items are required. Automatically set to True.
-	if check_if_scene_in_set(day_id, scene_id, NORMAL_CLEAR_NO_ITEM_SET):
+	if check_if_scene_in_set(used_day_id, used_scene_id, NORMAL_CLEAR_NO_ITEM_SET):
 		specific_scene_rule = True_()
 
-	return generic_scene_rule & specific_scene_rule
+	return generic_scene_rule & (specific_scene_rule)
 
 # Utils to check if a Scene exists in a Set from scene_clear.py files.
 # If the Day ID matches any [0] of the tuple,
 # and Scene ID appears in [1], said item is required for that scene.
+# Day and Scene ID indexed from 1.
 def check_if_scene_in_set(day_id: int, scene_id: int, given_set: tuple) -> bool:
 	for day_scene_tuple in given_set:
-		if day_id == day_scene_tuple[0] and scene_id in day_scene_tuple[1]:
-			return True
+		if day_id == day_scene_tuple[0]:
+			if type(day_scene_tuple[1]) == tuple:
+				return scene_id in day_scene_tuple[1]
+			if type(day_scene_tuple[1]) == int:
+				return scene_id == day_scene_tuple[1]
 	return False
 
 def get_day_any_scene_rules(day_id: int = 1):
@@ -355,7 +378,7 @@ def get_scene_item_clear_potential(day_id: int = 1, scene_id: int = 1):
 	"""
 	if scene_id in RULE_TABLE_ITEM_SCENE[day_id - 1].keys():
 		return RULE_TABLE_ITEM_SCENE[day_id - 1][scene_id]
-	return ()
+	return tuple()
 
 def get_scene_rule_per_item(day_id: int, scene_id: int, item_string_id: str):
 	"""
@@ -377,8 +400,8 @@ def get_scene_rule_per_item(day_id: int, scene_id: int, item_string_id: str):
 	# 2. Jump to step 5
 
 	scene_access_rule = rule_require_scene_access(
-		day_id=day_id + 1,
-		scene_id=scene_id + 1
+		day_id=day_id,
+		scene_id=scene_id
 	)
 	# If it's a No-Item Clear, skip this. No-Item clears get checked at the final step.
 	# Doll Sub scenes are treated the same as a No-Item clear, but with the Doll Sub-item requirement.
@@ -398,7 +421,7 @@ def get_scene_rule_per_item(day_id: int, scene_id: int, item_string_id: str):
 				if check_if_scene_in_set(day_id, scene_id, NORMAL_CLEAR_MALLET_JIZO_SET):
 					specific_scene_rule = specific_scene_rule | rule_require_item_combo(("mallet", "jizo"))
 
-		scene_item_potential_set = get_scene_item_clear_potential(day_id, scene_id)
+		scene_item_potential_set = tuple(get_scene_item_clear_potential(day_id, scene_id))
 
 		if len(scene_item_potential_set) > 0:
 			if item_string_id in scene_item_potential_set:
@@ -451,17 +474,17 @@ def get_nickname_rule(nickname_id: int = 0):
 			case 1:  # 5 scene clears
 				nickname_rule = rule_require_generic_clear(5)
 			case 8:  # 8-1 clear
-				nickname_rule = get_scene_rule(8, 1)
+				nickname_rule = get_scene_rule(8 - 1, 1 - 1)
 			case 9:  # Any Day 10 scene clear
 				nickname_rule = get_day_any_scene_rules(10)
 			case 10:  # 1-1 clear
-				nickname_rule = get_scene_rule(1, 1)
+				nickname_rule = get_scene_rule(1 - 1, 1 - 1)
 			case 11:  # 3-1 clear
-				nickname_rule = get_scene_rule(3, 1)
+				nickname_rule = get_scene_rule(3 - 1, 1 - 1)
 			case 12:  # 5-1 clear
-				nickname_rule = get_scene_rule(5, 1)
+				nickname_rule = get_scene_rule(5 - 1, 1 - 1)
 			case 13:  # 6-1 clear
-				nickname_rule = get_scene_rule(6, 1)
+				nickname_rule = get_scene_rule(6 - 1, 1 - 1)
 
 	return nickname_rule
 

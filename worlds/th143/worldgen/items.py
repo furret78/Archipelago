@@ -111,7 +111,8 @@ def get_vanilla_max_level_dict() -> dict[str, int]:
 	See CONST_ITEM_SHORT_TO_ID in location_item_name.py.
 	"""
 	max_level_dict = {}
-	for item_name, item_id in CONST_ITEM_SHORT_TO_ID:
+	for item_name, item_id in CONST_ITEM_SHORT_TO_ID.items():
+		if item_name == "none": continue
 		max_level_dict[item_name] = get_vanilla_level_max(item_id)
 	return max_level_dict
 
@@ -120,7 +121,8 @@ def get_vanilla_max_count_dict() -> dict[str, int]:
 	Like get_vanilla_max_level_dict(), but specifically for max item use counts.
 	"""
 	max_count_dict = {}
-	for item_name, item_id in CONST_ITEM_SHORT_TO_ID:
+	for item_name, item_id in CONST_ITEM_SHORT_TO_ID.items():
+		if item_name == "none": continue
 		max_count_dict[item_name] = get_vanilla_count_max(item_id)
 	return max_count_dict
 
@@ -129,7 +131,8 @@ def get_vanilla_max_stat_dict() -> dict[str, int]:
 	Like get_vanilla_max_level_dict(), but specifically for max item unique stats.
 	"""
 	max_stat_dict = {}
-	for item_name, item_id in CONST_ITEM_SHORT_TO_ID:
+	for item_name, item_id in CONST_ITEM_SHORT_TO_ID.items():
+		if item_name == "none": continue
 		max_stat_dict[item_name] = get_vanilla_stat_max(item_id)
 	return max_stat_dict
 
@@ -166,7 +169,10 @@ def create_all_items(world):
 		return number_of_unfilled_locations - number_of_items
 
 	def check_if_enough_items(the_pool: list[Item], items_needed: int = 1) -> bool:
-		return items_needed > get_remaining_locations(the_pool)
+		"""
+		Returns True there are enough items. If not, False.
+		"""
+		return items_needed <= get_remaining_locations(the_pool)
 
 	item_pool: list[Item] = []
 
@@ -265,7 +271,7 @@ def create_all_items(world):
 		if world.options.item_upgrade_separate:
 			for count_range in range(item_separate_amount[item_string_id][0]):
 				item_pool.append(world.create_item(get_item_name_usage(int_item_id)))
-			if item_separate_amount[item_string_id][1] > 0:
+			if item_separate_amount[item_string_id][1] > 0 and item_string_id != "yinyang":
 				for stat_range in range(item_separate_amount[item_string_id][1]):
 					item_pool.append(world.create_item(get_item_name_stat(int_item_id)))
 		else:
@@ -287,7 +293,6 @@ def create_all_items(world):
 		if remaining_locations <= 0:
 			raise Exception(f"Gold Rush goal is enabled, but there's not enough Filler to replace! {MSG_CHANGE_YAML_LOCATIONS}")
 
-
 		percent_to_int_treasure: int = clamp(
 			n=math.floor(remaining_locations * float(world.options.treasure_percent) / 100.0),
 			smallest=1,
@@ -296,6 +301,14 @@ def create_all_items(world):
 
 		for treasure_count in range(percent_to_int_treasure):
 			item_pool.append(world.create_item(CONST_TREASURE_ITEM_NAMES[0]))
+
+		treasure_count_for_goal: int = clamp(
+			n=math.floor(percent_to_int_treasure * float(world.options.treasure_required) / 100.0),
+			smallest=1,
+			largest=percent_to_int_treasure
+		)
+
+		world.treasure_count_needed = treasure_count_for_goal
 
 		remaining_locations = get_remaining_locations(item_pool)
 

@@ -1,5 +1,5 @@
-EVENT_ITEM_SCENE_CLEAR_NAME = "Event: Scene Cleared"
-EVENT_ITEM_SCENE_UNLOCK_NAME = "Event: Scene Accessible"
+EVENT_ITEM_SCENE_CLEAR_NAME = "EVENT: Scene Cleared"
+EVENT_ITEM_SCENE_UNLOCK_NAME = "EVENT: Scene Accessible"
 
 CONST_ITEM_NAMES = [
     "Nimble Fabric",
@@ -223,7 +223,7 @@ CONST_NICKNAME_NAME = [
     "Just Like A Jizou",
     "Doll Prototyper",
     "Mallet Smash!",
-    "Conserving Spirit"
+    "Conserving Spirit",
     # Hidden nicknames / Clear all scenes
     "Nimble Space God",
     "Camera Demon",
