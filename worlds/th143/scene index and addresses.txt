@@ -11,6 +11,8 @@ clear addresses are distanced from each other by +/- 0x314
 challenge and score addresses apply similarly
 
 index here is in decimal
+th143.exe+e6B9c
+offset (0x40 + 0x314 * abs_scene_id)
 
 1 1-1 (clear: 0x354) (challenge: 0x380) (score: 0x384) start game, yatsuhashi 3 items unlock
 2 1-2 (clear: 0x668) (challenge: 0x694) (score: 0x698)

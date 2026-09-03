@@ -1,14 +1,13 @@
-import logging
-
 from rule_builder.options import OptionFilter
 from rule_builder.rules import Has, True_, False_, HasAnyCount, HasAllCounts, HasFromList
 from ..world_locations.locations import get_fake_clear_item_name, get_fake_day_clear_item_name
+from ..world_options.options_classes import SkillDifficulty, ProgressiveDay, ProgressiveScene, \
+	ItemUpgradeSeparate, SubitemSlotUnlock, SubitemIndividual, IncludeItemlessLogic
 from ...worldgen.items import get_vanilla_max_level_dict, get_vanilla_max_count_dict, get_vanilla_max_stat_dict, \
 	get_vanilla_count_max, get_vanilla_level_max, get_vanilla_stat_max
-from ...client.options_classes import *
 from ...utils.utils_get_name import get_scene_unlock_name, get_item_name_level, get_item_name_usage, \
 	get_item_name_stat, get_item_name_subitem
-from ...utils.utils_math import clamp, duplicate_list
+from ...utils.utils_math import clamp
 from ...variables.game_stat_info import CONST_DAY_SCENE_COUNT
 from ...variables.location_item_name import CONST_PROGRESSIVE_DAY, CONST_ITEM_SHORT_TO_ID, CONST_SUBITEM_SLOT_NAME, \
 	EVENT_ITEM_SCENE_UNLOCK_NAME, CONST_TREASURE_ITEM_NAMES
@@ -320,7 +319,7 @@ def get_scene_rule(day_id: int, scene_id: int):
 	if check_if_scene_in_set(used_day_id, used_scene_id, NORMAL_CLEAR_NO_ITEM_SET):
 		specific_scene_rule = True_()
 
-	return generic_scene_rule & (specific_scene_rule)
+	return generic_scene_rule & specific_scene_rule
 
 # Utils to check if a Scene exists in a Set from scene_clear.py files.
 # If the Day ID matches any [0] of the tuple,

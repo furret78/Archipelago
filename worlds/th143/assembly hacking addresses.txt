@@ -113,11 +113,11 @@ if 0 then no, if 0x10 then yes
 
 Reduce playtime requirements by half/by a fifth
 (time written in reverse order of bytes/little endian encoding/least significant byte first)
-th143.exe+338aa
+th143.exe+338aa 1 hour
 40 73 05 (0x57e40) => 20 bf 02 (0x02bf20) => 40 19 01 (0x011940)
-th143.exe+338ce
+th143.exe+338ce 5 hours
 40 77 1b (0x1b7740) => a0 bb 0d (0x0dbba0) => 40 73 05 (0x57e40)
-th143.exe+338f2
+th143.exe+338f2 10 hours
 80 ee 36 (0x36ee80) => 40 77 1b (0x1b7740) => 80 FC 0A (0x0AFC80)
 
 Something idk

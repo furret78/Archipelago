@@ -1,18 +1,37 @@
 from typing import Mapping, Any
 
 from worlds.AutoWorld import World
-from .client import options
-from .client.options_classes import StartingDay, CompletionType
 from .client.webworld import ISCWebWorld
+from .worldgen.world_options import options
+from .worldgen.world_options.options_classes import StartingDay, CompletionType
 from .utils.utils_get_name import get_scene_unlock_name
 from .utils.utils_math import clamp
-from .variables.game_info import DISPLAY_NAME
+from .variables.game_info import DISPLAY_NAME, SHORT_NAME, CLIENT_DESCRIPTION
 from .variables.location_item_name import CONST_DAY_TO_ID, CONST_PROGRESSIVE_DAY, CONST_TREASURE_ITEM_NAMES
 from .worldgen import regions, items
 from .worldgen.world_locations import location_table
 from .worldgen.world_locations import locations
 from .worldgen.world_rules import rules
+from ..LauncherComponents import launch_subprocess, components, Component, Type, icon_paths
 
+
+def launch_client():
+	"""
+	Launch an instance of the game client.
+	"""
+	from .client.client_main import client_launch
+	launch_subprocess(client_launch, name="GameClient")
+
+components.append(Component(
+	display_name=f"{SHORT_NAME} Client",
+	description=CLIENT_DESCRIPTION,
+	func=launch_client,
+	component_type=Type.CLIENT,
+	game_name=DISPLAY_NAME,
+	icon="th143_icon"
+))
+
+icon_paths["th143_icon"] = f"ap:{__name__}/icons/th185_card.png"
 
 class ISCWorld(World):
 	"""
@@ -153,6 +172,7 @@ class ISCWorld(World):
 			"subitem_individual": self.options.subitem_individual.value,
 			"scene_skip_count": self.options.scene_skip_count.value,
 			"useless_filler": self.options.useless_filler.value,
+			"playtime_mult": self.options.playtime_mult.value,
 			"include_music_checks": self.options.include_music_checks.value,
 			"include_itemless_logic": self.options.include_itemless_logic.value,
 			"include_item_clears": self.options.include_item_clears.value,

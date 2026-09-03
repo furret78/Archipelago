@@ -21,7 +21,7 @@ th143.exe+E471C last chosen scene in menu
 
 
 Some random Stage Pointer address that is consistently set to 0 upon stage restart
-Probably some sort of counter? If less than 53 then stage likely restarted.
+Probably some sort of counter? If less than 30 then stage likely restarted.
 th143.exe+e6a00 offset 0x4240
 
 th143.exe+e6a2c = last cleared scene, if 0 => no scene cleared
@@ -194,12 +194,17 @@ th143.exe+E6B90 offset 0x18 = total item use during scene count
 th143.exe+E6B90 offset 7 * 0x314 + 3c = 2-1 No-item clear?
 scorefile offset eef4
 
-th143.exe+E6B90 offset (last_scene_id * 0x314) + 3c = what scene has had a no-item clear?
-th143.exe+E6B9C offset eef4 = Total No-item Clears
 
-th143.exe+E6B90 offset (0x10 * item_id + last_scene_id * 0x314 + 8) = scene clear record with item / what item was used to clear scene?
 
-th143.exe+E6B90 offset ed0c + (34 * item_id) + 14 = item scene clear count = item clear count / how many scenes has this item been used to clear?
+th143.exe+E6B9c offset (item_id * 4 + absolute_last_scene_id * 0x314 + 18) =
+    scene clear record with item / what item was used to clear scene?
+    increments by 1 when the item in question is used to clear
+    not unique, can have repeated clear counts
+    best used as a boolean
+
+th143.exe+E6B9c offset ed0c + (34 * item_id) + 14 =
+    item scene clear count = item clear count / how many scenes has this item been used to clear?
+    not unique, can have repeated clear counts
 
 th143.exe+E6B9C offset 0xEF94 = playtime (frames)
 th143.exe+E6B9C offset 0xEF98 = playtime (if this hits anywhere above 0, the player has accumulated way too much time)

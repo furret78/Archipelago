@@ -1,7 +1,7 @@
 from BaseClasses import Tutorial
 from worlds.AutoWorld import WebWorld
 from ..variables.game_info import DISPLAY_NAME
-from .options import option_groups, option_presets
+from ..worldgen.world_options.options import option_groups, option_presets
 
 
 class ISCWebWorld (WebWorld):

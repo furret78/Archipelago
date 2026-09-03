@@ -3,11 +3,11 @@ from .rules_utils import rule_require_day_access, rule_require_scene_access, rul
 	rule_require_day_clears, get_scene_rule_per_item, get_all_day_clears, get_nickname_rule, get_all_nickname_rules, \
 	get_gold_hunt_rule
 from ..world_locations.locations import get_fake_scene_name, get_fake_scene_access_name, check_if_scene_is_possible
-from ...client.options_classes import CompletionType
 from ...utils.utils_get_name import get_entrance_to_region_name, get_location_name_scene, get_location_name_music_room, \
 	get_location_name_nickname, get_location_name_scene_with_item
 from ...variables.game_stat_info import CONST_DAY_SCENE_COUNT
 from ...variables.location_item_name import CONST_DAY_TO_ID, CONST_NICKNAME_NAME, CONST_ITEM_SHORT_TO_ID
+from ..world_options.options_classes import CompletionType
 
 def set_all_rules(world):
 	set_entrance_rules(world)

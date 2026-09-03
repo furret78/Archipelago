@@ -1,5 +1,8 @@
 import copy
+import os
 
+from Utils import user_path
+from ..variables.game_info import CLIENT_DATA_PATH
 from ..variables.game_stat_info import CONST_DAY_SCENE_COUNT
 
 def duplicate_list(original_list):
@@ -28,9 +31,31 @@ def write_bit(bitarray: int = 0, index: int = 0, value: bool = False) -> int:
 		new_bitarray &= ~(1 << index)
 	return new_bitarray
 
-def get_relative_scene_id(absolute_scene_id: int = 0) -> tuple[int, int]:
+def write_bit_savedata(data_int: int = 0, index: int = 0, value: bool = False, save_type: int = 0) -> int:
 	"""
-	Returns the Day ID and Scene ID of this absolute scene ID in the form of a List.
+	save_type 0 = Save Data A, anything else = B
+	"""
+	if save_type != 0:
+		used_index = clamp(index - 500, 0, 511)
+	else:
+		used_index = clamp(index, 0, 511)
+
+	return write_bit(data_int, used_index, value)
+
+def read_bit_savedata(data_int: int = 0, index: int = 0, save_type: int = 0) -> bool:
+	"""
+	save_type 0 = Save Data A, anything else = B
+	"""
+	if save_type != 0:
+		used_index = clamp(index - 500, 0, 511)
+	else:
+		used_index = clamp(index, 0, 511)
+
+	return read_bit(data_int, used_index)
+
+def get_relative_scene_id(absolute_scene_id: int = 1) -> tuple[int, int]:
+	"""
+	Returns the Day ID and Scene ID of this absolute scene ID in the form of a tuple.
 	Day ID and Scene ID are both indexed from 1.
 	"""
 	relative_day_id: int = 1
@@ -52,7 +77,7 @@ def get_relative_scene_id(absolute_scene_id: int = 0) -> tuple[int, int]:
 
 	return relative_day_id, relative_scene_id
 
-def get_absolute_scene_id(day_id: int = 0, scene_id: int = 0) -> int:
+def get_absolute_scene_id(day_id: int = 1, scene_id: int = 1) -> int:
 	"""
 	Day ID and Scene ID indexed from 1.
 	Returns the absolute scene ID for a given Day and Scene within said Day.
@@ -70,3 +95,15 @@ def get_day_item_count(starting_day: int) -> int:
 	How many Progressive Day items are remaining to unlock the rest of the Days.
 	"""
 	return clamp(9 - starting_day, 0, 9)
+
+def get_pointer_address(pm, base, offsets):
+	address = base
+	for offset in offsets[:-1]:
+		address = pm.read_uint(address)
+		address += offset
+	return pm.read_uint(address) + offsets[-1]
+
+def client_directory_get_or_default():
+	directory_path = user_path(CLIENT_DATA_PATH)
+	if not os.path.exists(directory_path):
+		os.makedirs(directory_path, exist_ok=True)

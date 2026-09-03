@@ -33,6 +33,10 @@ ADDR_STATIC_MALLET_SUB3 = (
     # Set all to 0x90, length 3.
     0x56d3c, 0x56e18, 0x56ee2
 )
+ADDR_STATIC_MAX_LEVEL = (
+    # Overwrite with 0x90, length 7.
+    0x566d6, 0x567f5, 0x56908, 0x569fa, 0x56ae4, 0x56ba4, 0x56c9d, 0x56d93, 0x56e7c
+)
 
 # Cheat code disabling.
 # 18 bytes of 0x90 (NOP).
@@ -43,6 +47,9 @@ ADDR_STATIC_CHEAT_SOUND = 0x65EEC
 # Disable saving replays if a scene was cleared successfully.
 # Original opcodes are 7e, 0a. Change to 90, 90 to disable.
 ADDR_STATIC_SAVE_REPLAY = 0x4AB90
+# Change to anything but 0 to disable replays globally.
+# Change back to 0 to enable.
+ADDR_STATIC_CONTINUE_COUNT = 0xe4700
 # Changing whether the Next Scene button actually takes you to the next scene.
 # Originally 0x41 (increase by 1). Change to 0x00 to do nothing.
 ADDR_STATIC_NEXT_SCENE = 0x4b1e5

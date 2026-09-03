@@ -1,5 +1,5 @@
 from Options import Range, Choice, T, DefaultOnToggle, OptionSet, Toggle, ItemSet
-from ..variables.location_item_name import CONST_DAY_TO_ID, CONST_TEMP_PREFIX, CONST_FILLER_NAME
+from ...variables.location_item_name import CONST_DAY_TO_ID, CONST_TEMP_PREFIX, CONST_FILLER_NAME
 
 
 #
@@ -256,6 +256,28 @@ class ValidStartingDays(OptionSet):
 	display_name = "Randomized Start: Valid Days"
 	valid_keys = CONST_DAY_TO_ID.keys()
 	default = valid_keys
+
+class PlaytimeMultiplier(Choice):
+	"""
+	Determines the multiplier for the playtime needed to attain the playtime nicknames.
+	"""
+	display_name = "Playtime Requirement Multiplier"
+
+	option_vanilla = 0
+	option_half = 1
+	option_fifth = 2
+
+	default = option_half
+
+	@classmethod
+	def get_option_name(cls, value: T) -> str:
+		if value == cls.option_vanilla:
+			return "Vanilla (x1.0)"
+		elif value == cls.option_half:
+			return "Halved (x0.5)"
+		elif value == cls.option_fifth:
+			return "Fast (x0.2)"
+		return super().get_option_name(value)
 
 #
 # ITEMS

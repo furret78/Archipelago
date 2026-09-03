@@ -33,6 +33,7 @@ class ISCDataclass(PerGameCommonOptions):
 	scene_skip_count: SceneSkipCount
 	useless_filler: UselessFillerAllowed
 	# Logic/Locations
+	playtime_mult: PlaytimeMultiplier
 	include_music_checks: IncludeMusicRoomChecks
 	include_itemless_logic: IncludeItemlessLogic
 	include_item_clears: IncludeItemClears
@@ -80,6 +81,7 @@ option_groups = [
 	),
 	OptionGroup(
 		"Extra Logic Options", [
+			PlaytimeMultiplier,
 			IncludeMusicRoomChecks,
 			IncludeItemlessLogic,
 			IncludeItemClears,
