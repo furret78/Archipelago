@@ -12,6 +12,7 @@ JSON_SLOT_CLEARS_A = "clear_a"
 JSON_SLOT_CLEARS_B = "clear_b"
 JSON_SLOT_PLAYTIME = "time"
 JSON_SLOT_DEATHS = "miss"
+JSON_SLOT_SCENE_SKIP = "skip"
 CLIENT_DATA_PATH = "data\\th143"
 CLIENT_DEBUG_ALERTS = "debug_alerts"
 

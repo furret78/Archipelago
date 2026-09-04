@@ -374,12 +374,15 @@ item_table: dict[str, ISCItemData] = {
 	CONST_TEMP_PREFIX + CONST_FILLER_NAME["invinc3"]: ISCItemData(CATEGORY_USEFUL, 73, ItemClassification.filler),
 	CONST_TEMP_PREFIX + CONST_FILLER_NAME["count_up"]: ISCItemData(CATEGORY_USEFUL, 74, ItemClassification.filler),
 	CONST_TEMP_PREFIX + CONST_FILLER_NAME["count_up2"]: ISCItemData(CATEGORY_USEFUL, 75, ItemClassification.filler),
+	CONST_TEMP_PREFIX + CONST_FILLER_NAME["playtime1"]: ISCItemData(CATEGORY_USEFUL, 76, ItemClassification.filler),
+	CONST_TEMP_PREFIX + CONST_FILLER_NAME["playtime2"]: ISCItemData(CATEGORY_USEFUL, 77, ItemClassification.filler),
 
 	# Traps - ID 80-99
 	CONST_TEMP_PREFIX + CONST_FILLER_NAME["freeze"]: ISCItemData(CATEGORY_TRAP, 80, ItemClassification.trap),
 	CONST_TEMP_PREFIX + CONST_FILLER_NAME["null_sub"]: ISCItemData(CATEGORY_TRAP, 81, ItemClassification.trap),
 	CONST_TEMP_PREFIX + CONST_FILLER_NAME["count_down"]: ISCItemData(CATEGORY_TRAP, 82, ItemClassification.trap),
 	CONST_TEMP_PREFIX + CONST_FILLER_NAME["count_down2"]: ISCItemData(CATEGORY_TRAP, 83, ItemClassification.trap),
+	CONST_TEMP_PREFIX + CONST_FILLER_NAME["death"]: ISCItemData(CATEGORY_TRAP, 84, ItemClassification.trap),
 
 	# Any above 100 is Useless Filler.
 }

@@ -256,11 +256,14 @@ CONST_FILLER_NAME = {
     "null_sub": "Nullify Sub-Item Trap",
     "count_down": "-1 Item Use Count Trap",
     "count_down2": "-2 Item Use Count Trap",
+    "death": "Instant Death Trap",
     "invinc": "3-Second Invincibility",
     "invinc2": "5-Second Invincibility",
     "invinc3": "10-Second Invincibility",
     "count_up": "+1 Item Use Count",
-    "count_up2": "+2 Item Use Count"
+    "count_up2": "+2 Item Use Count",
+    "playtime1": "+10 Minutes Playtime",
+    "playtime2": "+30 Minutes Playtime"
 }
 
 # Items exclusively for Treasure Hunt mode.

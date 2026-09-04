@@ -15,10 +15,6 @@ class GameHandler:
 
 	def __init__(self):
 		self.gameController = GameController()
-		self.save_data_a: int = 0 # Scenes Cleared A
-		self.save_data_b: int = 0 # Scenes Cleared B
-		self.playtime_count: int = 0
-		self.death_count: int = 0
 		self.item_stats: list[dict[str, int]] = []
 		self.nickname_data: int = 0
 		self.music_data: list[bool] = []
@@ -40,10 +36,6 @@ class GameHandler:
 		"""
 		Initialize everything to defaults.
 		"""
-		self.save_data_a = 0
-		self.save_data_b = 0
-		self.playtime_count = 0
-		self.death_count = 0
 		self.item_stats = [
 			# Nimble Fabric
 			{
@@ -252,25 +244,6 @@ class GameHandler:
 		absolute_scene_id: int = get_absolute_scene_id(day_and_scene_id[0], day_and_scene_id[1])
 		self.gameController.set_scene_clear_item(absolute_scene_id, clean_item_id, final_value)
 
-	# Retrieval from Handler data.
-	def get_scene_clear_handler(self, day_and_scene_id: tuple[int, int] = (1, 1), item_id: int = 0) -> bool:
-		absolute_scene_id: int = get_absolute_scene_id(day_and_scene_id[0], day_and_scene_id[1]) - 1
-		clean_item_id: int = clamp(item_id, 0, 9)
-		bit_position: int = (absolute_scene_id * 10) + clean_item_id
-		if absolute_scene_id >= 49: # Use Save Data B.
-			return read_bit_savedata(self.save_data_b, bit_position, 1)
-		else: # Use Save Data A.
-			return read_bit_savedata(self.save_data_a, bit_position, 0)
-
-	def set_scene_clear_handler(self, day_and_scene_id: tuple[int, int] = (1, 1), item_id: int = 0, value: bool = False) -> bool:
-		absolute_scene_id: int = get_absolute_scene_id(day_and_scene_id[0], day_and_scene_id[1]) - 1
-		clean_item_id: int = clamp(item_id, 0, 9)
-		bit_position: int = (absolute_scene_id * 10) + clean_item_id
-		if absolute_scene_id >= 49:  # Use Save Data B.
-			self.save_data_b = write_bit_savedata(self.save_data_b, bit_position, value, 1)
-		else:  # Use Save Data A.
-			self.save_data_a = write_bit_savedata(self.save_data_a, bit_position, value, 0)
-
 	# Other
 	def do_scene_skip(self, day_and_scene_id: tuple[int, int] = (1, 1)):
 		self.set_scene_generic_clear(day_and_scene_id, True)
@@ -335,7 +308,7 @@ class GameHandler:
 		clean_nickname_id: int = clamp(nickname_id, 0, 69)
 		return self.gameController.get_nickname_record(clean_nickname_id)
 
-	def set_nickname_check(self, nickname_id: int, is_checked: bool):
+	def set_nickname_check(self, nickname_id: int = 0, is_checked: bool = False):
 		clean_nickname_id: int = clamp(nickname_id, 0, 69)
 		self.gameController.set_nickname_record(clean_nickname_id, is_checked)
 
@@ -343,7 +316,7 @@ class GameHandler:
 		clean_music_id: int = clamp(music_id, 0, 8)
 		return self.gameController.get_music_record(clean_music_id)
 
-	def set_music_check(self, music_id: int, is_checked: bool):
+	def set_music_check(self, music_id: int = 0, is_checked: bool = False):
 		clean_music_id: int = clamp(music_id, 0, 8)
 		self.gameController.set_music_record(clean_music_id, is_checked)
 

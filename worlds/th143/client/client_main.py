@@ -19,13 +19,16 @@ from CommonClient import (
 from NetUtils import NetworkItem
 from Utils import user_path
 from .client_handler import GameHandler
+from .. import clamp
 from ..utils.utils_get_name import get_item_index_save_name, get_location_name_nickname, get_location_name_music_room, \
 	get_location_name_scene, get_location_name_scene_with_item
-from ..utils.utils_math import client_directory_get_or_default
+from ..utils.utils_math import client_directory_get_or_default, set_scene_clear_neutral, get_scene_clear_neutral, \
+	should_be_save_b
 from ..variables.game_info import DISPLAY_NAME, SHORT_NAME, CLIENT_DATA_PATH, JSON_SLOT_ITEMS, JSON_SLOT_NAME, \
-	JSON_SLOT_CLEARS_A, JSON_SLOT_CLEARS_B, JSON_SLOT_PLAYTIME, JSON_SLOT_DEATHS
+	JSON_SLOT_CLEARS_A, JSON_SLOT_CLEARS_B, JSON_SLOT_PLAYTIME, JSON_SLOT_DEATHS, JSON_SLOT_SCENE_SKIP
 from ..client.client_cmd import CommandProccessorISC
-from ..variables.game_stat_info import CONST_DAY_SCENE_COUNT
+from ..variables.game_stat_info import CONST_DAY_SCENE_COUNT, CONST_MAX_PLAYTIME_CLIENT, CONST_MAX_DEATHS_CLIENT, \
+	CONST_MAX_SCENE_SKIPS
 from ..variables.location_item_name import CONST_NICKNAME_NAME, CONST_ITEM_SHORT_TO_ID
 from ..worldgen.world_locations.location_table import location_table
 
@@ -68,7 +71,15 @@ class ContextISC(CommonContext):
 		self.custom_data_keys_list: list = [str(self.team) + "_" + str(self.slot) + "SaveA143", # Scene Clears A
 											str(self.team) + "_" + str(self.slot) + "SaveB143", # Scene Clears B
 											str(self.team) + "_" + str(self.slot) + "Playtime143",
-											str(self.team) + "_" + str(self.slot) + "Deaths143"]
+											str(self.team) + "_" + str(self.slot) + "Deaths143",
+											str(self.team) + "_" + str(self.slot) + "Skips143"]
+
+		# Save data
+		self.save_data_a: int = 0x0
+		self.save_data_b: int = 0x0
+		self.save_playtime: int = 0
+		self.save_deaths: int = 0
+		self.save_skips_used: int = 0
 
 		# Various Death Link booleans
 		self.caused_deathlink: bool = False
@@ -81,6 +92,8 @@ class ContextISC(CommonContext):
 		self.is_loading_data_setup: bool = True
 		self.completed_loading_save_data: bool = False
 
+		self.reset_context()
+
 	def reset_context(self):
 		self.previous_location_checked = []
 		self.all_location_ids = []
@@ -89,10 +102,18 @@ class ContextISC(CommonContext):
 		self.is_connected = False
 		self.all_received_items = []
 		self.loaded_past_received_items = False
+
+		self.save_data_a = 0x0
+		self.save_data_b = 0x0
+		self.save_playtime = 0
+		self.save_deaths = 0
+		self.save_skips_used = 0
+
 		self.caused_deathlink = False
 		self.died_to_deathlink = False
 		self.pending_received_deathlink = False
 		self.deathlink_enabled = False
+
 		self.is_game_running = False
 		self.retrieved_custom_data = False
 		self.completed_loading_save_data = False
@@ -108,7 +129,7 @@ class ContextISC(CommonContext):
 		await self.get_username()
 		await self.send_connect()
 
-	# TODO
+	# TODO: Item handling
 	def on_package(self, cmd: str, args: dict):
 		"""
 		Manage the package received from the server
@@ -132,22 +153,30 @@ class ContextISC(CommonContext):
 			pass
 			#asyncio.create_task(self.handle_received_items(args["index"], args["items"]))
 
-		elif cmd == "Retrieved":  # Custom data
-			# Save Data A
-			if self.custom_data_keys_list[0] in args["keys"]:
-				pass
-
-			# Save Data B
-			if self.custom_data_keys_list[1] in args["keys"]:
-				pass
-
-			# Playtime Accumulated
-			if self.custom_data_keys_list[2] in args["keys"]:
-				pass
-
-			# Death Count
-			if self.custom_data_keys_list[3] in args["keys"]:
-				pass
+		# Custom data goes here.
+		elif cmd == "Retrieved":
+			for data_index in range(len(self.custom_data_keys_list)):
+				if self.custom_data_keys_list[data_index] in args["keys"]:
+					if args["keys"][self.custom_data_keys_list[data_index]] is not None:
+						new_data = self.custom_data_keys_list[data_index]
+						match data_index:
+							# Save Data A (512 bits only)
+							case 0:
+								self.save_data_a = new_data
+							# Save Data B (512 bits only)
+							case 1:
+								self.save_data_b = new_data
+							# Playtime Accumulated (Maxes out at 3 600 000)
+							case 2:
+								self.save_playtime = clamp(new_data, 0, CONST_MAX_PLAYTIME_CLIENT)
+							# Death Count (Maxes out at 300)
+							case 3:
+								self.save_deaths = clamp(new_data, 0, CONST_MAX_DEATHS_CLIENT)
+							# Scene Skips Used Count (Maxes out at 75)
+							case 4:
+								self.save_skips_used = clamp(new_data, 0, CONST_MAX_SCENE_SKIPS)
+							case _:
+								logger.info(f"Unknown index in custom data keys list. Skipping load for this one...")
 
 		elif cmd == "DataPackage":
 			if not self.all_location_ids: return
@@ -166,9 +195,6 @@ class ContextISC(CommonContext):
 			if "DeathLink" in tags and self.last_death_link != args["data"]["time"]:
 				self.last_death_link = args["data"]["time"]
 				self.on_deathlink(args["data"])
-
-		if cmd == "SetReply":
-			pass
 
 	def client_received_initial_server_data(self):
 		"""
@@ -230,9 +256,36 @@ class ContextISC(CommonContext):
 	# TODO
 	# Handle incoming items
 	#
+	async def handle_received_items(self, network_index, network_items_list):
+		pass
 
+	# Save data items
+	def handle_save_Data_items(self, network_item_list: list[NetworkItem]):
+		pass
 
-	# TODO
+	# TODO: Call update_days in the Handler after this. Write that too.
+	def handle_days_unlocked(self, day_unlock_list):
+		pass
+
+	# TODO: Call update_scenes in the Handler after this. Write that too.
+	def handle_scenes_unlocked(self, scene_unlock_list):
+		pass
+
+	# TODO: Call update_cheat_items in the Handler after this. Write that too.
+	def handle_cheat_items(self, filtered_list):
+		pass
+
+	async def handle_treasure_hunt(self, treasure_count):
+		pass
+
+	# Filler
+	def handle_filler_items(self, filtered_list):
+		pass
+
+	async def handle_game_only_items(self):
+		pass
+
+	#
 	# Victory Condition
 	#
 	def check_victory_conditions(self) -> bool:
@@ -283,9 +336,22 @@ class ContextISC(CommonContext):
 
 		# Scene Clears
 		if self.handler.is_game_paused():
-			new_scene_clear_locations = self.update_scene_clear_locations()
-			if len(new_scene_clear_locations) > 0:
-				new_locations.extend(new_scene_clear_locations)
+			for day_id in range(10):
+				for scene_id in range(CONST_DAY_SCENE_COUNT[day_id]):
+					used_day_id: int = day_id + 1
+					used_scene_id: int = scene_id + 1
+
+					if self.handler.get_scene_generic_clear((used_day_id, used_scene_id)):
+						generic_location_name = get_location_name_scene(used_day_id, used_scene_id)
+						if self.location_table_check(generic_location_name):
+							new_locations.append(location_table[generic_location_name])
+					if not self.options["include_item_clears"]: continue
+					for item_id in range(10):
+						if self.handler.get_scene_item_clear((used_day_id, used_scene_id), item_id):
+							item_location_name = get_location_name_scene_with_item(used_day_id, used_scene_id,
+																					   item_id)
+							if not self.location_table_check(item_location_name): continue
+							new_locations.append(location_table[item_location_name])
 
 		# Nicknames
 		for i in range(CONST_TOTAL_NICKNAME_COUNT):
@@ -314,31 +380,97 @@ class ContextISC(CommonContext):
 			self.finished_game = True
 			await self.send_msgs([{"cmd": 'StatusUpdate', "status": 30}])
 
-	def update_scene_clear_locations(self) -> list[int]:
-		new_locations_list = []
+	async def update_event_save_data(self):
+		"""
+		Intended to be called exclusively while the game is paused and in a stage.
+		May be called if a Scene Skip was used.
+		"""
+		def is_scene_not_internally_checked(day_scene_tuple: tuple[int, int], item_id: int) -> bool:
+			if self.retrieve_save_data_ab(day_scene_tuple, item_id): return False
+			if not self.handler.get_scene_item_clear(day_scene_tuple, item_id): return False
+			return True
+
+		has_updated_event_save: bool = False
 
 		for day_id in range(10):
 			for scene_id in range(CONST_DAY_SCENE_COUNT[day_id]):
-				used_day_id: int = day_id + 1
-				used_scene_id: int = scene_id + 1
+				used_day_tuple: tuple[int, int] = (day_id + 1, scene_id + 1)
 
-				if self.handler.get_scene_generic_clear((used_day_id, used_scene_id)):
-					generic_location_name = get_location_name_scene(used_day_id, used_scene_id)
-					if self.location_table_check(generic_location_name):
-						new_locations_list.append(location_table[generic_location_name])
-				if self.options["include_item_clears"]:
-					for item_id in range(10):
-						if self.handler.get_scene_item_clear((used_day_id, used_scene_id), item_id):
-							item_location_name = get_location_name_scene_with_item(used_day_id, used_scene_id, item_id)
-							if self.location_table_check(item_location_name):
-								new_locations_list.append(location_table[item_location_name])
+				for item_id in range(10):
+					if not is_scene_not_internally_checked(used_day_tuple, item_id): continue
+					self.update_check_save_data_ab(
+						day_scene_tuple=used_day_tuple,
+						item_id=item_id
+					)
+					has_updated_event_save = True
 
-		return new_locations_list
+		if not has_updated_event_save: return
+		await self.write_event_save_data_ab()
 
-	# TODO: Loading
+	def update_check_save_data_ab(self, day_scene_tuple: tuple[int, int] = (1, 1), item_id: int = 0):
+		old_data_tuple: tuple[int, int] = (self.save_data_a, self.save_data_b)
+		self.save_data_a, self.save_data_b = set_scene_clear_neutral(
+			save_data_ab=old_data_tuple,
+			day_scene_id=day_scene_tuple,
+			item_id=item_id,
+			value=True
+		)
+		if self.save_data_a < 0: self.save_data_a = 0
+		if self.save_data_b < 0: self.save_data_b = 0
+
+	def retrieve_save_data_ab(self, day_scene_tuple: tuple[int, int] = (1, 1), item_id: int = 0) -> bool:
+		return get_scene_clear_neutral(
+			save_data_ab=(self.save_data_a, self.save_data_b),
+			day_scene_id=day_scene_tuple,
+			item_id=item_id
+		)
+
+	#
+	# Server Interaction Functions
+	#
+	async def write_event_save_data_ab(self):
+		list_msg_to_send: list[dict] = [{
+			"cmd": 'Set',
+			"key": self.custom_data_keys_list[0],
+			"default": 0,
+			"operations": [{"operation": 'or', "value": self.save_data_a}]
+		}, {
+			"cmd": 'Set',
+			"key": self.custom_data_keys_list[1],
+			"default": 0,
+			"operations": [{"operation": 'or', "value": self.save_data_b}]
+		}]
+
+		await self.send_msgs(list_msg_to_send)
+
+	async def write_playtime_to_server(self):
+		await self.send_msgs([{
+			"cmd": 'Set',
+			"key": self.custom_data_keys_list[2],
+			"default": 0,
+			"operations": [{"operation": 'replace', "value": clamp(self.save_playtime, 0, CONST_MAX_PLAYTIME_CLIENT)}]
+		}])
+
+	async def write_death_stat_to_server(self):
+		await self.send_msgs([{
+			"cmd": 'Set',
+			"key": self.custom_data_keys_list[3],
+			"default": 0,
+			"operations": [{"operation": 'replace', "value": clamp(self.save_deaths, 0, CONST_MAX_DEATHS_CLIENT)}]
+		}])
+
+	async def write_scene_skip_to_server(self):
+		await self.send_msgs([{
+			"cmd": 'Set',
+			"key": self.custom_data_keys_list[4],
+			"default": 0,
+			"operations": [{"operation": 'max', "value": clamp(self.save_skips_used, 0, CONST_MAX_SCENE_SKIPS)}]
+		}])
+
+	#
 	# Save data
 	#
-	async def clear_save_data(self):
+	def clear_save_data(self):
 		"""
 		Should only be called when first connecting to the game.
 		"""
@@ -350,13 +482,12 @@ class ContextISC(CommonContext):
 	def clear_save_data_scene(self):
 		for day_id in range(10):
 			for scene_id in range(CONST_DAY_SCENE_COUNT[day_id]):
-				used_day_id: int = day_id + 1
-				used_scene_id: int = scene_id + 1
+				day_scene_tuple: tuple[int, int] = (day_id + 1, scene_id + 1)
 
-				self.handler.set_scene_generic_clear((used_day_id, used_scene_id), False)
+				self.handler.set_scene_generic_clear(day_scene_tuple, False)
 				for item_id in range(10):
 					self.handler.set_scene_item_clear(
-						(used_day_id, used_scene_id),
+						day_scene_tuple,
 						item_id,
 						False
 					)
@@ -365,9 +496,10 @@ class ContextISC(CommonContext):
 
 	def clear_save_data_other(self):
 		for nickname_id in range(CONST_TOTAL_NICKNAME_COUNT):
-			self.handler.set_nickname_check(nickname_id + 1, False)
+			self.handler.set_nickname_check(nickname_id, False)
 		for music_id in range(9):
-			self.handler.set_music_check(music_id + 1, False)
+			self.handler.set_music_check(music_id, False)
+		return
 
 	async def load_save_data(self):
 		while (self.handler is None or
@@ -375,26 +507,68 @@ class ContextISC(CommonContext):
 			   not self.handler.is_game_running()):
 			await asyncio.sleep(0.5)
 
-		await self.clear_save_data()
+		while self.handler.get_music_check(0):
+			self.clear_save_data()
+			await asyncio.sleep(1.0)
 
-		self.load_sava_data_items()
+		# Item Equip data is loaded when items from the AP server is received.
+		# Not here.
+
 		self.load_save_data_scene_generic()
 		self.load_save_data_scene_items()
 		self.load_save_data_other()
 
 		return
 
-	def load_sava_data_items(self):
-		pass
-
 	def load_save_data_scene_generic(self):
-		pass
+		# Go through Locations list.
+		for day_id in range(10):
+			for scene_id in range(CONST_DAY_SCENE_COUNT[day_id]):
+				generic_clear_location_name: str = get_location_name_scene(
+					day_number=day_id + 1,
+					scene_number=scene_id + 1
+				)
+				if not location_table[generic_clear_location_name] in self.locations_checked: continue
+				self.handler.set_scene_generic_clear(
+					day_and_scene_id=(day_id + 1, scene_id + 1),
+					value=True
+				)
+
+		return
 
 	def load_save_data_scene_items(self):
-		pass
+		# Rely on internal data.
+		for day_id in range(10):
+			for scene_id in range(CONST_DAY_SCENE_COUNT[day_id]):
+				for item_id in range(10):
+					if get_scene_clear_neutral(
+						save_data_ab=(self.save_data_a, self.save_data_b),
+						day_scene_id=(day_id + 1, scene_id + 1),
+						item_id=item_id
+					):
+						self.handler.set_scene_item_clear(
+							day_and_scene_id=(day_id + 1, scene_id + 1),
+							item_id=item_id,
+							value=True
+						)
+
+		return
 
 	def load_save_data_other(self):
-		pass
+		# Nicknames and Music Room should rely on Locations list.
+		for nickname_id in range(CONST_TOTAL_NICKNAME_COUNT):
+			if not self.options["include_hidden_nicknames"] and nickname_id >= (CONST_TOTAL_NICKNAME_COUNT - 10):
+				continue
+			nickname_location_name: str = get_location_name_nickname(nickname_id + 1)
+			if not location_table[nickname_location_name] in self.locations_checked: continue
+			self.handler.set_nickname_check(nickname_id, True)
+
+		for music_id in range(9):
+			music_location_name: str = get_location_name_music_room(music_id + 1)
+			if not location_table[music_location_name] in self.locations_checked: continue
+			self.handler.set_music_check(music_id, True)
+
+		return
 
 	# TODO
 	# Game Transfer between Menu and Stage
@@ -449,13 +623,15 @@ class ContextISC(CommonContext):
 				if JSON_SLOT_ITEMS in saved_data_dict:
 					self.all_received_items = saved_data_dict[JSON_SLOT_ITEMS]
 				if JSON_SLOT_CLEARS_A in saved_data_dict:
-					self.handler.sava_data_a = saved_data_dict[JSON_SLOT_CLEARS_A]
+					self.save_data_a = saved_data_dict[JSON_SLOT_CLEARS_A]
 				if JSON_SLOT_CLEARS_B in saved_data_dict:
-					self.handler.sava_data_b = saved_data_dict[JSON_SLOT_CLEARS_B]
+					self.save_data_b = saved_data_dict[JSON_SLOT_CLEARS_B]
 				if JSON_SLOT_PLAYTIME in saved_data_dict:
-					self.handler.playtime_count = saved_data_dict[JSON_SLOT_PLAYTIME]
+					self.save_playtime = saved_data_dict[JSON_SLOT_PLAYTIME]
 				if JSON_SLOT_DEATHS in saved_data_dict:
-					self.handler.deaths_count = saved_data_dict[JSON_SLOT_DEATHS]
+					self.save_deaths = saved_data_dict[JSON_SLOT_DEATHS]
+				if JSON_SLOT_SCENE_SKIP in saved_data_dict:
+					self.save_skips_used = saved_data_dict[JSON_SLOT_SCENE_SKIP]
 
 		self.loaded_past_received_items = True
 		return
@@ -486,10 +662,11 @@ class ContextISC(CommonContext):
 		full_dict = {
 			JSON_SLOT_NAME: self.player_names[self.slot],
 			JSON_SLOT_ITEMS: self.all_received_items,
-			JSON_SLOT_CLEARS_A: self.handler.sava_data_a,
-			JSON_SLOT_CLEARS_B: self.handler.sava_data_b,
-			JSON_SLOT_PLAYTIME: self.handler.playtime_count,
-			JSON_SLOT_DEATHS: self.handler.death_count
+			JSON_SLOT_CLEARS_A: self.save_data_a,
+			JSON_SLOT_CLEARS_B: self.save_data_b,
+			JSON_SLOT_PLAYTIME: self.save_playtime,
+			JSON_SLOT_DEATHS: self.save_deaths,
+			JSON_SLOT_SCENE_SKIP: self.save_skips_used
 		}
 
 		client_directory_get_or_default()

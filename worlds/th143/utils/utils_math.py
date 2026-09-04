@@ -10,6 +10,7 @@ def duplicate_list(original_list):
 
 def clamp(n, smallest, largest): return max(smallest, min(n, largest))
 
+# Bit manipulation
 def read_bit(bitarray: int = 0, index: int = 0) -> bool:
 	"""
 	If operation could not be done, return False.
@@ -31,28 +32,50 @@ def write_bit(bitarray: int = 0, index: int = 0, value: bool = False) -> int:
 		new_bitarray &= ~(1 << index)
 	return new_bitarray
 
-def write_bit_savedata(data_int: int = 0, index: int = 0, value: bool = False, save_type: int = 0) -> int:
+def write_bit_savedata(data_int: int = 0, index: int = 0, value: bool = False) -> int:
 	"""
 	save_type 0 = Save Data A, anything else = B
 	"""
-	if save_type != 0:
-		used_index = clamp(index - 500, 0, 511)
-	else:
-		used_index = clamp(index, 0, 511)
+	return write_bit(data_int, index, value)
 
-	return write_bit(data_int, used_index, value)
-
-def read_bit_savedata(data_int: int = 0, index: int = 0, save_type: int = 0) -> bool:
+def read_bit_savedata(data_int: int = 0, index: int = 0) -> bool:
 	"""
 	save_type 0 = Save Data A, anything else = B
 	"""
-	if save_type != 0:
-		used_index = clamp(index - 500, 0, 511)
+	return read_bit(data_int, index)
+
+def should_be_save_b(absolute_scene_id: int = 0) -> bool:
+	return absolute_scene_id > 49
+
+def get_scene_clear_neutral(save_data_ab: tuple[int, int], day_scene_id: tuple[int, int] = (1, 1), item_id: int = 0) -> bool:
+	absolute_scene_id: int = get_absolute_scene_id(day_scene_id[0], day_scene_id[1]) - 1
+	bit_position: int = get_bit_index_used(absolute_scene_id, item_id)
+	if should_be_save_b(absolute_scene_id): # Use Save Data B.
+		return read_bit_savedata(save_data_ab[1], bit_position)
+	else: # Use Save Data A.
+		return read_bit_savedata(save_data_ab[0], bit_position)
+
+def set_scene_clear_neutral(save_data_ab: tuple[int, int], day_scene_id: tuple[int, int] = (1, 1), item_id: int = 0, value: bool = False) -> tuple[int, int]:
+	absolute_scene_id: int = get_absolute_scene_id(day_scene_id[0], day_scene_id[1])
+	bit_position: int = get_bit_index_used(absolute_scene_id, item_id)
+	if should_be_save_b(absolute_scene_id):
+		new_save_data = write_bit_savedata(save_data_ab[1], bit_position, value)
+		return save_data_ab[0], new_save_data
 	else:
-		used_index = clamp(index, 0, 511)
+		new_save_data = write_bit_savedata(save_data_ab[0], bit_position, value)
+		return new_save_data, save_data_ab[1]
 
-	return read_bit(data_int, used_index)
+def get_bit_index_used(absolute_scene_id: int, item_id: int) -> int:
+	clean_item_id: int = clamp(item_id, 0, 9)
+	bit_position: int = (absolute_scene_id * 10) + clean_item_id
+	if should_be_save_b(absolute_scene_id):
+		bit_position = clamp(bit_position - 510, 0, 511)
+	else:
+		bit_position = clamp(bit_position - 10, 0, 511)
 
+	return bit_position
+
+# Other
 def get_relative_scene_id(absolute_scene_id: int = 1) -> tuple[int, int]:
 	"""
 	Returns the Day ID and Scene ID of this absolute scene ID in the form of a tuple.

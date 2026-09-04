@@ -69,3 +69,7 @@ CONST_PLAYTIME_REQUIRE = [
 	# Fifth
 	[bytes([0x40, 0x19, 0x01]), bytes([0x40, 0x73, 0x05]), bytes([0x80, 0xfc, 0x0a])]
 ]
+
+CONST_MAX_PLAYTIME_CLIENT: int = 3600000
+CONST_MAX_DEATHS_CLIENT: int = 300
+CONST_MAX_SCENE_SKIPS: int = 75
